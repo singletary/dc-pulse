@@ -1,0 +1,8 @@
+{
+  "objectIdFieldName": "OBJECTID",
+  "exceededTransferLimit": true,
+  "features": [
+    { "attributes": { "OBJECTID": 1 } },
+    { "attributes": { "OBJECTID": 2 }, "geometry": null }
+  ]
+}
