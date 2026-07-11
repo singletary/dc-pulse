@@ -1,0 +1,15 @@
+{
+  "objectIdFieldName": "OBJECTID",
+  "exceededTransferLimit": false,
+  "features": [
+    {
+      "attributes": {
+        "OBJECTID": 42,
+        "CATEGORY": "Street & Alley",
+        "DETAIL": null,
+        "OPENED": 1783267200000
+      },
+      "geometry": { "x": -77.0369, "y": 38.9072 }
+    }
+  ]
+}
