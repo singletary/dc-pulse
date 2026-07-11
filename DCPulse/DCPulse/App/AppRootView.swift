@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AppRootView: View {
     @State private var store = PulseDataStore()
+    @State private var locationService = LocationService()
 
     var body: some View {
         TabView {
@@ -12,7 +13,12 @@ struct AppRootView: View {
         }
         .tint(.indigo)
         .environment(store)
+        .environment(locationService)
         .task { await store.load() }
+        .onChange(of: locationService.coordinate) { _, coordinate in
+            guard let coordinate else { return }
+            Task { await store.load(coordinate: coordinate, placeName: "Current Location", force: true) }
+        }
     }
 }
 

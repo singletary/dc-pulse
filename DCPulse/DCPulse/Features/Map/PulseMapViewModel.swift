@@ -7,4 +7,11 @@ import SwiftUI
         center: SampleData.center.clLocationCoordinate,
         span: MKCoordinateSpan(latitudeDelta: 0.045, longitudeDelta: 0.045)
     ))
+
+    func center(on coordinate: PulseItem.Coordinate) {
+        position = .region(MKCoordinateRegion(
+            center: coordinate.clLocationCoordinate,
+            span: MKCoordinateSpan(latitudeDelta: 0.045, longitudeDelta: 0.045)
+        ))
+    }
 }

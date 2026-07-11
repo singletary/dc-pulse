@@ -18,6 +18,7 @@ DC Pulse answers “What’s changing around me today?” with a professional na
 ## Delivery sequence
 - **Phase 0 — foundation:** documentation, feature MVVM layout, domain model, reusable ArcGIS query/client, fixture tests, and polished sample-data shell.
 - **Next vertical slice — 311:** verify the service endpoint and metadata; implement its response model/adapter; query one mile and 30 days; paginate; render real states in Pulse, Activity, Map, and Item Details.
+- **Location-aware 311:** request when-in-use location only after an explicit user action; retain Downtown DC as the fallback; refresh shared features and map context when a location arrives.
 - **Permits:** independently verify and adapt 2026 Building Permits and 2026 DDOT Construction Permits; add layer filters and clustering.
 - **Product depth:** followed-place persistence and preferences with SwiftData, caching/background refresh, notifications, and widgets.
 
