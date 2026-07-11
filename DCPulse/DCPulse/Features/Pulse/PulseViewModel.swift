@@ -3,7 +3,6 @@ import Observation
 
 @Observable
 final class PulseViewModel {
-    let radiusMiles = 1
     let periodDays = 30
     var items: [PulseItem] = []
 

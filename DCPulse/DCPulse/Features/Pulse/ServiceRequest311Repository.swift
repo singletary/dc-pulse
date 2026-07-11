@@ -1,7 +1,19 @@
 import Foundation
 
 protocol PulseRepositoryProtocol: Sendable {
-    func nearbyItems(coordinate: PulseItem.Coordinate, radiusMiles: Double, days: Int) async throws -> [PulseItem]
+    func nearbyItems(
+        coordinate: PulseItem.Coordinate,
+        radiusMiles: Double,
+        days: Int,
+        offset: Int,
+        limit: Int
+    ) async throws -> PulsePage
+}
+
+struct PulsePage: Equatable, Sendable {
+    let items: [PulseItem]
+    let nextOffset: Int
+    let hasMore: Bool
 }
 
 struct ServiceRequest311Repository: PulseRepositoryProtocol, Sendable {
@@ -14,7 +26,13 @@ struct ServiceRequest311Repository: PulseRepositoryProtocol, Sendable {
         self.now = now
     }
 
-    func nearbyItems(coordinate: PulseItem.Coordinate, radiusMiles: Double, days: Int) async throws -> [PulseItem] {
+    func nearbyItems(
+        coordinate: PulseItem.Coordinate,
+        radiusMiles: Double,
+        days: Int,
+        offset: Int,
+        limit: Int
+    ) async throws -> PulsePage {
         let cutoff = Calendar(identifier: .gregorian).date(byAdding: .day, value: -days, to: now()) ?? now()
         let query = ArcGISQuery(
             whereClause: "ADDDATE >= DATE '\(Self.dateFormatter.string(from: cutoff))'",
@@ -22,12 +40,16 @@ struct ServiceRequest311Repository: PulseRepositoryProtocol, Sendable {
             point: .init(longitude: coordinate.longitude, latitude: coordinate.latitude),
             radiusMiles: radiusMiles,
             returnGeometry: true,
-            resultOffset: 0,
-            resultRecordCount: 500,
+            resultOffset: offset,
+            resultRecordCount: limit,
             orderByFields: ["ADDDATE DESC"]
         )
-        let features = try await ArcGISPaginator(client: client).fetchAll(from: ServiceRequest311Adapter.sourceURL, query: query)
-        return features.compactMap { try? adapter.map($0) }
+        let page = try await client.fetchPage(from: ServiceRequest311Adapter.sourceURL, query: query)
+        return PulsePage(
+            items: page.features.compactMap { try? adapter.map($0) },
+            nextOffset: offset + page.features.count,
+            hasMore: page.exceededTransferLimit == true
+        )
     }
 
     private static let outputFields = [

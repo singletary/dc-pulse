@@ -15,8 +15,8 @@ struct AppRootView: View {
         .environment(store)
         .environment(locationService)
         .task { await store.load() }
-        .onChange(of: locationService.coordinate) { _, coordinate in
-            guard let coordinate else { return }
+        .onChange(of: locationService.updateSequence) { _, _ in
+            guard let coordinate = locationService.coordinate else { return }
             Task { await store.load(coordinate: coordinate, placeName: "Current Location", force: true) }
         }
     }

@@ -2,7 +2,7 @@
 
 DC Pulse is a native, map-forward iPhone app that answers: **“What’s changing around me today?”** It translates Washington, DC public ArcGIS/Open Data into an approachable view of recent 311 requests, building permits, and DDOT construction permits.
 
-The app provides navigable Pulse, Map, Activity, Places, and Item Details experiences. Its first verified live vertical slice loads 2026 DC 311 requests around Downtown DC using a **one-mile** radius and **last-30-days** period. Building and DDOT permit endpoints remain intentionally unconfigured until independently verified.
+The app provides navigable Pulse, Map, Activity, Places, and Item Details experiences. Its first verified live vertical slice loads 2026 DC 311 requests around Downtown DC or the user's current location using a **half-mile** default radius and **last-30-days** period. Users can switch between quarter-mile, half-mile, and one-mile searches. Building and DDOT permit endpoints remain intentionally unconfigured until independently verified.
 
 ## Open the project
 
