@@ -21,6 +21,7 @@ struct PulseMapView: View {
         .navigationTitle("Map")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selectedItem) { item in NavigationStack { ItemDetailsView(item: item) } }
+        .onChange(of: store.searchCoordinate) { _, coordinate in viewModel.center(on: coordinate) }
     }
 
     private func icon(for item: PulseItem) -> String {

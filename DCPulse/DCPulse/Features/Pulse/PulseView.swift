@@ -3,14 +3,16 @@ import SwiftUI
 struct PulseView: View {
     @State private var viewModel = PulseViewModel()
     @Environment(PulseDataStore.self) private var store
+    @Environment(LocationService.self) private var locationService
 
     var body: some View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Near Downtown DC").font(.title2.bold())
+                    Text("Near \(store.placeName)").font(.title2.bold())
                     Label("Within \(viewModel.radiusMiles) mile · Last \(viewModel.periodDays) days", systemImage: "location.circle")
                         .font(.subheadline).foregroundStyle(.secondary)
+                    locationControl
                 }.padding(.vertical, 8)
             }
             Section("At a glance") {
@@ -37,6 +39,30 @@ struct PulseView: View {
         }
         .navigationTitle("Pulse")
         .navigationDestination(for: PulseItem.self) { ItemDetailsView(item: $0) }
+    }
+
+    @ViewBuilder private var locationControl: some View {
+        switch locationService.state {
+        case .requestingPermission, .locating:
+            Label("Finding your location…", systemImage: "location.fill").font(.subheadline).foregroundStyle(.secondary)
+        case .located where store.placeName == "Current Location":
+            Label("Using your current location", systemImage: "location.fill").font(.subheadline).foregroundStyle(.indigo)
+        case .denied:
+            VStack(alignment: .leading, spacing: 4) {
+                Label("Location access is off", systemImage: "location.slash")
+                Text("Enable location in Settings, or keep using Downtown DC.").font(.caption).foregroundStyle(.secondary)
+            }
+        case .restricted:
+            Text("Location access is restricted. Using Downtown DC.").font(.caption).foregroundStyle(.secondary)
+        case .failed(let message):
+            VStack(alignment: .leading, spacing: 4) {
+                Text(message).font(.caption).foregroundStyle(.secondary)
+                Button("Try Location Again") { locationService.requestCurrentLocation() }.buttonStyle(.borderless)
+            }
+        default:
+            Button { locationService.requestCurrentLocation() } label: { Label("Use My Location", systemImage: "location") }
+                .buttonStyle(.borderless)
+        }
     }
 
     private func metric(_ value: Int, _ title: String, _ color: Color) -> some View {
