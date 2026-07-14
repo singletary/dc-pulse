@@ -1,0 +1,29 @@
+{
+  "objectIdFieldName": "OBJECTID",
+  "geometryType": "esriGeometryPoint",
+  "spatialReference": { "wkid": 4326 },
+  "features": [
+    {
+      "attributes": {
+        "PERMIT_ID": "fixture-permit-001",
+        "PERMIT_TYPE_NAME": "SHOP DRAWING",
+        "PERMIT_SUBTYPE_NAME": "ELEVATOR - ALTERATION",
+        "PERMIT_CATEGORY_NAME": "NA",
+        "APPLICATION_STATUS_NAME": "PERMIT ISSUED",
+        "FULL_ADDRESS": "REDACTED TEST ADDRESS",
+        "DESC_OF_WORK": "Modernize an existing elevator system.",
+        "ISSUE_DATE": 1783483200000,
+        "LASTMODIFIEDDATE": 1783606517000,
+        "WARD": "2",
+        "NEIGHBORHOODCLUSTER": "Cluster 6",
+        "LATITUDE": 38.9010,
+        "LONGITUDE": -77.0310,
+        "FEES_PAID": 22000,
+        "ZONING": "D-2",
+        "SSL": "0000 0000"
+      },
+      "geometry": { "x": -77.0310, "y": 38.9010 }
+    }
+  ],
+  "exceededTransferLimit": false
+}

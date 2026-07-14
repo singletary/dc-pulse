@@ -1,0 +1,99 @@
+//
+//  DCPulseUITests.swift
+//  DCPulseUITests
+//
+//  Created by Michael Singletary on 7/11/26.
+//
+
+import XCTest
+
+final class DCPulseUITests: XCTestCase {
+
+    override func setUpWithError() throws {
+        // Put setup code here. This method is called before the invocation of each test method in the class.
+
+        // In UI tests it is usually best to stop immediately when a failure occurs.
+        continueAfterFailure = false
+
+        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
+    }
+
+    override func tearDownWithError() throws {
+        // Put teardown code here. This method is called after the invocation of each test method in the class.
+    }
+
+    @MainActor
+    func testExample() throws {
+        let app = XCUIApplication()
+        app.launch()
+        XCTAssertTrue(app.navigationBars["Happening near you"].waitForExistence(timeout: 10))
+    }
+
+    @MainActor
+    func testMapTabShowsClusteredMapAndControls() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let mapTab = app.tabBars.buttons["Map"]
+        XCTAssertTrue(mapTab.waitForExistence(timeout: 10))
+        mapTab.tap()
+
+        XCTAssertTrue(app.otherElements["map.clustered"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["map.filter"].exists)
+        XCTAssertTrue(app.buttons["map.currentLocation"].exists)
+
+        app.buttons["map.filter"].tap()
+        let radiusMenu = app.buttons["Search radius"]
+        XCTAssertTrue(radiusMenu.waitForExistence(timeout: 5))
+        radiusMenu.tap()
+        XCTAssertTrue(app.buttons["0.25 mile"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["0.5 mile"].exists)
+        XCTAssertTrue(app.buttons["1 mile"].exists)
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.5)).tap()
+
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "Clustered Map"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
+    @MainActor
+    func testStatusListOpensItemAndReturnsDirectlyHome() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let resolvedStatus = app.buttons["pulse.status.resolved"]
+        XCTAssertTrue(resolvedStatus.waitForExistence(timeout: 15))
+        resolvedStatus.tap()
+        XCTAssertTrue(app.navigationBars["Resolved"].waitForExistence(timeout: 10))
+
+        let firstItem = app.buttons.matching(identifier: "status.item").firstMatch
+        XCTAssertTrue(firstItem.waitForExistence(timeout: 15))
+        firstItem.tap()
+        XCTAssertTrue(app.navigationBars["Item Details"].waitForExistence(timeout: 10))
+
+        app.navigationBars["Item Details"].buttons["Resolved"].tap()
+        XCTAssertTrue(app.navigationBars["Resolved"].waitForExistence(timeout: 10))
+        app.navigationBars["Resolved"].buttons["Happening near you"].tap()
+        XCTAssertTrue(app.navigationBars["Happening near you"].waitForExistence(timeout: 10))
+    }
+
+    @MainActor
+    func testRequestsTabExposesFollowedLocationBrowser() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let requestsTab = app.tabBars.buttons["Requests"]
+        XCTAssertTrue(requestsTab.waitForExistence(timeout: 10))
+        requestsTab.tap()
+        XCTAssertTrue(app.buttons["requests.locationPicker"].waitForExistence(timeout: 10))
+    }
+
+    @MainActor
+    func testLaunchPerformance() throws {
+        // This measures how long it takes to launch your application.
+        measure(metrics: [XCTApplicationLaunchMetric()]) {
+            XCUIApplication().launch()
+        }
+    }
+}

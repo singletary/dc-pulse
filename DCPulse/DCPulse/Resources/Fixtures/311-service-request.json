@@ -1,0 +1,26 @@
+{
+  "objectIdFieldName": "OBJECTID",
+  "geometryType": "esriGeometryPoint",
+  "spatialReference": { "wkid": 4326 },
+  "features": [
+    {
+      "attributes": {
+        "SERVICEREQUESTID": "fixture-311-001",
+        "SERVICECODEDESCRIPTION": "Illegal Dumping",
+        "SERVICETYPECODEDESCRIPTION": "Solid Waste Management",
+        "ORGANIZATIONACRONYM": "DPW",
+        "ADDDATE": 1783783172000,
+        "RESOLUTIONDATE": null,
+        "SERVICEORDERSTATUS": "Open",
+        "STATUS_CODE": null,
+        "DETAILS": null,
+        "PRIORITY": "Standard",
+        "STREETADDRESS": "REDACTED TEST ADDRESS",
+        "WARD": "Ward 2",
+        "EDITED": null
+      },
+      "geometry": { "x": -77.0300, "y": 38.9000 }
+    }
+  ],
+  "exceededTransferLimit": false
+}

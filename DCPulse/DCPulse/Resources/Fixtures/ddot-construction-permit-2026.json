@@ -1,0 +1,32 @@
+{
+  "objectIdFieldName": "OBJECTID",
+  "geometryType": "esriGeometryPoint",
+  "spatialReference": { "wkid": 4326 },
+  "features": [
+    {
+      "attributes": {
+        "TRACKINGNUMBER": "fixture-ddot-001",
+        "PERMITNUMBER": null,
+        "APPLICATIONDATE": 1783699874000,
+        "ISSUEDATE": null,
+        "EFFECTIVEDATE": 1785124800000,
+        "EXPIRATIONDATE": 1790222400000,
+        "STATUS": "Assigned",
+        "WLFULLADDRESS": "REDACTED TEST ADDRESS",
+        "PERMITTEENAME": "Public Utility Contractor",
+        "WORKDETAIL": "Trench in the roadway and place conduit for utility work.",
+        "ISEXCAVATION": "T",
+        "ISFIXTURE": "F",
+        "ISPAVING": "F",
+        "ISLANDSCAPING": "F",
+        "ISPROJECTIONS": "F",
+        "ISPSRENTAL": "F",
+        "LATITUDE": 38.9020,
+        "LONGITUDE": -77.0320,
+        "EDITED": null
+      },
+      "geometry": { "x": -77.0320, "y": 38.9020 }
+    }
+  ],
+  "exceededTransferLimit": false
+}
