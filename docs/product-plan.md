@@ -41,3 +41,8 @@ The current ranked execution plan is maintained in [roadmap.md](roadmap.md). It 
 
 ## MVP quality bar
 No source-specific response object reaches SwiftUI. Malformed records are handled at the adapter boundary. Network errors are actionable, empty results are useful, source attribution is visible, and fixture-only work is never described as live integration.
+## Near-term civic actions
+
+DC Pulse should reduce the work required to report a neighborhood issue without obscuring where the official transaction occurs. The photo-first flow suggests a broad 311 category and location, keeps those suggestions editable, and never submits without an explicit final action. Until DC offers a supported write contract, the official DC 311 portal remains responsible for authentication, required fields, photo upload, submission, and confirmation numbers.
+
+Restaurant health is a distinct experience rather than another 311 category. It should prioritize closures and unresolved Priority/Priority Foundation violations, show inspection history in context, and avoid grades or scores that DC Health does not publish. Nearby integration follows only after a stable official data interface is verified.

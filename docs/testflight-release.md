@@ -29,6 +29,9 @@ DC Pulse makes it easier to see recent DC 311 requests and public permit activit
 - Save Home, follow a place, watch an item, and exercise notification permission and manual refresh flows.
 - Try denied, approximate, and out-of-DC location paths, plus offline and slow-network recovery.
 - Verify the X status-update composer and DC reporting handoffs, but do not submit a real report solely for testing.
+- Open **Report an Issue to 311**, choose a non-sensitive test image, confirm the suggested type remains editable, and verify that Continue opens the official portal without claiming submission.
+- Verify camera denial, a photo without location metadata, current-location fallback, and manual address entry. Do not use a personal photo in App Store screenshots or shared test evidence.
+- Open **Restaurant Health Inspections** and verify all three official DC Health destinations plus Dynamic Type and VoiceOver labels.
 
 **Feedback email**
 

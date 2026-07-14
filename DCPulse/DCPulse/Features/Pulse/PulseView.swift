@@ -11,6 +11,8 @@ struct PulseView: View {
     @State private var showingSaveHome = false
     @State private var showingManualHome = false
     @State private var selectedStatus: StatusItemsDestination?
+    @State private var showingReport311 = false
+    @State private var showingRestaurantHealth = false
 
     var body: some View {
         List {
@@ -111,7 +113,7 @@ struct PulseView: View {
                     }
                 } else {
                     Button { beginSavingHome() } label: {
-                        Label("Save your home location", systemImage: "house.badge.plus")
+                        Label("Save your home location", systemImage: "house")
                     }
                     Text("Track requests reported at your address.")
                         .font(.caption).foregroundStyle(.secondary)
@@ -129,13 +131,20 @@ struct PulseView: View {
             Section("Explore another area") {
                 Button { showingWardPicker = true } label: { Label("Browse by Ward", systemImage: "building.columns") }
                 Button { showingAddressSearch = true } label: { Label("Search Around a DC Address", systemImage: "magnifyingglass") }
-                Link(destination: URL(string: "https://311.dc.gov")!) {
-                    Label("Submit a 311 Request", systemImage: "square.and.pencil")
+                Button { showingReport311 = true } label: {
+                    Label("Report an Issue to 311", systemImage: "camera.viewfinder")
                 }
+                .accessibilityIdentifier("pulse.report311")
+                Button { showingRestaurantHealth = true } label: {
+                    Label("Restaurant Health Inspections", systemImage: "fork.knife")
+                }
+                .accessibilityIdentifier("pulse.restaurantHealth")
             }
         }
         .navigationTitle("Happening near you")
         .navigationDestination(item: $selectedStatus) { StatusItemsView(status: $0.status) }
+        .navigationDestination(isPresented: $showingReport311) { Report311View() }
+        .navigationDestination(isPresented: $showingRestaurantHealth) { RestaurantHealthView() }
         .navigationDestination(for: PulseItem.self) { ItemDetailsView(item: $0) }
         .refreshable { await store.retry() }
         .toolbar {

@@ -70,7 +70,7 @@ struct PlacesView: View {
                     }
                 } else {
                     Button { showingManualHome = true } label: {
-                        Label("Add Home Address", systemImage: "house.badge.plus")
+                        Label("Add Home Address", systemImage: "house")
                     }
                 }
             }
