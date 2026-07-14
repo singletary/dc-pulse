@@ -420,6 +420,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "DC Pulse";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSCameraUsageDescription = "DC Pulse uses the camera only when you choose to photograph an issue for a 311 request draft.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "DC Pulse uses your location to show nearby public requests and permits.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -455,6 +456,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "DC Pulse";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSCameraUsageDescription = "DC Pulse uses the camera only when you choose to photograph an issue for a 311 request draft.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "DC Pulse uses your location to show nearby public requests and permits.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

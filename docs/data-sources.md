@@ -20,6 +20,20 @@ On July 13, 2026, a read-only grouped-statistics query was also verified against
 | 2026 Building Permits | Building activity layer | Verified 2026 layer; live repository implemented |
 | 2026 DDOT Construction Permits | Transportation/public-space construction layer | Verified 2026 layer; live repository implemented |
 
+## DC Health restaurant inspections
+
+DC Health's authoritative public inspection search is `https://dc.healthinspections.us/?a=Inspections`. A read-only review on July 13, 2026 confirmed that it exposes establishment, permit, inspection type/date, and detailed HTML inspection reports. Those reports contain Priority, Priority Foundation, and Core violation counts. DC Health explicitly uses pass/fail inspections and does not publish letter grades, percentages, or restaurant ratings.
+
+The public portal is a server-rendered ColdFusion search form, not a documented JSON, ArcGIS, or other supported application interface. DC Pulse therefore provides official search, interpretation guidance, and closure/restoration links while keeping the normalized `RestaurantInspection` model ready for a future source adapter. Nearby restaurant results must not ship until DC Health or its publisher provides a stable contract or explicitly approves an integration approach. HTML scraping is not considered a verified production source.
+
+Closures must receive the strongest visual treatment because DC Health uses them for imminent public-health risks. Priority and Priority Foundation violations follow; Core violations remain visible but must not be presented as equivalent to closure. Inspection reports are point-in-time observations, not permanent ratings of an establishment.
+
+## DC 311 submission
+
+The official submission destination is `https://311.dc.gov/citizen/s/`. DC also documents phone, text, X, portal, and official mobile-app submission, but no supported public write API has been verified.
+
+DC Pulse can safely prepare a request draft: the person selects or takes a photo, Apple's on-device Vision framework suggests a broad civic category, and current location or manual address supplies the report location. Photo location metadata is not read. Every inferred field is editable. The app copies reviewed details and opens the official portal; it does not claim that a request was submitted and does not upload the photo during analysis. True in-app submission requires a supported DC contract and a confirmation identifier returned by DC.
+
 Ward fallback centers are derived from the authoritative DC GIS **Ward - 2022** polygon layer at `https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Administrative_Other_Boundaries/MapServer/53`.
 
 The authoritative 2026 311 layer is `https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/ServiceRequests/FeatureServer/21`. Its metadata and a live spatial/date query were verified on July 11, 2026. It supports point geometry, distance queries, ordering, pagination, JSON, a 1,000-record service maximum, and WGS84 output. A redacted representative fixture is checked in.

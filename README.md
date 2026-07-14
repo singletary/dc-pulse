@@ -22,6 +22,8 @@ DC Pulse is a native, map-forward iPhone app for exploring recent public activit
 - **Places** saves Home and other meaningful DC locations on-device for quick return visits.
 - **Item Details** normalizes dates, status, agency, address, source attributes, and official civic-action destinations.
 - **Watches** track selected public records on-device and can produce local alerts when an in-app refresh detects a status change.
+- **Report to 311** turns a selected or captured photo into an editable, on-device request draft before handing off to the official DC portal.
+- **Restaurant Health** explains DC's real pass/fail and violation terminology and links directly to official inspections and closure information while a supported nearby-data contract is pursued.
 
 Location is requested only to perform a nearby search. If a usable DC location is unavailable, people can browse by ward or search around a DC address. The default search covers **half a mile** and the **last 30 days**, with additional radius and time options available on Map.
 
@@ -39,7 +41,7 @@ The verified endpoints, schema notes, query contract, and known source limitatio
 
 ## Privacy by design
 
-DC Pulse has no account system, advertising SDK, analytics SDK, or custom backend. Home, followed places, watched items, cached results, and preferences stay in on-device storage. Nearby searches send the selected coordinate and query parameters directly to the relevant DC ArcGIS service, without a DC Pulse account or device identifier.
+DC Pulse has no account system, advertising SDK, analytics SDK, or custom backend. Home, followed places, watched items, cached results, and preferences stay in on-device storage. Nearby searches send the selected coordinate and query parameters directly to the relevant DC ArcGIS service, without a DC Pulse account or device identifier. Photo classification for a 311 draft runs on-device; DC Pulse does not read photo location metadata, upload the photo, or submit the request.
 
 See [App Store readiness](docs/app-store-readiness.md) for the current privacy inventory and disclosure assumptions.
 
@@ -64,7 +66,7 @@ DCPulse/DCPulse/
 │   ├── Networking/      ArcGIS query, client, and pagination
 │   └── Notifications/   Watch reconciliation and local alerts
 ├── DesignSystem/        Reusable native components
-├── Features/            Near You, Map, Requests, Places, Item Details
+├── Features/            Near You, Map, Requests, Places, Item Details, Health, Report 311
 └── Resources/Fixtures/  Redacted representative payloads
 ```
 

@@ -74,11 +74,14 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 
 - Continue investigating verified 311 photo/comment fields and human-readable record links without scraping private or unstable Salesforce pages.
 - Improve official violation-reporting handoffs if DOB or DDOT publishes supported address- or permit-specific parameters.
-- Add a first-class “Submit a 311 request” handoff with clear boundaries between DC Pulse and the official submission service.
+- **Completed foundation:** a photo-first 311 draft flow uses on-device Vision classification, reads embedded DC photo location when available, supports current-location/address fallback, requires user review, and hands a copied draft to the official portal.
+- Replace the official-portal handoff with true in-app submission only if DC publishes or grants a supported write contract. Never depend on private Salesforce endpoints or represent a draft as submitted.
+- Evaluate a category-specific model only with a representative, licensed, privacy-reviewed dataset; generic image classification must remain a suggestion rather than an automated decision.
 
 ## 6. Additional civic datasets — medium
 
-- Evaluate restaurant health inspections/violations as an independent adapter and repository using an authoritative, stable service.
+- **Completed foundation:** restaurant inspection domain semantics highlight closures, follow-up requirements, and Priority/Priority Foundation violations without inventing letter grades or scores; the app links to authoritative DC Health search, guidance, and closure pages.
+- Obtain or verify a stable, supported inspection data interface before adding nearby results. The current public portal is server-rendered HTML and must not be treated as a durable API without publisher approval.
 - Add new datasets only with source-specific mapping, fixtures, partial-failure behavior, filters, attribution, and accessibility coverage.
 
 ## 7. Later product expansion — deferred

@@ -15,6 +15,10 @@ final class DCPulseUITests: XCTestCase {
         // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
 
+        // Keep feature tests deterministic even if a launch test previously left
+        // the shared simulator in landscape.
+        XCUIDevice.shared.orientation = .portrait
+
         // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
     }
 
@@ -47,8 +51,8 @@ final class DCPulseUITests: XCTestCase {
         XCTAssertTrue(radiusMenu.waitForExistence(timeout: 5))
         radiusMenu.tap()
         XCTAssertTrue(app.buttons["0.25 mile"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["0.5 mile"].exists)
-        XCTAssertTrue(app.buttons["1 mile"].exists)
+        XCTAssertTrue(app.buttons["0.5 mile"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["1 mile"].waitForExistence(timeout: 5))
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.5)).tap()
 
         let attachment = XCTAttachment(screenshot: app.screenshot())
@@ -90,10 +94,35 @@ final class DCPulseUITests: XCTestCase {
     }
 
     @MainActor
+    func testCivicActionDestinationsOpenFromNearYou() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let reportButton = app.buttons["pulse.report311"]
+        scrollToElement(reportButton, in: app)
+        reportButton.tap()
+        XCTAssertTrue(app.navigationBars["Report to 311"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Start with a photo"].exists)
+
+        app.navigationBars["Report to 311"].buttons["Happening near you"].tap()
+        let healthButton = app.buttons["pulse.restaurantHealth"]
+        scrollToElement(healthButton, in: app)
+        healthButton.tap()
+        XCTAssertTrue(app.navigationBars["Restaurant Health"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Check before you dine"].exists)
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {
             XCUIApplication().launch()
         }
+    }
+
+    private func scrollToElement(_ element: XCUIElement, in app: XCUIApplication) {
+        for _ in 0..<8 where !element.isHittable { app.swipeUp() }
+        XCTAssertTrue(element.waitForExistence(timeout: 5))
+        XCTAssertTrue(element.isHittable)
     }
 }
