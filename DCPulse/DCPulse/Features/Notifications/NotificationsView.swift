@@ -6,6 +6,7 @@ struct NotificationsView: View {
     @Query(sort: \InAppNotification.createdAt, order: .reverse)
     private var notifications: [InAppNotification]
     @Query private var watchedItems: [WatchedPulseItem]
+    @State private var selectedItem: PulseItem?
 
     var body: some View {
         Group {
@@ -33,6 +34,9 @@ struct NotificationsView: View {
             }
         }
         .navigationTitle("Notifications")
+        .navigationDestination(item: $selectedItem) { item in
+            ItemDetailsView(item: item)
+        }
         .toolbar {
             if !notifications.isEmpty {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -60,13 +64,14 @@ struct NotificationsView: View {
     @ViewBuilder
     private func notificationRow(_ notification: InAppNotification) -> some View {
         if let item = notification.item {
-            NavigationLink {
-                ItemDetailsView(item: item)
-                    .onAppear { markRead(notification) }
+            Button {
+                selectedItem = item
+                markRead(notification)
             } label: {
                 NotificationRow(notification: notification)
             }
-            .simultaneousGesture(TapGesture().onEnded { markRead(notification) })
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("notifications.item")
         } else {
             Button { markRead(notification) } label: {
                 NotificationRow(notification: notification)
