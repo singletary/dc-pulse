@@ -11,8 +11,6 @@ protocol ReportPhotoAnalyzing: Sendable {
 }
 
 actor VisionReportPhotoAnalyzer: ReportPhotoAnalyzing {
-    nonisolated init() {}
-
     func analyze(_ data: Data) async throws -> ReportImageAnalysis {
         try Task.checkCancellation()
         let request = VNClassifyImageRequest()

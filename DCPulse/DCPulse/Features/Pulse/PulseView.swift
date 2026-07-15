@@ -1,4 +1,5 @@
 import CoreLocation
+import SwiftData
 import SwiftUI
 
 struct PulseView: View {
@@ -6,6 +7,7 @@ struct PulseView: View {
     @Environment(LocationService.self) private var locationService
     @Environment(AppNavigation.self) private var navigation
     @Environment(HomeLocationStore.self) private var homeLocation
+    @Query private var inAppNotifications: [InAppNotification]
     @State private var showingWardPicker = false
     @State private var showingAddressSearch = false
     @State private var showingSaveHome = false
@@ -149,6 +151,22 @@ struct PulseView: View {
         .refreshable { await store.retry() }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink { NotificationsView() } label: {
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: unreadNotificationCount == 0 ? "bell" : "bell.fill")
+                        if unreadNotificationCount > 0 {
+                            Circle()
+                                .fill(.red)
+                                .frame(width: 9, height: 9)
+                                .overlay(Circle().stroke(.background, lineWidth: 1.5))
+                                .offset(x: 3, y: -2)
+                        }
+                    }
+                }
+                .accessibilityLabel(notificationAccessibilityLabel)
+                .accessibilityIdentifier("pulse.notifications")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
                 Button { Task { await store.retry() } } label: { Image(systemName: "arrow.clockwise") }
                     .accessibilityLabel("Refresh nearby activity")
             }
@@ -163,6 +181,16 @@ struct PulseView: View {
         } message: {
             Text("Saving this as your home location lets you automatically track 311 requests at your address.\n\n\(currentAddress ?? "Current location")")
         }
+    }
+
+    private var unreadNotificationCount: Int {
+        inAppNotifications.lazy.filter(\.isUnread).count
+    }
+
+    private var notificationAccessibilityLabel: String {
+        unreadNotificationCount == 0
+            ? "Notifications"
+            : "Notifications, \(unreadNotificationCount) unread"
     }
 
     @ViewBuilder private var requestContent: some View {
