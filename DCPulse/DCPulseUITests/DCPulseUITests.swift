@@ -94,6 +94,18 @@ final class DCPulseUITests: XCTestCase {
     }
 
     @MainActor
+    func testNotificationCenterOpensFromNearYou() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let notifications = app.buttons["pulse.notifications"]
+        XCTAssertTrue(notifications.waitForExistence(timeout: 10))
+        notifications.tap()
+        XCTAssertTrue(app.navigationBars["Notifications"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["No notifications yet"].exists)
+    }
+
+    @MainActor
     func testCivicActionDestinationsOpenFromNearYou() throws {
         let app = XCUIApplication()
         app.launch()

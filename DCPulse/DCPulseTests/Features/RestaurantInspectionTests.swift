@@ -24,6 +24,18 @@ struct RestaurantInspectionTests {
         #expect(RestaurantInspectionPortal.closuresURL.host == "dchealth.dc.gov")
     }
 
+    @Test func mapHighlightsOnlyTheMostSeriousInspectionsByDefault() {
+        let closed = inspection(outcome: .closed, priority: 0, foundation: 0, core: 0)
+        let priority = inspection(outcome: .followUpRequired, priority: 1, foundation: 0, core: 0)
+        let foundation = inspection(outcome: .followUpRequired, priority: 0, foundation: 3, core: 2)
+        let passed = inspection(outcome: .passed, priority: 0, foundation: 0, core: 0)
+
+        #expect(closed.mapVisibility == .highlightedByDefault)
+        #expect(priority.mapVisibility == .highlightedByDefault)
+        #expect(foundation.mapVisibility == .availableThroughFilter)
+        #expect(passed.mapVisibility == .availableThroughFilter)
+    }
+
     private func inspection(
         outcome: RestaurantInspection.Outcome,
         priority: Int,

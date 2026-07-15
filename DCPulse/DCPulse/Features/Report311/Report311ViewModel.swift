@@ -15,8 +15,8 @@ final class Report311ViewModel {
     private(set) var analysisState: AnalysisState = .idle
     private let analyzer: any ReportPhotoAnalyzing
 
-    init(analyzer: any ReportPhotoAnalyzing = VisionReportPhotoAnalyzer()) {
-        self.analyzer = analyzer
+    init(analyzer: (any ReportPhotoAnalyzing)? = nil) {
+        self.analyzer = analyzer ?? VisionReportPhotoAnalyzer()
     }
 
     func setPhoto(_ data: Data) async {

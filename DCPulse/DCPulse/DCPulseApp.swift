@@ -16,6 +16,11 @@ struct DCPulseApp: App {
         WindowGroup {
             AppRootView()
         }
-        .modelContainer(for: [WatchedPulseItem.self, FollowedPlace.self, PulseObservationRecord.self])
+        .modelContainer(for: [
+            WatchedPulseItem.self,
+            FollowedPlace.self,
+            PulseObservationRecord.self,
+            InAppNotification.self
+        ])
     }
 }

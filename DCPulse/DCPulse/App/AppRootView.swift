@@ -14,6 +14,7 @@ final class AppNavigation {
 }
 
 struct AppRootView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @State private var store = PulseDataStore()
     @State private var locationService = LocationService()
     @State private var navigation = AppNavigation()
@@ -25,6 +26,7 @@ struct AppRootView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var watchedItems: [WatchedPulseItem]
     @Query private var observations: [PulseObservationRecord]
+    @Query private var inAppNotifications: [InAppNotification]
 
     var body: some View {
         @Bindable var navigation = navigation
@@ -60,6 +62,10 @@ struct AppRootView: View {
         .onChange(of: navigation.watchRefreshRequestID) { _, _ in
             Task { await refreshWatchedItems() }
         }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task { await refreshWatchedItemsIfNeeded() }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .openWatchedPulseItem)) { notification in
             guard let userInfo = notification.userInfo,
                   let destination = NotificationDestination(userInfo: userInfo) else { return }
@@ -67,6 +73,7 @@ struct AppRootView: View {
                 itemID: destination.itemID,
                 item: watchedItems.compactMap(\.item).first { $0.id == destination.itemID }
             )
+            markNotificationsRead(for: destination.itemID)
         }
         .sheet(item: $notificationPresentation) { destination in
             NavigationStack {
@@ -92,6 +99,7 @@ struct AppRootView: View {
             let previousStatus = PulseItem.Status(rawValue: watchedItem.statusRawValue)
             watchedItem.update(from: current)
             if let previousStatus, previousStatus != current.status {
+                recordStatusChange(item: current, previousStatus: previousStatus)
                 Task {
                     await notificationService.notifyStatusChange(
                         item: current,
@@ -129,6 +137,7 @@ struct AppRootView: View {
         ) {
             let key = WatchedPulseItem.stableKey(for: item.id)
             modelContext.insert(WatchedPulseItem(item: item))
+            recordNewNearbyItem(item)
             watchedKeys.insert(key)
         }
     }
@@ -146,6 +155,7 @@ struct AppRootView: View {
                 }
                 watched.update(from: item)
                 if let transition = transitions[item.id] {
+                    recordStatusChange(item: transition.item, previousStatus: transition.previousStatus)
                     await notificationService.notifyStatusChange(
                         item: transition.item,
                         previousStatus: transition.previousStatus
@@ -160,6 +170,40 @@ struct AppRootView: View {
             watchRefreshStatus.complete(success: false)
         }
     }
+
+    private func refreshWatchedItemsIfNeeded(now: Date = .now) async {
+        if let lastAttempt = watchRefreshStatus.lastAttempt,
+           now.timeIntervalSince(lastAttempt) < 15 * 60 {
+            return
+        }
+        await refreshWatchedItems()
+    }
+
+    private func recordStatusChange(item: PulseItem, previousStatus: PulseItem.Status) {
+        let notification = InAppNotification.statusChange(
+            item: item,
+            previousStatus: previousStatus
+        )
+        insertNotificationIfNeeded(notification)
+    }
+
+    private func recordNewNearbyItem(_ item: PulseItem) {
+        insertNotificationIfNeeded(.newNearbyItem(item: item))
+    }
+
+    private func insertNotificationIfNeeded(_ notification: InAppNotification) {
+        guard !inAppNotifications.contains(where: { $0.eventKey == notification.eventKey }) else { return }
+        modelContext.insert(notification)
+    }
+
+    private func markNotificationsRead(for itemID: PulseItem.ID) {
+        for notification in inAppNotifications where notification.item?.id == itemID {
+            notification.markRead()
+        }
+        let key = WatchedPulseItem.stableKey(for: itemID)
+        watchedItems.first { $0.stableKey == key }?.markStatusChangeSeen()
+        try? modelContext.save()
+    }
 }
 
 private struct NotificationPresentation: Identifiable {
@@ -171,7 +215,7 @@ private struct NotificationPresentation: Identifiable {
 #Preview {
     AppRootView()
         .modelContainer(
-            for: [WatchedPulseItem.self, FollowedPlace.self, PulseObservationRecord.self],
+            for: [WatchedPulseItem.self, FollowedPlace.self, PulseObservationRecord.self, InAppNotification.self],
             inMemory: true
         )
 }

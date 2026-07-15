@@ -1,6 +1,11 @@
 import Foundation
 
 struct RestaurantInspection: Identifiable, Hashable, Sendable {
+    enum MapVisibility: Equatable, Sendable {
+        case highlightedByDefault
+        case availableThroughFilter
+    }
+
     struct ID: Hashable, Sendable {
         let permitIdentifier: String
         let inspectionIdentifier: String
@@ -45,6 +50,15 @@ struct RestaurantInspection: Identifiable, Hashable, Sendable {
 
     var needsAttention: Bool {
         outcome == .closed || outcome == .followUpRequired || violations.hasFoodSafetyPriority
+    }
+
+    /// Keeps the default civic map focused on the most urgent food-safety findings.
+    /// Every other inspection remains available when the restaurant layer is expanded.
+    var mapVisibility: MapVisibility {
+        if outcome == .closed || violations.priority > 0 {
+            return .highlightedByDefault
+        }
+        return .availableThroughFilter
     }
 
     var attentionSummary: String {

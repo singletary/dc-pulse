@@ -28,6 +28,16 @@ The public portal is a server-rendered ColdFusion search form, not a documented 
 
 Closures must receive the strongest visual treatment because DC Health uses them for imminent public-health risks. Priority and Priority Foundation violations follow; Core violations remain visible but must not be presented as equivalent to closure. Inspection reports are point-in-time observations, not permanent ratings of an establishment.
 
+When a supported inspection feed becomes available, the Map defaults to closures and inspections with at least one Priority violation. An explicit filter may reveal all inspection outcomes. The filter must explain that hidden results are routine or lower-severity records, not missing data.
+
+## Flock and public surveillance cameras
+
+MPD's [submitted 2026 performance-hearing response](https://dccouncil.gov/wp-content/uploads/2026/03/SUBMITTED_MPD-2026-Perf-Hrg-Questions-and-Attachments_02-23-26_v2.pdf) reports that, as of January 2026, Flock Safety owned and operated nine fixed CCTVs, 67 fixed license-plate readers, and four mobile license-plate readers connected to MPD's surveillance environment. The response provides counts, not a Flock-specific list of fixed coordinates; mobile readers do not have stable map locations.
+
+MPD separately publishes neighborhood CCTV locations, and DC GIS publishes DDOT traffic CCTV and automated safety-camera layers. Those sources describe different camera programs and cannot be relabeled as Flock. DC Pulse will not infer a camera's vendor from appearance, proximity, or a generic CCTV record.
+
+A future **Flock cameras** overlay must be off by default and enabled explicitly in Settings. Each displayed point must carry its source, observation or publication date, camera type, whether the location is authoritative or crowdsourced, and a report-correction path. A crowdsourced source such as OpenStreetMap/DeFlock requires a license and reliability review, visible attribution, bounded caching, and language that the map may be incomplete or outdated before integration.
+
 ## DC 311 submission
 
 The official submission destination is `https://311.dc.gov/citizen/s/`. DC also documents phone, text, X, portal, and official mobile-app submission, but no supported public write API has been verified.
