@@ -1,13 +1,13 @@
 # TestFlight release checklist
 
-This checklist prepares DC Pulse 1.0 (1) for an internal TestFlight build. It does not authorize changes to signing, the development team, provisioning, entitlements, or the bundle identifier.
+This checklist prepares DC Pulse 1.0 (2) for internal TestFlight testing. It does not authorize changes to signing, the development team, provisioning, entitlements, or the bundle identifier.
 
 ## Before upload
 
 - Build and test the app on an available iPhone Simulator.
 - Run a Release build and Xcode static analysis.
 - Create and validate an iOS archive using the existing automatic-signing configuration.
-- Inspect the archive for the DC Pulse icon, `PrivacyInfo.xcprivacy`, version `1.0` (`1`), iPhone device family, location usage description, and the non-exempt-encryption declaration.
+- Inspect the archive for the DC Pulse icon, `PrivacyInfo.xcprivacy`, version `1.0` (`2`), iPhone device family, location usage description, and the non-exempt-encryption declaration.
 - Smoke test on a physical iPhone before inviting external testers.
 - Confirm the privacy, support, and marketing URLs in App Store Connect.
 - Reconcile App Store privacy answers with `docs/app-store-readiness.md` and the published privacy policy.

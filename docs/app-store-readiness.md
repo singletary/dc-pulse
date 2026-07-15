@@ -5,7 +5,7 @@
 - Display name: **DC Pulse**
 - Bundle identifier: `com.dcpulseapp.DCPulse`
 - Marketing version: `1.0`
-- Build number: `1`
+- Build number: `2`
 - Supported device family: iPhone
 - Location permission: When In Use only
 - Camera permission: requested only when the person chooses **Take Photo** in the 311 draft flow
