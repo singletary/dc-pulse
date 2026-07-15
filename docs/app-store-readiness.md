@@ -22,7 +22,7 @@ Signing, capabilities, entitlements, bundle identifiers, and Apple-account confi
 - Complete the physical-device regression and accessibility pass on the replacement build.
 - Keep restaurant inspection language data-gated until a nearby report map is backed by a dependable, reviewed source.
 
-The copy-ready listing, review notes, privacy recommendation, and final light-mode screenshot sequence are maintained in `docs/app-store-listing.md` and `marketing/app-store`.
+The copy-ready listing, review notes, privacy recommendation, and final light-mode screenshot sequences for the 6.9-inch and 6.5-inch App Store slots are maintained in `docs/app-store-listing.md` and `marketing/app-store`.
 
 ## Privacy behavior and draft disclosure
 
