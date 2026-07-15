@@ -12,7 +12,14 @@
 
 DC Pulse is a native, map-forward iPhone app for exploring recent public activity around a location in Washington, DC. It turns DC’s ArcGIS and Open Data services into one approachable view of 311 service requests, building permits, and DDOT construction permits—without exposing people to raw GIS complexity.
 
-> **Project status:** Pre-release. The 1.0 candidate is preparing for internal TestFlight testing and is not yet available on the App Store.
+> **Project status:** Pre-release. Version 1.0 (build 2) is installed through internal TestFlight for physical-iPhone testing. It has not been submitted for public App Store review.
+
+<p align="center">
+  <img src="marketing/app-store/screenshots/en-US/iPhone-6.9/01-near-you.png" width="23%" alt="DC Pulse Near You screen">
+  <img src="marketing/app-store/screenshots/en-US/iPhone-6.9/02-map.png" width="23%" alt="DC Pulse map screen">
+  <img src="marketing/app-store/screenshots/en-US/iPhone-6.9/03-requests.png" width="23%" alt="DC Pulse requests screen">
+  <img src="marketing/app-store/screenshots/en-US/iPhone-6.9/04-places.png" width="23%" alt="DC Pulse places screen">
+</p>
 
 ## What DC Pulse does
 
@@ -22,10 +29,22 @@ DC Pulse is a native, map-forward iPhone app for exploring recent public activit
 - **Places** saves Home and other meaningful DC locations on-device for quick return visits.
 - **Item Details** normalizes dates, status, agency, address, source attributes, and official civic-action destinations.
 - **Watches** track selected public records on-device and can produce local alerts when an in-app refresh detects a status change.
-- **Report to 311** turns a selected or captured photo into an editable, on-device request draft before handing off to the official DC portal.
-- **Restaurant Health** explains DC's real pass/fail and violation terminology and links directly to official inspections and closure information while a supported nearby-data contract is pursued.
+- **Report to 311 (beta)** turns a selected or captured photo into an editable, on-device request draft before an official DC handoff. The current TestFlight text-entry and portal-launch defects are tracked as release blockers.
+- **Restaurant Health (data-gated)** models DC's real pass/fail and violation terminology. Nearby inspection reports and a useful inspection map will ship only after a dependable source contract or a separately reviewed ingestion approach is established.
 
 Location is requested only to perform a nearby search. If a usable DC location is unavailable, people can browse by ward or search around a DC address. The default search covers **half a mile** and the **last 30 days**, with additional radius and time options available on Map.
+
+## Current TestFlight focus
+
+The next replacement build is intentionally focused on reliability rather than adding another broad feature:
+
+1. Make the 311 draft keyboard dismissible and keep its continuation control reachable at every supported text size and screen height.
+2. Replace the black-page **Continue in DC 311** result with a verified official launch path and a useful fallback.
+3. Repeat the physical-iPhone regression pass for location, map loading, filters, watched-item navigation, local alerts, and external handoffs.
+4. Investigate a durable restaurant-inspection feed, then build a nearby map that emphasizes closures and serious violations without implying unsupported grades or scores.
+5. Complete the approved Background App Refresh foundation before promising opportunistic notification delivery; immediate remote push remains deferred.
+
+Notification category icons, richer trends, widgets, and optional civic overlays remain planned, but they follow the submission-path and release-quality work above. See the [ranked roadmap](docs/roadmap.md) for acceptance criteria and dependency gates.
 
 ## Data sources
 
@@ -103,6 +122,7 @@ Never change the development team, signing configuration, entitlements, provisio
 - [Data sources](docs/data-sources.md) — authoritative layers, mappings, and resilience rules
 - [Ranked roadmap](docs/roadmap.md) — release priorities and future work
 - [App Store readiness](docs/app-store-readiness.md) — privacy, metadata, and device quality gates
+- [App Store listing](docs/app-store-listing.md) — copy-ready metadata, privacy answers, review notes, and screenshot sequence
 - [TestFlight checklist](docs/testflight-release.md) — internal beta preparation and smoke test
 
 ## Contributing and security

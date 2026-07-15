@@ -6,6 +6,7 @@
 - Bundle identifier: `com.dcpulseapp.DCPulse`
 - Marketing version: `1.0`
 - Build number: `2`
+- Distribution state: installed through internal TestFlight for owner testing; not submitted for public App Store review
 - Supported device family: iPhone
 - Location permission: When In Use only
 - Camera permission: requested only when the person chooses **Take Photo** in the 311 draft flow
@@ -13,6 +14,15 @@
 - Non-exempt encryption: none; the app uses Apple-provided networking and declares this in its Info.plist
 
 Signing, capabilities, entitlements, bundle identifiers, and Apple-account configuration require explicit approval before changes.
+
+## Current submission blockers
+
+- Fix and physically verify keyboard dismissal and continuation-button reachability in the photo-first 311 draft.
+- Replace the black-page **Continue in DC 311** result with a verified official launch path and a useful failure fallback.
+- Complete the physical-device regression and accessibility pass on the replacement build.
+- Keep restaurant inspection language data-gated until a nearby report map is backed by a dependable, reviewed source.
+
+The copy-ready listing, review notes, privacy recommendation, and final light-mode screenshot sequence are maintained in `docs/app-store-listing.md` and `marketing/app-store`.
 
 ## Privacy behavior and draft disclosure
 

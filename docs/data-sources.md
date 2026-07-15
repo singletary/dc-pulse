@@ -24,11 +24,11 @@ On July 13, 2026, a read-only grouped-statistics query was also verified against
 
 DC Health's authoritative public inspection search is `https://dc.healthinspections.us/?a=Inspections`. A read-only review on July 13, 2026 confirmed that it exposes establishment, permit, inspection type/date, and detailed HTML inspection reports. Those reports contain Priority, Priority Foundation, and Core violation counts. DC Health explicitly uses pass/fail inspections and does not publish letter grades, percentages, or restaurant ratings.
 
-The public portal is a server-rendered ColdFusion search form, not a documented JSON, ArcGIS, or other supported application interface. DC Pulse therefore provides official search, interpretation guidance, and closure/restoration links while keeping the normalized `RestaurantInspection` model ready for a future source adapter. Nearby restaurant results must not ship until DC Health or its publisher provides a stable contract or explicitly approves an integration approach. HTML scraping is not considered a verified production source.
+The public portal is a server-rendered ColdFusion search form, not a documented JSON, ArcGIS, or other supported application interface. The generic official destinations exposed by the current TestFlight build do not provide a useful location-centered report experience and must not be described as nearby inspection integration. The normalized `RestaurantInspection` model remains ready for a future source adapter. Nearby restaurant results must not ship until DC Health or its publisher provides a stable contract or an alternative ingestion approach passes explicit legal, reliability, caching, rate-limit, freshness, and maintenance review. HTML scraping is not considered a verified production source by default.
 
 Closures must receive the strongest visual treatment because DC Health uses them for imminent public-health risks. Priority and Priority Foundation violations follow; Core violations remain visible but must not be presented as equivalent to closure. Inspection reports are point-in-time observations, not permanent ratings of an establishment.
 
-When a supported inspection feed becomes available, the Map defaults to closures and inspections with at least one Priority violation. An explicit filter may reveal all inspection outcomes. The filter must explain that hidden results are routine or lower-severity records, not missing data.
+When an approved inspection feed becomes available, a nearby map centers on the active DC Pulse search location and respects its radius. The Map defaults to closures, follow-up-required inspections, and inspections with at least one Priority violation. An explicit filter may reveal all supported outcomes. The filter must explain that hidden results are routine or lower-severity records, not missing data. Each marker must open establishment, inspection date/outcome, notable violations, and authoritative attribution.
 
 ## Flock and public surveillance cameras
 
@@ -40,7 +40,7 @@ A future **Flock cameras** overlay must be off by default and enabled explicitly
 
 ## DC 311 submission
 
-The official submission destination is `https://311.dc.gov/citizen/s/`. DC also documents phone, text, X, portal, and official mobile-app submission, but no supported public write API has been verified.
+The currently configured official submission destination is `https://311.dc.gov/citizen/s/`. DC also documents phone, text, X, portal, and official mobile-app submission, but no supported public write API has been verified. Internal TestFlight testing found that the current continuation path can render as a black page on a physical iPhone; the destination and launch method must therefore be re-verified before the next build, with a useful fallback when the web experience cannot render.
 
 DC Pulse can safely prepare a request draft: the person selects or takes a photo, Apple's on-device Vision framework suggests a broad civic category, and current location or manual address supplies the report location. Photo location metadata is not read. Every inferred field is editable. The app copies reviewed details and opens the official portal; it does not claim that a request was submitted and does not upload the photo during analysis. True in-app submission requires a supported DC contract and a confirmation identifier returned by DC.
 

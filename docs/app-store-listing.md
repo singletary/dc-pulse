@@ -43,7 +43,6 @@ This document is the canonical draft for the first public DC Pulse App Store lis
 > • Start a 311 draft with a photo and an editable on-device category suggestion
 > • Continue to the official DC 311 portal to review and submit
 > • Open official reporting destinations for possible permit violations
-> • Search official DC Health restaurant inspection reports and closure information
 >
 > BUILT WITH PRIVACY IN MIND
 >
@@ -118,7 +117,7 @@ This product-page disclosure is separate from `PrivacyInfo.xcprivacy`, which cor
 >
 > Report an Issue to 311 creates an editable draft and performs photo classification on-device. DC Pulse does not read photo GPS metadata, upload the photo, or claim submission. Continue in DC 311 copies the reviewed text and opens the official portal, where the user completes any official transaction.
 >
-> Restaurant Health links to authoritative DC Health inspection search, guidance, and closure pages. Nearby inspection records are not currently ingested because no supported data interface has been verified.
+> Restaurant Health is data-gated. The current generic DC Health destinations are not represented as nearby inspection integration. Before advertising this feature, DC Pulse must either provide a useful location-centered map backed by an approved source or remove the placeholder destinations from the release candidate.
 >
 > DC Pulse is not affiliated with or endorsed by the Government of the District of Columbia. Source attribution and limitations are visible in the app and at https://dcpulseapp.com/#data.
 
@@ -135,6 +134,8 @@ All launch screenshots use real application UI staged around a well-known public
 
 ## Still required before App Review
 
+- Fix the 311 keyboard/reachability defect and physically verify a non-blank official handoff with fallback in a replacement TestFlight build.
+- Do not advertise nearby restaurant inspections until a useful map is backed by an approved source; remove or clearly limit the placeholder experience if it is not ready.
 - Add a visible support email to the public support section.
 - Complete the age-rating questionnaire in App Store Connect.
 - Complete the App Privacy questionnaire using the audited answers above.

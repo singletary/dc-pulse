@@ -2,16 +2,20 @@
 
 This roadmap orders work by release value, correctness risk, and dependency. Items inside a priority are listed in recommended execution order.
 
-## Progress recorded July 12, 2026
+## Current release state — July 14, 2026
 
+- Internal TestFlight: version 1.0 (build 2) is installed on a physical iPhone for owner testing; no public App Store submission has been made.
 - Completed: Swift 6 actor-isolation warning cleanup for the current test suite.
 - Completed: live one-record schema smoke audit for all three ArcGIS layers.
-- Completed: privacy manifest with app-local UserDefaults required reason and an App Store privacy/readiness draft.
+- Completed: privacy manifest with app-local UserDefaults required reason, copy-ready App Store metadata/review notes, and four privacy-reviewed 6.9-inch screenshots.
 - Completed: capability-neutral watched-item identifier refresh, partial-failure isolation, persisted last-check timestamps, manual and throttled foreground refresh, status-transition alerts, notification-tap routing, and an on-device notification inbox with unread history.
+- Immediate replacement-build blockers: dismissible 311 draft keyboard/visible continuation control and a working official DC 311 handoff with a non-blank fallback.
 - Remaining capability gate: `BGTaskScheduler` registration and Background Modes/background fetch approval.
 
 ## 1. Release stability and data correctness — critical
 
+- Fix the new-311 draft keyboard trap before the next TestFlight build: provide an obvious keyboard dismissal action, allow interactive scroll dismissal, keep the primary continuation button reachable on small screens, and add UI coverage for the full text-entry flow.
+- Repair the **Continue in DC 311** handoff before promoting another build: reproduce the black-page failure on a physical iPhone, verify the current official destination and supported launch method, and provide a useful fallback instead of opening a broken page.
 - Run a repeatable physical-iPhone regression pass covering location authorization, out-of-DC recovery, initial loading, radius/time changes, followed-place browsing, map clustering, X compose, and notification authorization.
 - Keep the Swift 6 actor-isolation warning baseline clean as new tests and concurrency boundaries are added.
 - Add UI coverage for followed-place selection, loading/error recovery, item detail actions, and watched-item state restoration.
@@ -20,13 +24,22 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 
 ## 2. App Store release readiness — critical
 
-- Finalize bundle display metadata, version/build numbering, privacy descriptions, support URL, privacy-policy URL, and App Store copy.
+- **Completed package:** bundle display metadata, version/build inventory, privacy disclosure draft, support/privacy/marketing URLs, App Store copy, review notes, and screenshot sequence are documented in `app-store-listing.md`.
 - Complete accessibility, Dynamic Type, VoiceOver, Reduce Motion, Light/Dark Mode, and small-screen checks.
-- Produce final screenshots and verify the production app icon across required sizes.
-- Archive and validate a release build, then complete TestFlight internal testing before App Review submission.
+- **Completed assets:** four final light-mode 6.9-inch screenshots and a reproducible generator are checked in; verify the production icon and any additional required device-class presentation before submission.
+- Archive and validate the replacement build after the critical 311 fixes, then complete internal TestFlight testing before App Review submission.
+- Complete App Store Connect age rating, privacy questionnaire, review contact, export-compliance, build selection, and manual-release configuration without submitting until the physical-device pass is stable.
 - Do not change signing, capabilities, entitlements, bundle identifiers, or Apple-account configuration without explicit approval.
 
-## 3. Opportunistic background notifications — high
+## 3. Nearby restaurant inspection discovery — high, data-gated
+
+- Replace the current generic inspection-page links with a useful in-app nearby-inspections map once a reliable inspection feed is available; center it on the active search location and respect the selected radius.
+- Keep the default map focused on closures, follow-up-required inspections, and Priority/Priority Foundation violations, with an explicit filter to reveal all supported reports.
+- Make every restaurant marker open a clear inspection summary with establishment, inspection date, outcome, notable violations, and authoritative source attribution.
+- Verify a stable supported data interface first. If no durable public interface exists, complete a legal, reliability, caching, rate-limit, and maintenance review before approving any scraper-backed service.
+- Until nearby inspection data is genuinely available, avoid presenting generic links as though they lead to location-specific reports.
+
+## 4. Opportunistic background notifications — high
 
 Background App Refresh is the selected first-release delivery model. It is useful but scheduled at iOS's discretion; DC Pulse must not promise immediate alerts.
 
@@ -51,6 +64,7 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 - Keep notification permission tied to explicit alert or auto-watch opt-in.
 - Add separate preferences for watched-item status changes and new items near Home.
 - Preserve the completed notification-to-Item Details routing and explicit unavailable-record fallback.
+- Replace generic notification-row dots with source/category icons shared with Near You, while preserving unread state through a separate tint or indicator and accessible labels.
 - Use source-aware titles and include only non-sensitive context on the lock screen.
 - Add an in-app explanation that delivery timing is controlled by iOS Background App Refresh settings.
 - Provide recovery UI when notifications or Background App Refresh are disabled in Settings.
@@ -62,7 +76,7 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 - Enabling Background Modes/background fetch changes app capabilities and must receive explicit approval before implementation.
 - Defer server polling and APNs until product use demonstrates a need for more reliable or timely delivery.
 
-## 4. Trustworthy trends and history — high
+## 5. Trustworthy trends and history — high
 
 - Keep `PulseObservationRecord` as the on-device normalized request index, but separate “records observed” from historical state snapshots.
 - Add observation snapshots only where status-history analysis needs them; avoid unbounded duplicate storage.
@@ -70,7 +84,7 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 - Store trend query provenance, geography, period, and refresh date so the UI can explain exactly what a percentage represents.
 - Add retention and migration rules and verify trend calculations across radius, followed-place, and time-range changes.
 
-## 5. Item-detail depth and civic actions — medium
+## 6. Item-detail depth and civic actions — medium
 
 - Continue investigating verified 311 photo/comment fields and human-readable record links without scraping private or unstable Salesforce pages.
 - Improve official violation-reporting handoffs if DOB or DDOT publishes supported address- or permit-specific parameters.
@@ -78,14 +92,12 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 - Replace the official-portal handoff with true in-app submission only if DC publishes or grants a supported write contract. Never depend on private Salesforce endpoints or represent a draft as submitted.
 - Evaluate a category-specific model only with a representative, licensed, privacy-reviewed dataset; generic image classification must remain a suggestion rather than an automated decision.
 
-## 6. Additional civic datasets — medium
+## 7. Additional civic datasets — medium
 
-- **Completed foundation:** restaurant inspection domain semantics highlight closures, follow-up requirements, and Priority/Priority Foundation violations without inventing letter grades or scores; the app links to authoritative DC Health search, guidance, and closure pages.
-- **Completed visibility policy:** only closures and inspections with Priority violations join the default Map; an explicit filter will reveal all supported restaurant inspections.
-- Obtain or verify a stable, supported inspection data interface before adding nearby results. The current public portal is server-rendered HTML and must not be treated as a durable API without publisher approval.
+- **Completed restaurant foundation:** inspection domain semantics highlight closures, follow-up requirements, and Priority/Priority Foundation violations without inventing letter grades or scores; the default-visibility policy is defined for the nearby map planned above.
 - Add new datasets only with source-specific mapping, fixtures, partial-failure behavior, filters, attribution, and accessibility coverage.
 
-## 7. Later product expansion — deferred
+## 8. Later product expansion — deferred
 
 - Add a Settings-controlled Flock camera overlay that is off by default only after a licensed, attributable, freshness-aware location source is verified. MPD's published 2026 response confirms Flock camera counts but does not provide a Flock-specific coordinate feed; never relabel generic MPD or DDOT camera layers.
 - Widgets for Home and followed places.
