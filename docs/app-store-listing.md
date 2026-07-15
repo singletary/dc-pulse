@@ -125,7 +125,7 @@ App Review contact first/last name, telephone number, and account email must be 
 
 ## Screenshot sequence
 
-All launch screenshots use real application UI staged around a well-known public landmark in **Downtown DC**. Any visible addresses are public records in that demonstration area. They contain no coordinate, saved Home, email, or location associated with the developer or tester.
+All launch screenshots use real application UI staged around a well-known public landmark in **Downtown DC**. Any visible addresses are public records in that demonstration area. They contain no coordinate, saved Home, email, or location associated with the developer or tester. Matching sets are generated for App Store Connect's 6.9-inch (1320 × 2868) and 6.5-inch (1284 × 2778) portrait slots.
 
 1. **Know what’s happening nearby.** — Near You overview, status totals, categories, and trends
 2. **See the city change in real time.** — clustered map, search radius, and mixed public sources

@@ -10,11 +10,15 @@ Install or otherwise make `sharp` available to Node, then run:
 node marketing/app-store/generate-screenshots.mjs
 ```
 
-The generator reads the privacy-reviewed captures in `source` and writes the final files to `screenshots/en-US/iPhone-6.9`.
+The generator reads the privacy-reviewed captures in `source` and writes the final files to:
+
+- `screenshots/en-US/iPhone-6.9`
+- `screenshots/en-US/iPhone-6.5`
 
 ## Output contract
 
-- 1320 × 2868 pixels (Apple's accepted 6.9-inch portrait size)
+- 1320 × 2868 pixels for the 6.9-inch portrait slot
+- 1284 × 2778 pixels for the 6.5-inch portrait slot
 - PNG without an alpha channel
 - English (U.S.)
 - Ordered by the numeric filename prefix

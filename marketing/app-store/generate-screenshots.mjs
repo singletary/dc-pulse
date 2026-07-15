@@ -7,7 +7,7 @@ const sharp = require("sharp");
 
 const root = path.dirname(new URL(import.meta.url).pathname);
 const sourceDirectory = path.join(root, "source");
-const outputDirectory = path.join(root, "screenshots", "en-US", "iPhone-6.9");
+const screenshotDirectory = path.join(root, "screenshots", "en-US");
 
 const width = 1320;
 const height = 2868;
@@ -15,6 +15,11 @@ const screenWidth = 1020;
 const screenHeight = 2218;
 const screenLeft = 150;
 const screenTop = 620;
+
+const outputProfiles = [
+  { directory: "iPhone-6.9", width: 1320, height: 2868 },
+  { directory: "iPhone-6.5", width: 1284, height: 2778 },
+];
 
 const slides = [
   {
@@ -120,21 +125,33 @@ async function roundedScreen(sourcePath) {
     .toBuffer();
 }
 
-await fs.mkdir(outputDirectory, { recursive: true });
+await Promise.all(outputProfiles.map(({ directory }) =>
+  fs.mkdir(path.join(screenshotDirectory, directory), { recursive: true })
+));
 
 for (const slide of slides) {
   const sourcePath = path.join(sourceDirectory, slide.source);
-  const outputPath = path.join(outputDirectory, slide.output);
   const screen = await roundedScreen(sourcePath);
-  await sharp(backgroundSVG(slide))
+  const canonicalOutput = await sharp(backgroundSVG(slide))
     .composite([{ input: screen, left: screenLeft, top: screenTop }])
     .flatten({ background: "#FFFFFF" })
     .removeAlpha()
     .png({ compressionLevel: 9, palette: false })
-    .toFile(outputPath);
-  const metadata = await sharp(outputPath).metadata();
-  if (metadata.width !== width || metadata.height !== height || metadata.hasAlpha) {
-    throw new Error(`Invalid App Store output: ${slide.output}`);
+    .toBuffer();
+
+  for (const profile of outputProfiles) {
+    const outputPath = path.join(screenshotDirectory, profile.directory, slide.output);
+    await sharp(canonicalOutput)
+      .resize(profile.width, profile.height, { fit: "cover", position: "centre" })
+      .flatten({ background: "#FFFFFF" })
+      .removeAlpha()
+      .png({ compressionLevel: 9, palette: false })
+      .toFile(outputPath);
+
+    const metadata = await sharp(outputPath).metadata();
+    if (metadata.width !== profile.width || metadata.height !== profile.height || metadata.hasAlpha) {
+      throw new Error(`Invalid App Store output: ${profile.directory}/${slide.output}`);
+    }
+    console.log(`${profile.directory}/${slide.output}: ${metadata.width}x${metadata.height}, alpha=${metadata.hasAlpha}`);
   }
-  console.log(`${slide.output}: ${metadata.width}x${metadata.height}, alpha=${metadata.hasAlpha}`);
 }
