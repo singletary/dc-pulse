@@ -51,6 +51,7 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 - Keep notification permission tied to explicit alert or auto-watch opt-in.
 - Add separate preferences for watched-item status changes and new items near Home.
 - Preserve the completed notification-to-Item Details routing and explicit unavailable-record fallback.
+- Replace generic notification-row dots with source/category icons shared with Near You, while preserving unread state through a separate tint or indicator and accessible labels.
 - Use source-aware titles and include only non-sensitive context on the lock screen.
 - Add an in-app explanation that delivery timing is controlled by iOS Background App Refresh settings.
 - Provide recovery UI when notifications or Background App Refresh are disabled in Settings.
