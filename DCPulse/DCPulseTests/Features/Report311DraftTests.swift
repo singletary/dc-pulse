@@ -4,6 +4,13 @@ import Testing
 
 @MainActor
 struct Report311DraftTests {
+    @Test func officialHandoffUsesDistrictAppAndSecurePortal() {
+        #expect(DC311Handoff.appStoreURL.host == "apps.apple.com")
+        #expect(DC311Handoff.appStoreURL.path.contains("id966327559"))
+        #expect(DC311Handoff.websiteURL.scheme == "https")
+        #expect(DC311Handoff.websiteURL.host == "311.dc.gov")
+    }
+
     @Test func suggestsCivicCategoriesFromImageClassifications() {
         #expect(ReportSuggestionEngine.category(for: ["street", "pothole", "asphalt"]) == .pothole)
         #expect(ReportSuggestionEngine.category(for: ["Norway rat", "animal"]) == .rodentControl)

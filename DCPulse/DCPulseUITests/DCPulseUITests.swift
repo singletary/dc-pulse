@@ -116,6 +116,17 @@ final class DCPulseUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Report to 311"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["Start with a photo"].exists)
 
+        let details = app.textFields["report311.details"]
+        XCTAssertTrue(details.waitForExistence(timeout: 5))
+        details.tap()
+        details.typeText("Test request details")
+        let continueButton = app.buttons["report311.continue"]
+        XCTAssertTrue(continueButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(continueButton.isHittable)
+        continueButton.tap()
+        XCTAssertTrue(app.alerts["Draft copied"].waitForExistence(timeout: 5))
+        app.alerts["Draft copied"].buttons["Cancel"].tap()
+
         app.navigationBars["Report to 311"].buttons["Happening near you"].tap()
         let healthButton = app.buttons["pulse.restaurantHealth"]
         scrollToElement(healthButton, in: app)
