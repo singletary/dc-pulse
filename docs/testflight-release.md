@@ -1,6 +1,13 @@
 # TestFlight release checklist
 
-This checklist prepares DC Pulse 1.0 (2) for internal TestFlight testing. It does not authorize changes to signing, the development team, provisioning, entitlements, or the bundle identifier.
+DC Pulse 1.0 (2) is the current internal TestFlight build and is installed on a physical iPhone. This checklist records its regression pass and prepares the next replacement build after critical fixes. It does not authorize changes to signing, the development team, provisioning, entitlements, or the bundle identifier.
+
+## Known build 2 issues to verify and close
+
+- The keyboard in the new-311 request details flow cannot be dismissed reliably and may cover the continuation control.
+- **Continue in DC 311** can open a black page instead of a usable official destination.
+- Restaurant Health currently exposes generic official destinations rather than useful nearby inspection results; do not represent it as a live nearby-inspections integration.
+- Notification rows use generic unread dots; source/category icons are planned after the release-blocking submission defects.
 
 ## Before upload
 
@@ -29,9 +36,9 @@ DC Pulse makes it easier to see recent DC 311 requests and public permit activit
 - Save Home, follow a place, watch an item, and exercise notification permission and manual refresh flows.
 - Try denied, approximate, and out-of-DC location paths, plus offline and slow-network recovery.
 - Verify the X status-update composer and DC reporting handoffs, but do not submit a real report solely for testing.
-- Open **Report an Issue to 311**, choose a non-sensitive test image, confirm the suggested type remains editable, and verify that Continue opens the official portal without claiming submission.
+- Open **Report an Issue to 311**, choose a non-sensitive test image, confirm the suggested type remains editable, dismiss the keyboard, and verify the continuation control stays reachable. Confirm that Continue opens a useful official destination or documented fallback without claiming submission.
 - Verify camera denial, a photo without location metadata, current-location fallback, and manual address entry. Do not use a personal photo in App Store screenshots or shared test evidence.
-- Open **Restaurant Health Inspections** and verify all three official DC Health destinations plus Dynamic Type and VoiceOver labels.
+- Open **Restaurant Health Inspections** only to document the current generic-link limitation, Dynamic Type, and VoiceOver labels. Nearby restaurant map/report verification begins after a dependable source interface is approved.
 
 **Feedback email**
 
@@ -49,6 +56,6 @@ Notifications currently use on-device refresh checks rather than a push-notifica
 2. Keep the existing bundle identifier and signing configuration. Stop if Xcode requests a different team, certificate, profile, entitlement, or identifier.
 3. In App Store Connect, wait for processing, complete export-compliance and beta information, then add the build to an internal testing group.
 4. Install through TestFlight on the physical iPhone and complete the pass above.
-5. Increment the build number before uploading any replacement build; never reuse build `1` for the same marketing version.
+5. Increment the build number before uploading any replacement build; the next 1.0 upload must be greater than build `2`.
 
 External testing can follow only after the internal pass is stable and Apple has approved any required beta review.

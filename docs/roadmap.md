@@ -2,12 +2,14 @@
 
 This roadmap orders work by release value, correctness risk, and dependency. Items inside a priority are listed in recommended execution order.
 
-## Progress recorded July 12, 2026
+## Current release state — July 14, 2026
 
+- Internal TestFlight: version 1.0 (build 2) is installed on a physical iPhone for owner testing; no public App Store submission has been made.
 - Completed: Swift 6 actor-isolation warning cleanup for the current test suite.
 - Completed: live one-record schema smoke audit for all three ArcGIS layers.
-- Completed: privacy manifest with app-local UserDefaults required reason and an App Store privacy/readiness draft.
+- Completed: privacy manifest with app-local UserDefaults required reason, copy-ready App Store metadata/review notes, and four privacy-reviewed 6.9-inch screenshots.
 - Completed: capability-neutral watched-item identifier refresh, partial-failure isolation, persisted last-check timestamps, manual and throttled foreground refresh, status-transition alerts, notification-tap routing, and an on-device notification inbox with unread history.
+- Immediate replacement-build blockers: dismissible 311 draft keyboard/visible continuation control and a working official DC 311 handoff with a non-blank fallback.
 - Remaining capability gate: `BGTaskScheduler` registration and Background Modes/background fetch approval.
 
 ## 1. Release stability and data correctness — critical
@@ -22,10 +24,11 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 
 ## 2. App Store release readiness — critical
 
-- Finalize bundle display metadata, version/build numbering, privacy descriptions, support URL, privacy-policy URL, and App Store copy.
+- **Completed package:** bundle display metadata, version/build inventory, privacy disclosure draft, support/privacy/marketing URLs, App Store copy, review notes, and screenshot sequence are documented in `app-store-listing.md`.
 - Complete accessibility, Dynamic Type, VoiceOver, Reduce Motion, Light/Dark Mode, and small-screen checks.
-- Produce final screenshots and verify the production app icon across required sizes.
-- Archive and validate a release build, then complete TestFlight internal testing before App Review submission.
+- **Completed assets:** four final light-mode 6.9-inch screenshots and a reproducible generator are checked in; verify the production icon and any additional required device-class presentation before submission.
+- Archive and validate the replacement build after the critical 311 fixes, then complete internal TestFlight testing before App Review submission.
+- Complete App Store Connect age rating, privacy questionnaire, review contact, export-compliance, build selection, and manual-release configuration without submitting until the physical-device pass is stable.
 - Do not change signing, capabilities, entitlements, bundle identifiers, or Apple-account configuration without explicit approval.
 
 ## 3. Nearby restaurant inspection discovery — high, data-gated
