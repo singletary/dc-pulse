@@ -12,6 +12,8 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 
 ## 1. Release stability and data correctness — critical
 
+- Fix the new-311 draft keyboard trap before the next TestFlight build: provide an obvious keyboard dismissal action, allow interactive scroll dismissal, keep the primary continuation button reachable on small screens, and add UI coverage for the full text-entry flow.
+- Repair the **Continue in DC 311** handoff before promoting another build: reproduce the black-page failure on a physical iPhone, verify the current official destination and supported launch method, and provide a useful fallback instead of opening a broken page.
 - Run a repeatable physical-iPhone regression pass covering location authorization, out-of-DC recovery, initial loading, radius/time changes, followed-place browsing, map clustering, X compose, and notification authorization.
 - Keep the Swift 6 actor-isolation warning baseline clean as new tests and concurrency boundaries are added.
 - Add UI coverage for followed-place selection, loading/error recovery, item detail actions, and watched-item state restoration.
@@ -26,7 +28,15 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - Archive and validate a release build, then complete TestFlight internal testing before App Review submission.
 - Do not change signing, capabilities, entitlements, bundle identifiers, or Apple-account configuration without explicit approval.
 
-## 3. Opportunistic background notifications — high
+## 3. Nearby restaurant inspection discovery — high, data-gated
+
+- Replace the current generic inspection-page links with a useful in-app nearby-inspections map once a reliable inspection feed is available; center it on the active search location and respect the selected radius.
+- Keep the default map focused on closures, follow-up-required inspections, and Priority/Priority Foundation violations, with an explicit filter to reveal all supported reports.
+- Make every restaurant marker open a clear inspection summary with establishment, inspection date, outcome, notable violations, and authoritative source attribution.
+- Verify a stable supported data interface first. If no durable public interface exists, complete a legal, reliability, caching, rate-limit, and maintenance review before approving any scraper-backed service.
+- Until nearby inspection data is genuinely available, avoid presenting generic links as though they lead to location-specific reports.
+
+## 4. Opportunistic background notifications — high
 
 Background App Refresh is the selected first-release delivery model. It is useful but scheduled at iOS's discretion; DC Pulse must not promise immediate alerts.
 
@@ -63,7 +73,7 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 - Enabling Background Modes/background fetch changes app capabilities and must receive explicit approval before implementation.
 - Defer server polling and APNs until product use demonstrates a need for more reliable or timely delivery.
 
-## 4. Trustworthy trends and history — high
+## 5. Trustworthy trends and history — high
 
 - Keep `PulseObservationRecord` as the on-device normalized request index, but separate “records observed” from historical state snapshots.
 - Add observation snapshots only where status-history analysis needs them; avoid unbounded duplicate storage.
@@ -71,7 +81,7 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 - Store trend query provenance, geography, period, and refresh date so the UI can explain exactly what a percentage represents.
 - Add retention and migration rules and verify trend calculations across radius, followed-place, and time-range changes.
 
-## 5. Item-detail depth and civic actions — medium
+## 6. Item-detail depth and civic actions — medium
 
 - Continue investigating verified 311 photo/comment fields and human-readable record links without scraping private or unstable Salesforce pages.
 - Improve official violation-reporting handoffs if DOB or DDOT publishes supported address- or permit-specific parameters.
@@ -79,14 +89,12 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 - Replace the official-portal handoff with true in-app submission only if DC publishes or grants a supported write contract. Never depend on private Salesforce endpoints or represent a draft as submitted.
 - Evaluate a category-specific model only with a representative, licensed, privacy-reviewed dataset; generic image classification must remain a suggestion rather than an automated decision.
 
-## 6. Additional civic datasets — medium
+## 7. Additional civic datasets — medium
 
-- **Completed foundation:** restaurant inspection domain semantics highlight closures, follow-up requirements, and Priority/Priority Foundation violations without inventing letter grades or scores; the app links to authoritative DC Health search, guidance, and closure pages.
-- **Completed visibility policy:** only closures and inspections with Priority violations join the default Map; an explicit filter will reveal all supported restaurant inspections.
-- Obtain or verify a stable, supported inspection data interface before adding nearby results. The current public portal is server-rendered HTML and must not be treated as a durable API without publisher approval.
+- **Completed restaurant foundation:** inspection domain semantics highlight closures, follow-up requirements, and Priority/Priority Foundation violations without inventing letter grades or scores; the default-visibility policy is defined for the nearby map planned above.
 - Add new datasets only with source-specific mapping, fixtures, partial-failure behavior, filters, attribution, and accessibility coverage.
 
-## 7. Later product expansion — deferred
+## 8. Later product expansion — deferred
 
 - Add a Settings-controlled Flock camera overlay that is off by default only after a licensed, attributable, freshness-aware location source is verified. MPD's published 2026 response confirms Flock camera counts but does not provide a Flock-specific coordinate feed; never relabel generic MPD or DDOT camera layers.
 - Widgets for Home and followed places.
