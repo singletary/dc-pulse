@@ -1,6 +1,11 @@
 import Foundation
 import Observation
 
+enum DC311Handoff {
+    static let appStoreURL = URL(string: "https://apps.apple.com/us/app/dc311/id966327559")!
+    static let websiteURL = URL(string: "https://311.dc.gov/citizen/s/")!
+}
+
 @MainActor @Observable
 final class Report311ViewModel {
     enum AnalysisState: Equatable {

@@ -3,12 +3,18 @@ import SwiftUI
 import UIKit
 
 struct Report311View: View {
+    private enum FocusedField: Hashable {
+        case details
+        case address
+    }
+
     @Environment(LocationService.self) private var locationService
     @Environment(\.openURL) private var openURL
     @State private var viewModel = Report311ViewModel()
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var showingCamera = false
     @State private var showingHandoffConfirmation = false
+    @FocusState private var focusedField: FocusedField?
 
     var body: some View {
         Form {
@@ -59,11 +65,16 @@ struct Report311View: View {
 
                 TextField("Describe what you see", text: $viewModel.draft.details, axis: .vertical)
                     .lineLimit(3...7)
+                    .focused($focusedField, equals: .details)
+                    .submitLabel(.done)
+                    .accessibilityIdentifier("report311.details")
             }
 
             Section {
                 TextField("Address or nearest intersection", text: $viewModel.draft.address)
                     .textContentType(.fullStreetAddress)
+                    .focused($focusedField, equals: .address)
+                    .submitLabel(.done)
 
                 if viewModel.draft.coordinate != nil {
                     Label("Using your current DC location", systemImage: "location.fill")
@@ -85,20 +96,31 @@ struct Report311View: View {
             }
 
             Section {
-                Button {
-                    UIPasteboard.general.string = viewModel.draft.summaryForOfficialPortal
-                    showingHandoffConfirmation = true
-                } label: {
-                    Label("Continue in DC 311", systemImage: "arrow.up.forward.app")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-            } footer: {
-                Text("Review every suggestion before submitting. DC Pulse copies your draft and opens the official portal; it does not submit or post anything on your behalf.")
+                Text("Review every suggestion before submitting. DC Pulse copies your draft for the official DC311 app or website; it does not submit or post anything on your behalf.")
             }
+        }
+        .scrollDismissesKeyboard(.interactively)
+        .safeAreaInset(edge: .bottom) {
+            Button(action: prepareHandoff) {
+                Label("Continue with DC 311", systemImage: "arrow.up.forward.app")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .padding(.horizontal)
+            .padding(.vertical, 10)
+            .background(.bar)
+            .accessibilityIdentifier("report311.continue")
         }
         .navigationTitle("Report to 311")
         .navigationBarTitleDisplayMode(.inline)
+        .onSubmit { focusedField = nil }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { focusedField = nil }
+            }
+        }
         .onChange(of: selectedPhoto) { _, item in
             guard let item else { return }
             Task {
@@ -121,10 +143,11 @@ struct Report311View: View {
                 .ignoresSafeArea()
         }
         .alert("Draft copied", isPresented: $showingHandoffConfirmation) {
-            Button("Open DC 311") { openURL(URL(string: "https://311.dc.gov/citizen/s/")!) }
+            Button("Open DC311 App") { openURL(DC311Handoff.appStoreURL) }
+            Button("Use Official Website") { openURL(DC311Handoff.websiteURL) }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("Paste the reviewed details into the official DC 311 form and attach the photo there.")
+            Text("The official web portal is not loading reliably on some iPhones. For the best handoff, open the District's DC311 app, then paste the reviewed details and attach the photo.")
         }
     }
 
@@ -134,5 +157,11 @@ struct Report311View: View {
         } else {
             locationService.requestCurrentLocation()
         }
+    }
+
+    private func prepareHandoff() {
+        focusedField = nil
+        UIPasteboard.general.string = viewModel.draft.summaryForOfficialPortal
+        showingHandoffConfirmation = true
     }
 }
