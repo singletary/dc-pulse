@@ -6,7 +6,8 @@
     <a href="https://dcpulseapp.com">Website</a> ·
     <a href="https://dcpulseapp.com/#privacy">Privacy</a> ·
     <a href="https://dcpulseapp.com/#support">Support</a> ·
-    <a href="docs/product-plan.md">Product plan</a>
+    <a href="docs/product-plan.md">Product plan</a> ·
+    <a href="LICENSE">MIT License</a>
   </p>
 </div>
 
@@ -129,7 +130,7 @@ Never change the development team, signing configuration, entitlements, provisio
 
 ## Contributing and security
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a change. Please report security or privacy concerns privately according to [SECURITY.md](SECURITY.md), especially if they involve a precise location, saved address, credential, or unpublished vulnerability.
+DC Pulse is open source under the [MIT License](LICENSE). Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md) before proposing a change. Please report security or privacy concerns privately according to [SECURITY.md](SECURITY.md), especially if they involve a precise location, saved address, credential, or unpublished vulnerability.
 
 ## Acknowledgments
 
