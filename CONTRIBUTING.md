@@ -5,9 +5,10 @@ Thank you for helping make DC public information easier to understand. DC Pulse 
 ## Before starting
 
 1. Read `AGENTS.md` for repository-wide architecture and verification requirements.
-2. Review the relevant product and architecture documentation in `docs/`.
-3. Open an issue before work that materially changes product behavior, adds a dataset, introduces a dependency, or affects privacy.
-4. Never include a real home address, precise private location, API credential, signing asset, or Apple account information in code, fixtures, screenshots, logs, issues, or pull requests.
+2. Read and follow `CODE_OF_CONDUCT.md` in every project space.
+3. Review the relevant product and architecture documentation in `docs/`.
+4. Open an issue before work that materially changes product behavior, adds a dataset, introduces a dependency, or affects privacy.
+5. Never include a real home address, precise private location, API credential, signing asset, or Apple account information in code, fixtures, screenshots, logs, issues, or pull requests.
 
 ## Architecture expectations
 

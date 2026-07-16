@@ -58,7 +58,7 @@ This document is the canonical draft for the first public DC Pulse App Store lis
 
 > https://dcpulseapp.com/#support
 
-The support section should visibly include `support@dcpulseapp.com` before App Review in addition to its contact form.
+The support section must provide a monitored private contact form before App Review.
 
 **Marketing URL**
 
@@ -121,7 +121,7 @@ This product-page disclosure is separate from `PrivacyInfo.xcprivacy`, which cor
 >
 > DC Pulse is not affiliated with or endorsed by the Government of the District of Columbia. Source attribution and limitations are visible in the app and at https://dcpulseapp.com/#data.
 
-App Review contact first/last name, telephone number, and account email must be entered by the account holder. Use `support@dcpulseapp.com` for the public support email; use a monitored private address and reachable phone number for Apple's private review contact fields.
+App Review contact first/last name, telephone number, and account email must be entered privately by the account holder. Use a monitored private address and reachable phone number for Apple's review contact fields; do not commit them to the repository.
 
 ## Screenshot sequence
 

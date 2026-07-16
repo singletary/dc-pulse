@@ -4,7 +4,8 @@ DC Pulse is a pre-release, local-first iOS application that queries public DC Ar
 
 ## Report privately
 
-Email **support@dcpulseapp.com** for:
+Use the private contact form on the
+[DC Pulse support page](https://dcpulseapp.com/#support) for:
 
 - a vulnerability or suspected unsafe data exposure,
 - a screenshot or log containing a precise private location or saved address,
