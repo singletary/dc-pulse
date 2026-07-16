@@ -22,6 +22,10 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
     private(set) var updateSequence = 0
     private(set) var locationLabel: String?
 
+    var isResolvingLocation: Bool {
+        state == .requestingPermission || state == .locating
+    }
+
     init(manager: CLLocationManager = CLLocationManager()) {
         self.manager = manager
         super.init()

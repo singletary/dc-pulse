@@ -186,7 +186,7 @@ final class PulseDataStore {
         }
     }
 
-    func loadMore(limit: Int = 30) async {
+    func loadMore(limit: Int = 30, persistResult: Bool = true) async {
         guard state == .loaded, hasMore, !isLoadingMore else { return }
         let requestSequence = loadSequence
         let requestedOffset = nextOffset
@@ -210,7 +210,7 @@ final class PulseDataStore {
             nextOffset = page.nextOffset
             hasMore = page.hasMore
             sourceWarnings = Array(Set(sourceWarnings + page.warnings)).sorted()
-            saveCache()
+            if persistResult { saveCache() }
         } catch is CancellationError {
             return
         } catch {
@@ -223,11 +223,14 @@ final class PulseDataStore {
         maximumItemCount: Int = 150,
         pageSize: Int = 30
     ) async {
+        var loadedAdditionalItems = false
         while state == .loaded, hasMore, items.count < maximumItemCount, loadMoreError == nil {
             let previousCount = items.count
-            await loadMore(limit: pageSize)
-            if items.count == previousCount { return }
+            await loadMore(limit: pageSize, persistResult: false)
+            if items.count == previousCount { break }
+            loadedAdditionalItems = true
         }
+        if loadedAdditionalItems { saveCache() }
     }
 
     /// Prepares a denser, monotonic result set for the map. A larger search radius
@@ -247,24 +250,26 @@ final class PulseDataStore {
 
         do {
             if selectedRadius != .quarterMile {
-                let closeItems = try await coverageItems(
+                try await mergeCoverageItems(
                     coordinate: coordinate,
                     radius: .quarterMile,
                     period: selectedPeriod,
-                    limit: Self.mapResultLimit
+                    limit: Self.mapResultLimit,
+                    requestSequence: requestSequence,
+                    selectedRadius: selectedRadius
                 )
                 try Task.checkCancellation()
                 guard requestSequence == loadSequence,
                       coordinate == searchCoordinate,
                       selectedRadius == radius,
                       selectedPeriod == period else { return }
-                merge(closeItems)
             }
 
             await prefetchSummary(
                 maximumItemCount: Self.mapResultLimit,
                 pageSize: Self.mapPageSize
             )
+            saveCache()
         } catch is CancellationError {
             return
         } catch {
@@ -284,14 +289,12 @@ final class PulseDataStore {
         guard radius != self.radius else { return }
         self.radius = radius
         await load(coordinate: searchCoordinate, placeName: placeName, force: true)
-        await prefetchSummary()
     }
 
     func selectPeriod(_ period: Period) async {
         guard period != self.period else { return }
         self.period = period
         await load(coordinate: searchCoordinate, placeName: placeName, force: true)
-        await prefetchSummary()
     }
 
     func resetSearchOptions() async {
@@ -299,7 +302,6 @@ final class PulseDataStore {
         radius = .halfMile
         period = .thirtyDays
         await load(coordinate: searchCoordinate, placeName: placeName, force: true)
-        await prefetchSummary()
     }
 
     var isLoading: Bool { state == .loading }
@@ -338,16 +340,18 @@ final class PulseDataStore {
 
     private var isFailure: Bool { if case .failed = state { true } else { false } }
 
-    private func coverageItems(
+    private func mergeCoverageItems(
         coordinate: PulseItem.Coordinate,
         radius: Radius,
         period: Period,
-        limit: Int
-    ) async throws -> [PulseItem] {
-        var result: [PulseItem] = []
+        limit: Int,
+        requestSequence: Int,
+        selectedRadius: Radius
+    ) async throws {
+        var loadedCount = 0
         var offset = 0
         var hasMore = true
-        while hasMore, result.count < limit {
+        while hasMore, loadedCount < limit {
             try Task.checkCancellation()
             let page = try await repository.nearbyItems(
                 coordinate: coordinate,
@@ -356,12 +360,16 @@ final class PulseDataStore {
                 offset: offset,
                 limit: Self.mapPageSize
             )
-            result.append(contentsOf: page.items)
+            guard requestSequence == loadSequence,
+                  coordinate == searchCoordinate,
+                  selectedRadius == self.radius,
+                  period == self.period else { throw CancellationError() }
+            merge(page.items)
+            loadedCount += page.items.count
             guard page.nextOffset > offset || !page.hasMore else { break }
             offset = page.nextOffset
             hasMore = page.hasMore
         }
-        return Array(result.prefix(limit))
     }
 
     private func merge(_ additionalItems: [PulseItem]) {
@@ -369,7 +377,6 @@ final class PulseDataStore {
         for item in additionalItems { byID[item.id] = item }
         items = byID.values.sorted { $0.openedAt > $1.openedAt }
         if !items.isEmpty, state == .empty { state = .loaded }
-        saveCache()
     }
 
     private var cacheKey: String { "dcPulse.requestCache.v4" }

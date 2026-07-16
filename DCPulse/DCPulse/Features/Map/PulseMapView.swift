@@ -237,15 +237,13 @@ struct PulseMapView: View {
     }
 
     private var isMapUpdating: Bool {
-        store.isLoading || store.isLoadingMore || store.isMapCoverageLoading || isCategoryLoading || store.isRequestInsightsLoading
+        store.isLoading || isCategoryLoading
     }
 
     private var mapLoadingLabel: String {
         if isCategoryLoading { return "Loading \(requestTypeFilter ?? "category") requests…" }
         if store.isLoading { return "Updating map…" }
-        if store.isMapCoverageLoading { return "Checking close-in and nearby results…" }
-        if store.isLoadingMore { return "Adding more nearby results…" }
-        return "Loading complete category filters…"
+        return "Updating map…"
     }
 
     private var categoryLoadContext: MapCategoryLoadContext? {

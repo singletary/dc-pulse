@@ -53,6 +53,24 @@ struct CombinedPulseRepositoryTests {
         #expect(page.nextOffset == 10)
         #expect(limits == [10, 10, 10])
     }
+
+    @Test func returnsHealthySourcesWithoutWaitingIndefinitelyForASlowSource() async throws {
+        let item = try #require(SampleData.items.first)
+        let repository = CombinedPulseRepository(
+            sources: [
+                .init(name: "DC 311", repository: FixedRepository(result: .success(.init(items: [item], nextOffset: 1, hasMore: false)))),
+                .init(name: "Slow permits", repository: DelayedRepository())
+            ],
+            sourceTimeout: .milliseconds(250)
+        )
+
+        let page = try await repository.nearbyItems(
+            coordinate: SampleData.center, radiusMiles: 0.5, days: 30, offset: 0, limit: 30
+        )
+
+        #expect(page.items == [item])
+        #expect(page.warnings == ["Slow permits is temporarily unavailable."])
+    }
 }
 
 private struct FixedRepository: PulseRepositoryProtocol {
@@ -74,4 +92,11 @@ private actor RecordingRepository: PulseRepositoryProtocol {
     }
 
     func requestedLimits() -> [Int] { limits.sorted() }
+}
+
+private struct DelayedRepository: PulseRepositoryProtocol {
+    func nearbyItems(coordinate: PulseItem.Coordinate, radiusMiles: Double, days: Int, offset: Int, limit: Int) async throws -> PulsePage {
+        try await Task.sleep(for: .seconds(1))
+        return .init(items: [], nextOffset: offset, hasMore: false)
+    }
 }

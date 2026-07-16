@@ -7,6 +7,12 @@ struct NamedPulseRepository: Sendable {
 
 struct CombinedPulseRepository: PulseRepositoryProtocol, Sendable {
     let sources: [NamedPulseRepository]
+    let sourceTimeout: Duration
+
+    init(sources: [NamedPulseRepository], sourceTimeout: Duration = .seconds(4)) {
+        self.sources = sources
+        self.sourceTimeout = sourceTimeout
+    }
 
     func nearbyItems(
         coordinate: PulseItem.Coordinate,
@@ -24,9 +30,14 @@ struct CombinedPulseRepository: PulseRepositoryProtocol, Sendable {
             for source in sources {
                 group.addTask {
                     do {
-                        let page = try await source.repository.nearbyItems(
-                            coordinate: coordinate, radiusMiles: radiusMiles, days: days,
-                            offset: offset, limit: sourceLimit
+                        let page = try await fetchPage(
+                            from: source.repository,
+                            coordinate: coordinate,
+                            radiusMiles: radiusMiles,
+                            days: days,
+                            offset: offset,
+                            limit: sourceLimit,
+                            timeout: sourceTimeout
                         )
                         return SourceResult(page: page, warning: nil)
                     } catch is CancellationError {
@@ -53,6 +64,37 @@ struct CombinedPulseRepository: PulseRepositoryProtocol, Sendable {
         )
     }
 }
+
+private func fetchPage(
+    from repository: any PulseRepositoryProtocol,
+    coordinate: PulseItem.Coordinate,
+    radiusMiles: Double,
+    days: Int,
+    offset: Int,
+    limit: Int,
+    timeout: Duration
+) async throws -> PulsePage {
+    try await withThrowingTaskGroup(of: PulsePage.self) { group in
+        group.addTask {
+            try await repository.nearbyItems(
+                coordinate: coordinate,
+                radiusMiles: radiusMiles,
+                days: days,
+                offset: offset,
+                limit: limit
+            )
+        }
+        group.addTask {
+            try await Task.sleep(for: timeout)
+            throw SourceFetchError.timedOut
+        }
+        defer { group.cancelAll() }
+        guard let page = try await group.next() else { throw CancellationError() }
+        return page
+    }
+}
+
+private enum SourceFetchError: Error { case timedOut }
 
 private struct SourceResult: Sendable {
     let page: PulsePage?
