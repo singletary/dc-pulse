@@ -1,6 +1,6 @@
 # TestFlight release checklist
 
-DC Pulse 1.0 (4) is the external-TestFlight candidate. Complete this checklist internally before enabling an external group. It does not authorize changes to signing, the development team, provisioning, entitlements, or the bundle identifier.
+DC Pulse 1.0 (5) is the external-TestFlight candidate. Complete this checklist internally before enabling an external group. It does not authorize changes to signing, the development team, provisioning, entitlements, or the bundle identifier.
 
 ## Known issues
 
@@ -16,7 +16,7 @@ DC Pulse 1.0 (4) is the external-TestFlight candidate. Complete this checklist i
 - Build and test the app on an available iPhone Simulator.
 - Run a Release build and Xcode static analysis.
 - Create and validate an iOS archive using the existing automatic-signing configuration.
-- Inspect the archive for the DC Pulse icon, `PrivacyInfo.xcprivacy`, version `1.0` (`4`), iPhone device family, location usage description, and the non-exempt-encryption declaration.
+- Inspect the archive for the DC Pulse icon, `PrivacyInfo.xcprivacy`, version `1.0` (`5`), iPhone device family, location usage description, and the non-exempt-encryption declaration.
 - Smoke test on a physical iPhone before inviting external testers.
 - Confirm the privacy, support, and marketing URLs in App Store Connect.
 - Reconcile App Store privacy answers with `docs/app-store-readiness.md` and the published privacy policy.
@@ -30,6 +30,7 @@ DC Pulse makes it easier to see recent DC 311 requests and public permit activit
 **What to test**
 
 - Allow location access and confirm nearby results match the simulated or physical location.
+- Cold-launch the app and confirm the Near You summary appears promptly without first loading an unrelated default location.
 - Open Map and check that it becomes interactive promptly while additional markers load progressively.
 - Change radius, time range, data source, status, and request-type filters.
 - At one unchanged center, verify that records visible at 0.25 mile remain available at 0.5 and 1 mile. Change several filters quickly, then use **Reset** and confirm all sources/statuses/categories, 0.5 mile, and 30 days return without moving the center.
@@ -60,7 +61,7 @@ Notifications currently use on-device refresh checks rather than a push-notifica
 2. Keep the existing bundle identifier and signing configuration. Stop if Xcode requests a different team, certificate, profile, entitlement, or identifier.
 3. In App Store Connect, wait for processing, complete export-compliance and beta information, then add the build to an internal testing group.
 4. Install through TestFlight on the physical iPhone and complete the pass above.
-5. Keep build 4 internal for a short crash-free soak, then add it to an external group and submit it for Beta App Review.
-6. Increment the build number before uploading any replacement build; the next 1.0 upload must be greater than build `4`.
+5. Keep build 5 internal for a short crash-free soak, then add it to an external group and submit it for Beta App Review.
+6. Increment the build number before uploading any replacement build; the next 1.0 upload must be greater than build `5`.
 
 External testing can follow only after the internal pass is stable and Apple has approved any required beta review.
