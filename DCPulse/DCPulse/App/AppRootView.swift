@@ -23,6 +23,7 @@ struct AppRootView: View {
     @State private var notificationService = NotificationService()
     @State private var watchRefreshStatus = WatchRefreshStatusStore()
     @State private var notificationPresentation: NotificationPresentation?
+    @State private var watchSynchronizationTask: Task<Void, Never>?
     @Environment(\.modelContext) private var modelContext
     @Query private var watchedItems: [WatchedPulseItem]
     @Query private var observations: [PulseObservationRecord]
@@ -47,8 +48,8 @@ struct AppRootView: View {
         .task {
             await notificationService.refreshAuthorizationState()
             locationService.requestCurrentLocation()
-            await store.load()
-            await refreshWatchedItems()
+            await loadInitialLocation()
+            await refreshWatchedItemsAfterLaunchDelay()
         }
         .onChange(of: locationService.updateSequence) { _, _ in
             guard let coordinate = locationService.coordinate else { return }
@@ -57,14 +58,18 @@ struct AppRootView: View {
             }
         }
         .onChange(of: store.items) { _, items in
-            synchronizeWatches(with: items)
+            scheduleWatchSynchronization(with: items)
         }
         .onChange(of: navigation.watchRefreshRequestID) { _, _ in
             Task { await refreshWatchedItems() }
         }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
-            Task { await refreshWatchedItemsIfNeeded() }
+            Task {
+                try? await Task.sleep(for: .seconds(2))
+                guard !Task.isCancelled else { return }
+                await refreshWatchedItemsIfNeeded()
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .openWatchedPulseItem)) { notification in
             guard let userInfo = notification.userInfo,
@@ -88,6 +93,33 @@ struct AppRootView: View {
                     .navigationTitle("Notification")
                 }
             }
+        }
+    }
+
+    private func loadInitialLocation() async {
+        for _ in 0..<10 where locationService.coordinate == nil && locationService.isResolvingLocation {
+            try? await Task.sleep(for: .milliseconds(150))
+            if Task.isCancelled { return }
+        }
+        if let coordinate = locationService.coordinate {
+            await store.load(coordinate: coordinate, placeName: "Current Location")
+        } else {
+            await store.load()
+        }
+    }
+
+    private func refreshWatchedItemsAfterLaunchDelay() async {
+        try? await Task.sleep(for: .seconds(2))
+        guard !Task.isCancelled else { return }
+        await refreshWatchedItemsIfNeeded()
+    }
+
+    private func scheduleWatchSynchronization(with items: [PulseItem]) {
+        watchSynchronizationTask?.cancel()
+        watchSynchronizationTask = Task {
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            synchronizeWatches(with: items)
         }
     }
 

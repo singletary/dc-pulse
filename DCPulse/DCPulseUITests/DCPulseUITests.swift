@@ -70,19 +70,19 @@ final class DCPulseUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        let resolvedStatus = app.buttons["pulse.status.resolved"]
-        XCTAssertTrue(resolvedStatus.waitForExistence(timeout: 15))
-        resolvedStatus.tap()
-        XCTAssertTrue(app.navigationBars["Resolved"].waitForExistence(timeout: 10))
+        let newStatus = app.buttons["pulse.status.new"]
+        XCTAssertTrue(newStatus.waitForExistence(timeout: 15))
+        newStatus.tap()
+        XCTAssertTrue(app.navigationBars["New"].waitForExistence(timeout: 10))
 
         let firstItem = app.buttons.matching(identifier: "status.item").firstMatch
         XCTAssertTrue(firstItem.waitForExistence(timeout: 15))
         firstItem.tap()
         XCTAssertTrue(app.navigationBars["Item Details"].waitForExistence(timeout: 10))
 
-        app.navigationBars["Item Details"].buttons["Resolved"].tap()
-        XCTAssertTrue(app.navigationBars["Resolved"].waitForExistence(timeout: 10))
-        app.navigationBars["Resolved"].buttons["Happening near you"].tap()
+        app.navigationBars["Item Details"].buttons["New"].tap()
+        XCTAssertTrue(app.navigationBars["New"].waitForExistence(timeout: 10))
+        app.navigationBars["New"].buttons["Happening near you"].tap()
         XCTAssertTrue(app.navigationBars["Happening near you"].waitForExistence(timeout: 10))
     }
 
