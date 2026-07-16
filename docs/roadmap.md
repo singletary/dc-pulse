@@ -4,7 +4,7 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 
 ## Current release state — July 16, 2026
 
-- Internal TestFlight: version 1.0 (build 3) is installed for physical-iPhone testing; build 4 is the external-beta candidate. No public App Store submission has been made.
+- Internal TestFlight: version 1.0 (build 4) is installed for physical-iPhone testing; build 5 is the external-beta candidate. No public App Store submission has been made.
 - Completed: Swift 6 actor-isolation warning cleanup for the current test suite.
 - Completed: live one-record schema smoke audit for all three ArcGIS layers.
 - Completed: privacy manifest with app-local UserDefaults required reason, copy-ready App Store metadata/review notes, and four privacy-reviewed 6.9-inch screenshots.
@@ -14,7 +14,8 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - Completed for build 4: **Requests nearby** uses complete period category counts from the grouped trend query rather than partial loaded-page counts; the cache generation was advanced to prevent stale summaries.
 - Completed for build 4: Requests supports native pull-to-refresh; **Choose Photo** uses the privacy-preserving Photos picker while **Take Photo** remains a separate camera action.
 - Completed for build 4: an age-derived New-to-Active presentation change is silent for watched items and cannot create an inbox or system notification event.
-- Immediate release gate: complete the build 4 physical-iPhone regression pass and a short internal soak before external TestFlight distribution.
+- Completed for build 5: cold launch waits briefly for the requested location instead of starting a redundant fallback search, Map coverage arrives progressively without a blocking overlay, watch synchronization is debounced, and slow individual data sources time out without withholding healthy results.
+- Immediate release gate: complete the build 5 physical-iPhone regression pass and a short internal soak before external TestFlight distribution.
 - Remaining capability gate: `BGTaskScheduler` registration and Background Modes/background fetch approval.
 
 ## 1. Release stability and data correctness — critical
