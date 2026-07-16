@@ -40,7 +40,7 @@ A future **Flock cameras** overlay must be off by default and enabled explicitly
 
 ## DC 311 submission
 
-The currently configured official submission destination is `https://311.dc.gov/citizen/s/`. DC also documents phone, text, X, portal, and official mobile-app submission, but no supported public write API has been verified. Internal TestFlight testing found that the current continuation path can render as a black page on a physical iPhone; the destination and launch method must therefore be re-verified before the next build, with a useful fallback when the web experience cannot render.
+The configured official website fallback is `https://311.dc.gov/citizen/s/`. DC also documents phone, text, X, portal, and an official mobile app, but no supported public write API has been verified. Because the website rendered unreliably during physical-iPhone testing, the current handoff prefers the official DC311 app and presents the website only as an explicit fallback after copying the reviewed draft.
 
 DC Pulse can safely prepare a request draft: the person selects or takes a photo, Apple's on-device Vision framework suggests a broad civic category, and current location or manual address supplies the report location. Photo location metadata is not read. Every inferred field is editable. The app copies reviewed details and opens the official portal; it does not claim that a request was submitted and does not upload the photo during analysis. True in-app submission requires a supported DC contract and a confirmation identifier returned by DC.
 

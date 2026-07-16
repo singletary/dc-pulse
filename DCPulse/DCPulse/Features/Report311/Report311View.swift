@@ -32,15 +32,9 @@ struct Report311View: View {
                     )
                 }
 
-                HStack {
-                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                        Label("Choose Photo", systemImage: "photo")
-                    }
-                    Spacer()
-                    Button { showingCamera = true } label: {
-                        Label("Take Photo", systemImage: "camera")
-                    }
-                    .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 12) { photoLibraryButton; cameraButton }
+                    VStack(spacing: 10) { photoLibraryButton; cameraButton }
                 }
             } header: {
                 Text("What needs attention?")
@@ -149,6 +143,27 @@ struct Report311View: View {
         } message: {
             Text("The official web portal is not loading reliably on some iPhones. For the best handoff, open the District's DC311 app, then paste the reviewed details and attach the photo.")
         }
+    }
+
+    private var photoLibraryButton: some View {
+        PhotosPicker(selection: $selectedPhoto, matching: .images) {
+            Label("Choose Photo", systemImage: "photo.on.rectangle")
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .accessibilityIdentifier("report311.choosePhoto")
+        .accessibilityHint("Opens your photo library")
+    }
+
+    private var cameraButton: some View {
+        Button { showingCamera = true } label: {
+            Label("Take Photo", systemImage: "camera")
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
+        .accessibilityIdentifier("report311.takePhoto")
+        .accessibilityHint("Opens the camera")
     }
 
     private func useCurrentLocationIfAvailable() {

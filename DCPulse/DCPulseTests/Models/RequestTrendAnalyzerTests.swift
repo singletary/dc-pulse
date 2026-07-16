@@ -18,6 +18,7 @@ struct RequestTrendAnalyzerTests {
         let graffiti = try #require(snapshot.trends.first { $0.category == "Graffiti Removal" })
         #expect(graffiti.direction == .newlyObserved)
         #expect(snapshot.categories == ["Graffiti Removal", "Rodent Inspection"])
+        #expect(snapshot.categoryCounts == ["Graffiti Removal": 4, "Rodent Inspection": 9])
     }
 
     @Test func suppressesUnchangedAndSmallSamplesButRetainsCategoryCatalog() {
@@ -28,6 +29,7 @@ struct RequestTrendAnalyzerTests {
 
         #expect(snapshot.trends.isEmpty)
         #expect(snapshot.categories == ["Small", "Steady"])
+        #expect(snapshot.categoryCounts == ["Small": 2, "Steady": 6])
     }
 
     @Test func ranksLargestAbsoluteChangeFirst() throws {

@@ -98,7 +98,8 @@ struct AppRootView: View {
                   let current = currentItems[watchedID] else { continue }
             let previousStatus = PulseItem.Status(rawValue: watchedItem.statusRawValue)
             watchedItem.update(from: current)
-            if let previousStatus, previousStatus != current.status {
+            if let previousStatus,
+               current.status.isNotificationWorthyTransition(from: previousStatus) {
                 recordStatusChange(item: current, previousStatus: previousStatus)
                 Task {
                     await notificationService.notifyStatusChange(

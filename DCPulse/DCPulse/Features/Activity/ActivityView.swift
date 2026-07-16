@@ -66,6 +66,7 @@ struct ActivityView: View {
             .accessibilityHint("Changes sorting or filters by data source")
         }
         .navigationDestination(for: PulseItem.self) { ItemDetailsView(item: $0) }
+        .refreshable { await store.retry() }
         .overlay {
             if store.isLoading {
                 SearchLoadingOverlay(placeName: store.placeName, radius: store.radius, period: store.period)

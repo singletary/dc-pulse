@@ -25,9 +25,12 @@ final class WatchedPulseItem {
 
     @MainActor func update(from item: PulseItem, now: Date = .now) {
         if statusRawValue != item.status.rawValue {
-            previousStatusRawValue = statusRawValue
+            if let previous = PulseItem.Status(rawValue: statusRawValue),
+               item.status.isNotificationWorthyTransition(from: previous) {
+                previousStatusRawValue = statusRawValue
+                statusChangedAt = now
+            }
             statusRawValue = item.status.rawValue
-            statusChangedAt = now
         }
         itemData = (try? JSONEncoder().encode(item)) ?? itemData
         lastSeenAt = now

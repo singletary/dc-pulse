@@ -29,6 +29,17 @@ struct WatchedPulseItemTests {
         #expect(WatchedPulseItem.stableKey(for: request) != WatchedPulseItem.stableKey(for: permit))
     }
 
+    @Test func agingFromNewToActiveDoesNotCreateUnseenChange() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let watched = WatchedPulseItem(item: makeItem(status: .new, openedAt: now), now: now)
+
+        watched.update(from: makeItem(status: .active, openedAt: now), now: now.addingTimeInterval(60))
+
+        #expect(watched.item?.status == .active)
+        #expect(watched.previousStatusRawValue == nil)
+        #expect(!watched.hasUnseenStatusChange)
+    }
+
     private func makeItem(status: PulseItem.Status, openedAt: Date) -> PulseItem {
         PulseItem(
             id: .init(source: .serviceRequests311, sourceIdentifier: "311-42"),

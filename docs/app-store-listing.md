@@ -134,7 +134,7 @@ All launch screenshots use real application UI staged around a well-known public
 
 ## Still required before App Review
 
-- Fix the 311 keyboard/reachability defect and physically verify a non-blank official handoff with fallback in a replacement TestFlight build.
+- Physically verify build 4's distinct photo-library/camera actions and its official DC311 app handoff plus website fallback.
 - Do not advertise nearby restaurant inspections until a useful map is backed by an approved source; remove or clearly limit the placeholder experience if it is not ready.
 - Add a visible support email to the public support section.
 - Complete the age-rating questionnaire in App Store Connect.

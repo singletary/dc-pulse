@@ -35,6 +35,20 @@ struct WatchedItemRefreshCoordinatorTests {
         #expect(result.failedSources == [.serviceRequests311])
     }
 
+    @Test func suppressesAgeBasedNewToActiveTransition() async throws {
+        let request = try #require(SampleData.items.first { $0.id.source == .serviceRequests311 })
+        let newRequest = copy(request, status: .new)
+        let activeRequest = copy(request, status: .active)
+        let coordinator = WatchedItemRefreshCoordinator(repositories: [
+            StubWatchedRefreshRepository(source: .serviceRequests311, items: [activeRequest])
+        ])
+
+        let result = try await coordinator.refresh([newRequest])
+
+        #expect(result.refreshedItems == [activeRequest])
+        #expect(result.transitions.isEmpty)
+    }
+
     private func copy(_ item: PulseItem, status: PulseItem.Status) -> PulseItem {
         PulseItem(
             id: item.id, category: item.category, subtype: item.subtype, title: item.title,

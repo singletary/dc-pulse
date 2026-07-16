@@ -5,6 +5,8 @@ import Observation
 final class PulseDataStore {
     static let pageSize = 30
     static let summaryLimit = 150
+    static let mapPageSize = 150
+    static let mapResultLimit = 600
     static let cacheLifetime: TimeInterval = 10 * 60
 
     private struct CacheEntry: Codable {
@@ -62,11 +64,13 @@ final class PulseDataStore {
     private let defaults: UserDefaults
     private let now: () -> Date
     private var loadSequence = 0
+    private var mapCoverageSequence = 0
     private var nextOffset = 0
     var items: [PulseItem] = []
     var state: State = .idle
     private(set) var hasMore = false
     private(set) var isLoadingMore = false
+    private(set) var isMapCoverageLoading = false
     private(set) var loadMoreError: String?
     private(set) var sourceWarnings: [String] = []
     private(set) var requestStatusCounts: RequestStatusCounts?
@@ -182,7 +186,7 @@ final class PulseDataStore {
         }
     }
 
-    func loadMore() async {
+    func loadMore(limit: Int = 30) async {
         guard state == .loaded, hasMore, !isLoadingMore else { return }
         let requestSequence = loadSequence
         let requestedOffset = nextOffset
@@ -198,7 +202,7 @@ final class PulseDataStore {
                 radiusMiles: radius.rawValue,
                 days: period.queryDays,
                 offset: requestedOffset,
-                limit: Self.pageSize
+                limit: limit
             )
             guard requestSequence == loadSequence else { return }
             let existingIDs = Set(items.map(\.id))
@@ -215,11 +219,59 @@ final class PulseDataStore {
         }
     }
 
-    func prefetchSummary() async {
-        while state == .loaded, hasMore, items.count < Self.summaryLimit, loadMoreError == nil {
+    func prefetchSummary(
+        maximumItemCount: Int = 150,
+        pageSize: Int = 30
+    ) async {
+        while state == .loaded, hasMore, items.count < maximumItemCount, loadMoreError == nil {
             let previousCount = items.count
-            await loadMore()
+            await loadMore(limit: pageSize)
             if items.count == previousCount { return }
+        }
+    }
+
+    /// Prepares a denser, monotonic result set for the map. A larger search radius
+    /// first includes the close-in quarter-mile results so zooming out cannot hide
+    /// a nearby record merely because newer, farther-away records filled a page.
+    func prepareMapResults() async {
+        mapCoverageSequence += 1
+        let coverageSequence = mapCoverageSequence
+        let requestSequence = loadSequence
+        let coordinate = searchCoordinate
+        let selectedRadius = radius
+        let selectedPeriod = period
+        isMapCoverageLoading = true
+        defer {
+            if coverageSequence == mapCoverageSequence { isMapCoverageLoading = false }
+        }
+
+        do {
+            if selectedRadius != .quarterMile {
+                let closeItems = try await coverageItems(
+                    coordinate: coordinate,
+                    radius: .quarterMile,
+                    period: selectedPeriod,
+                    limit: Self.mapResultLimit
+                )
+                try Task.checkCancellation()
+                guard requestSequence == loadSequence,
+                      coordinate == searchCoordinate,
+                      selectedRadius == radius,
+                      selectedPeriod == period else { return }
+                merge(closeItems)
+            }
+
+            await prefetchSummary(
+                maximumItemCount: Self.mapResultLimit,
+                pageSize: Self.mapPageSize
+            )
+        } catch is CancellationError {
+            return
+        } catch {
+            guard requestSequence == loadSequence else { return }
+            sourceWarnings = Array(Set(sourceWarnings + [
+                "Some close-in map results could not be verified. Pull to refresh and try again."
+            ])).sorted()
         }
     }
 
@@ -242,9 +294,18 @@ final class PulseDataStore {
         await prefetchSummary()
     }
 
+    func resetSearchOptions() async {
+        guard radius != .halfMile || period != .thirtyDays else { return }
+        radius = .halfMile
+        period = .thirtyDays
+        await load(coordinate: searchCoordinate, placeName: placeName, force: true)
+        await prefetchSummary()
+    }
+
     var isLoading: Bool { state == .loading }
     var requestTrends: [RequestTrendAnalyzer.Trend] { requestTrendSnapshot?.trends ?? [] }
     var requestCategories: [String] { requestTrendSnapshot?.categories ?? [] }
+    var requestCategoryCounts: [String: Int] { requestTrendSnapshot?.categoryCounts ?? [:] }
 
     func requestItems(in category: String, limit: Int = 250) async throws -> [PulseItem] {
         guard let requestCategoryRepository else {
@@ -277,7 +338,41 @@ final class PulseDataStore {
 
     private var isFailure: Bool { if case .failed = state { true } else { false } }
 
-    private var cacheKey: String { "dcPulse.requestCache.v3" }
+    private func coverageItems(
+        coordinate: PulseItem.Coordinate,
+        radius: Radius,
+        period: Period,
+        limit: Int
+    ) async throws -> [PulseItem] {
+        var result: [PulseItem] = []
+        var offset = 0
+        var hasMore = true
+        while hasMore, result.count < limit {
+            try Task.checkCancellation()
+            let page = try await repository.nearbyItems(
+                coordinate: coordinate,
+                radiusMiles: radius.rawValue,
+                days: period.queryDays,
+                offset: offset,
+                limit: Self.mapPageSize
+            )
+            result.append(contentsOf: page.items)
+            guard page.nextOffset > offset || !page.hasMore else { break }
+            offset = page.nextOffset
+            hasMore = page.hasMore
+        }
+        return Array(result.prefix(limit))
+    }
+
+    private func merge(_ additionalItems: [PulseItem]) {
+        var byID = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
+        for item in additionalItems { byID[item.id] = item }
+        items = byID.values.sorted { $0.openedAt > $1.openedAt }
+        if !items.isEmpty, state == .empty { state = .loaded }
+        saveCache()
+    }
+
+    private var cacheKey: String { "dcPulse.requestCache.v4" }
 
     private func restoreFreshCache(for coordinate: PulseItem.Coordinate, placeName: String) -> Bool {
         guard let data = defaults.data(forKey: cacheKey),
