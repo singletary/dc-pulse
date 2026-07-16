@@ -243,6 +243,15 @@ struct PulseView: View {
     }
 
     private var topCategories: [(name: String, count: Int)] {
+        if !store.requestCategoryCounts.isEmpty {
+            return store.requestCategoryCounts
+                .map { (name: $0.key, count: $0.value) }
+                .sorted {
+                    if $0.count == $1.count { return $0.name < $1.name }
+                    return $0.count > $1.count
+                }
+                .prefix(3).map { $0 }
+        }
         let requests = store.items.filter { $0.id.source == .serviceRequests311 }
         let groups: [String: [PulseItem]] = Dictionary(grouping: requests) { $0.category }
         let counts: [(name: String, count: Int)] = groups.map { (name: $0.key, count: $0.value.count) }

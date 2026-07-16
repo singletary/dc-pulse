@@ -51,7 +51,8 @@ struct WatchedItemRefreshCoordinator: Sendable {
 
         let refreshedByID = Dictionary(uniqueKeysWithValues: refreshed.map { ($0.id, $0) })
         let transitions = refreshed.compactMap { item -> StatusTransition? in
-            guard let prior = existing[item.id], prior.status != item.status else { return nil }
+            guard let prior = existing[item.id],
+                  item.status.isNotificationWorthyTransition(from: prior.status) else { return nil }
             return StatusTransition(previousStatus: prior.status, item: item)
         }
         let failedSet = Set(failedSources)

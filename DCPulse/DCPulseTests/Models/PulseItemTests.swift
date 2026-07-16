@@ -4,6 +4,12 @@ import Testing
 
 @MainActor
 struct PulseItemTests {
+    @Test func notificationTransitionsIgnoreAgeBasedNewToActiveChange() {
+        #expect(!PulseItem.Status.active.isNotificationWorthyTransition(from: .new))
+        #expect(!PulseItem.Status.new.isNotificationWorthyTransition(from: .active))
+        #expect(PulseItem.Status.resolved.isNotificationWorthyTransition(from: .active))
+        #expect(PulseItem.Status.active.isNotificationWorthyTransition(from: .resolved))
+    }
     @Test func identityIsNamespacedByDataset() {
         let left = PulseItem.ID(source: .serviceRequests311, sourceIdentifier: "42")
         let right = PulseItem.ID(source: .buildingPermits2026, sourceIdentifier: "42")

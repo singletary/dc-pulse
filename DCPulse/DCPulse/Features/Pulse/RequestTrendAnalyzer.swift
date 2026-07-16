@@ -3,6 +3,8 @@ import Foundation
 struct RequestTrendSnapshot: Codable, Equatable, Sendable {
     var trends: [RequestTrendAnalyzer.Trend]
     var categories: [String]
+    /// Complete counts for the selected period, not merely the first loaded page.
+    var categoryCounts: [String: Int]
 }
 
 protocol RequestTrendSummaryRepositoryProtocol: Sendable {
@@ -52,6 +54,13 @@ enum RequestTrendAnalyzer {
             }
             return leftDifference > rightDifference
         }
-        return RequestTrendSnapshot(trends: trends, categories: categories)
+        let categoryCounts = Dictionary(uniqueKeysWithValues: categories.map {
+            ($0, currentCounts[$0, default: 0] + previousCounts[$0, default: 0])
+        })
+        return RequestTrendSnapshot(
+            trends: trends,
+            categories: categories,
+            categoryCounts: categoryCounts
+        )
     }
 }

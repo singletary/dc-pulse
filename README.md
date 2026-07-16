@@ -12,7 +12,7 @@
 
 DC Pulse is a native, map-forward iPhone app for exploring recent public activity around a location in Washington, DC. It turns DC’s ArcGIS and Open Data services into one approachable view of 311 service requests, building permits, and DDOT construction permits—without exposing people to raw GIS complexity.
 
-> **Project status:** Pre-release. Version 1.0 (build 2) is installed through internal TestFlight for physical-iPhone testing. It has not been submitted for public App Store review.
+> **Project status:** Pre-release. Version 1.0 (build 4) is the external-beta candidate; it must complete an internal physical-iPhone pass before public TestFlight access. It has not been submitted for public App Store review.
 
 <p align="center">
   <img src="marketing/app-store/screenshots/en-US/iPhone-6.9/01-near-you.png" width="23%" alt="DC Pulse Near You screen">
@@ -29,20 +29,20 @@ DC Pulse is a native, map-forward iPhone app for exploring recent public activit
 - **Places** saves Home and other meaningful DC locations on-device for quick return visits.
 - **Item Details** normalizes dates, status, agency, address, source attributes, and official civic-action destinations.
 - **Watches** track selected public records on-device and can produce local alerts when an in-app refresh detects a status change.
-- **Report to 311 (beta)** turns a selected or captured photo into an editable, on-device request draft before an official DC handoff. The current TestFlight text-entry and portal-launch defects are tracked as release blockers.
+- **Report to 311 (beta)** turns a deliberately selected or captured photo into an editable, on-device request draft before an official DC app or website handoff.
 - **Restaurant Health (data-gated)** models DC's real pass/fail and violation terminology. Nearby inspection reports and a useful inspection map will ship only after a dependable source contract or a separately reviewed ingestion approach is established.
 
 Location is requested only to perform a nearby search. If a usable DC location is unavailable, people can browse by ward or search around a DC address. The default search covers **half a mile** and the **last 30 days**, with additional radius and time options available on Map.
 
 ## Current TestFlight focus
 
-The next replacement build is intentionally focused on reliability rather than adding another broad feature:
+Build 4 is intentionally focused on reliability rather than adding another broad feature:
 
-1. Make the 311 draft keyboard dismissible and keep its continuation control reachable at every supported text size and screen height.
-2. Replace the black-page **Continue in DC 311** result with a verified official launch path and a useful fallback.
-3. Repeat the physical-iPhone regression pass for location, map loading, filters, watched-item navigation, local alerts, and external handoffs.
-4. Investigate a durable restaurant-inspection feed, then build a nearby map that emphasizes closures and serious violations without implying unsupported grades or scores.
-5. Complete the approved Background App Refresh foundation before promising opportunistic notification delivery; immediate remote push remains deferred.
+1. Preserve close-in map records at wider radii, progressively load denser coverage, and expose an atomic **Reset** for all filters.
+2. Keep Near You status and category summaries coherent by using complete grouped totals rather than a partial first page.
+3. Add native pull-to-refresh to Requests, separate photo-library and camera actions, and suppress recency-only New-to-Active watch alerts.
+4. Repeat the physical-iPhone regression pass for location, filters, watched-item navigation, local alerts, photo input, and external handoffs before opening external testing.
+5. Investigate a durable restaurant-inspection feed and supported direct-311 contract after the external-beta stabilization pass.
 
 Notification category icons, richer trends, widgets, and optional civic overlays remain planned, but they follow the submission-path and release-quality work above. See the [ranked roadmap](docs/roadmap.md) for acceptance criteria and dependency gates.
 

@@ -46,7 +46,11 @@ struct PulseDataStoreTests {
             direction: .increased
         )
         let summary = StubTrendSummaryRepository(
-            snapshot: .init(trends: [trend], categories: ["Graffiti Removal", "Illegal Dumping"])
+            snapshot: .init(
+                trends: [trend],
+                categories: ["Graffiti Removal", "Illegal Dumping"],
+                categoryCounts: ["Graffiti Removal": 5, "Illegal Dumping": 8]
+            )
         )
         let store = PulseDataStore(repository: repository, requestTrendSummaryRepository: summary)
 
@@ -54,6 +58,7 @@ struct PulseDataStoreTests {
 
         #expect(store.requestTrends == [trend])
         #expect(store.requestCategories == ["Graffiti Removal", "Illegal Dumping"])
+        #expect(store.requestCategoryCounts == ["Graffiti Removal": 5, "Illegal Dumping": 8])
         #expect(!store.isRequestInsightsLoading)
     }
 
@@ -133,6 +138,42 @@ struct PulseDataStoreTests {
         #expect(store.items == [first, second, third])
         #expect(repository.offsetRequests == [0, 1, 2])
         #expect(!store.hasMore)
+    }
+
+    @Test func largerMapRadiusAlsoIncludesCloseInCoverage() async throws {
+        let broadItem = try #require(SampleData.items.first)
+        let closeItem = try #require(SampleData.items.dropFirst().first)
+        let repository = StubPulseRepository(results: [
+            .success(.init(items: [broadItem], nextOffset: 1, hasMore: false)),
+            .success(.init(items: [closeItem], nextOffset: 1, hasMore: false))
+        ])
+        let store = PulseDataStore(repository: repository)
+
+        await store.load()
+        await store.prepareMapResults()
+
+        #expect(Set(store.items.map(\.id)) == Set([broadItem.id, closeItem.id]))
+        #expect(repository.radiusRequests == [0.5, 0.25])
+        #expect(repository.limitRequests == [30, 150])
+        #expect(!store.isMapCoverageLoading)
+    }
+
+    @Test func resetsSearchOptionsWithOneReload() async {
+        let emptyPage = PulsePage(items: [], nextOffset: 0, hasMore: false)
+        let repository = StubPulseRepository(results: [
+            .success(emptyPage), .success(emptyPage), .success(emptyPage), .success(emptyPage)
+        ])
+        let store = PulseDataStore(repository: repository)
+
+        await store.load()
+        await store.selectRadius(.oneMile)
+        await store.selectPeriod(.ninetyDays)
+        await store.resetSearchOptions()
+
+        #expect(store.radius == .halfMile)
+        #expect(store.period == .thirtyDays)
+        #expect(repository.radiusRequests.last == 0.5)
+        #expect(repository.daysRequests.last == 30)
     }
 
     @Test func reusesFreshCachedResultsWithoutCallingTheRepository() async throws {

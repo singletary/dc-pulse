@@ -47,13 +47,17 @@ final class DCPulseUITests: XCTestCase {
         XCTAssertTrue(app.buttons["map.currentLocation"].exists)
 
         app.buttons["map.filter"].tap()
-        let radiusMenu = app.buttons["Search radius"]
+        let radiusMenu = app.buttons["map.filter.radius"]
         XCTAssertTrue(radiusMenu.waitForExistence(timeout: 5))
         radiusMenu.tap()
         XCTAssertTrue(app.buttons["0.25 mile"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["0.5 mile"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["1 mile"].waitForExistence(timeout: 5))
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.5)).tap()
+        app.buttons["0.25 mile"].tap()
+        let reset = app.buttons["map.filters.reset"]
+        XCTAssertTrue(reset.waitForExistence(timeout: 5))
+        XCTAssertTrue(reset.isEnabled)
+        reset.tap()
 
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "Clustered Map"
@@ -115,6 +119,8 @@ final class DCPulseUITests: XCTestCase {
         reportButton.tap()
         XCTAssertTrue(app.navigationBars["Report to 311"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["Start with a photo"].exists)
+        XCTAssertTrue(app.buttons["report311.choosePhoto"].exists)
+        XCTAssertTrue(app.buttons["report311.takePhoto"].exists)
 
         let details = app.textFields["report311.details"]
         XCTAssertTrue(details.waitForExistence(timeout: 5))

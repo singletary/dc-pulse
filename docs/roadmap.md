@@ -2,18 +2,19 @@
 
 This roadmap orders work by release value, correctness risk, and dependency. Items inside a priority are listed in recommended execution order.
 
-## Current release state — July 14, 2026
+## Current release state — July 16, 2026
 
-- Internal TestFlight: version 1.0 (build 2) is installed on a physical iPhone; build 3 has been uploaded for internal testing. No public App Store submission has been made.
+- Internal TestFlight: version 1.0 (build 3) is installed for physical-iPhone testing; build 4 is the external-beta candidate. No public App Store submission has been made.
 - Completed: Swift 6 actor-isolation warning cleanup for the current test suite.
 - Completed: live one-record schema smoke audit for all three ArcGIS layers.
 - Completed: privacy manifest with app-local UserDefaults required reason, copy-ready App Store metadata/review notes, and four privacy-reviewed 6.9-inch screenshots.
 - Completed: capability-neutral watched-item identifier refresh, partial-failure isolation, persisted last-check timestamps, manual and throttled foreground refresh, status-transition alerts, notification-tap routing, and an on-device notification inbox with unread history.
 - Completed for build 3: dismissible 311 draft keyboard, a keyboard-visible continuation control, and an official DC311 app handoff with an explicit website fallback.
-- Immediate release gate: complete the build 3 physical-iPhone regression pass before external TestFlight distribution.
-- Newly observed release risk: changing Map filters can intermittently leave the map sparsely populated instead of completing the expected replacement load. Reproduce and resolve this before treating the external beta as stable.
-- Newly observed release risk: reducing the Map radius from 0.5 miles to 0.25 miles can reveal very close records that were absent from the wider search. For an unchanged center and filters, the smaller-radius identifiers must be a subset of the larger-radius identifiers; investigate this correctness violation before external beta expansion.
-- Newly observed release risk: **Requests nearby** can show three implausible one-request category totals even after the status totals above it have refreshed; a manual refresh then corrects the categories. Treat this as a data-coherence defect before external beta expansion.
+- Completed for build 4: Map progressively loads a denser bounded set, explicitly merges close-in quarter-mile coverage into wider searches, shows loading progress, keeps every filter family in a consistent expandable section, and offers an atomic default-filter reset without moving the search center.
+- Completed for build 4: **Requests nearby** uses complete period category counts from the grouped trend query rather than partial loaded-page counts; the cache generation was advanced to prevent stale summaries.
+- Completed for build 4: Requests supports native pull-to-refresh; **Choose Photo** uses the privacy-preserving Photos picker while **Take Photo** remains a separate camera action.
+- Completed for build 4: an age-derived New-to-Active presentation change is silent for watched items and cannot create an inbox or system notification event.
+- Immediate release gate: complete the build 4 physical-iPhone regression pass and a short internal soak before external TestFlight distribution.
 - Remaining capability gate: `BGTaskScheduler` registration and Background Modes/background fetch approval.
 
 ## 1. Release stability and data correctness — critical
@@ -32,6 +33,8 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - Add a prominent **Reset Filters** action distinct from the current-location control. It should atomically restore the documented Map defaults—every default data source, all statuses and request types, the default radius, and the last-30-days period—then force a trustworthy reload for the active search center.
 - Keep location behavior separate: resetting filters must not unexpectedly move the map or change the active search center; the existing current-location action remains responsible for returning to the user's location.
 - Add deterministic tests for individual changes, reset behavior, cancellation races, cache separation, empty responses, partial source failures, and rapid multi-filter changes. Include a physical-iPhone regression that compares fresh launch, changed filters, and reset results for the same location.
+- After the current data-coherence defects are resolved, add native pull-to-refresh to the **Requests** timeline. Refresh the active location or followed place using its current radius, period, source, category, status, and sort choices rather than silently returning to defaults.
+- Keep the existing list visible while refreshing, show standard refresh progress, reject stale completions, avoid duplicate rows, preserve the user's scroll/navigation context where practical, and provide an accessible failure state with the last successful results intact. Share the same coherent refresh transaction and cache-update rules used by Near You and Map, with tests for rapid repeated pulls, cancellation, offline failure, partial source failure, and an empty response.
 - **Completed in build 3:** the new-311 draft supports keyboard dismissal, keeps its continuation action reachable, and has UI coverage for continuing while the keyboard is visible.
 - **Completed in build 3:** the 311 handoff offers the official DC311 app as its primary route and retains the official website as an explicit fallback instead of silently opening a blank page.
 - Run a repeatable physical-iPhone regression pass covering location authorization, out-of-DC recovery, initial loading, radius/time changes, followed-place browsing, map clustering, X compose, and notification authorization.
@@ -53,6 +56,9 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 
 This is the highest-priority product-development track after the current TestFlight stabilization pass. Do not begin implementation until the discovery work identifies how the recently reported third-party app submits requests and whether that mechanism is supported, permissioned, and suitable for production use.
 
+- Fix the existing photo-source routing before deeper submission work: **Take a Photo** must present the camera and **Choose a Photo** must present the system photo picker. Keep their labels, icons, accessibility hints, and permission explanations consistent with the source each action actually opens.
+- Handle camera unavailability, denied or restricted camera access, limited Photos access, cancellation, picker errors, and re-selection without losing the rest of the draft. Prefer the privacy-preserving system photo picker and avoid requesting broad photo-library access when item-level selection is sufficient.
+- Add focused tests for both source actions and their cancellation/error paths, plus a physical-iPhone check that confirms the selected image reaches the same on-device analysis and editable review flow regardless of its source.
 - Locate and review the recent coverage of another app offering direct DC 311 submission, identify the app, and determine the actual integration mechanism rather than inferring it from the user experience.
 - Establish whether submission uses a documented public API, a partner agreement, an official mobile deep link, supported web parameters, or an unofficial/private endpoint. Record authentication, required fields, category identifiers, photo handling, rate limits, terms, and confirmation behavior.
 - Do not send test requests to DC, automate the public portal, depend on private Salesforce interfaces, or claim feasibility until the mechanism and authorization are verified. Any live submission test must be deliberate, clearly labeled, and approved first.
@@ -91,6 +97,12 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 - Refresh auto-watch regions around Home using the selected 0.1- or 0.25-mile distance and a bounded recent time window.
 - Persist enough comparison state to detect new nearby items and status changes across launches.
 - Deduplicate notifications by source, record identifier, event type, and observed state.
+- Separate source lifecycle status from the derived **New** recency presentation. An item aging from **New** to **Active** without an underlying source-status change must update its visual grouping silently and must not generate a watched-item notification, notification-history entry, badge increment, or duplicate event.
+- Define notification-worthy transitions from normalized source semantics, such as active to resolved/closed, resolved to reopened, or another materially changed source state. Add clock-injected tests around the newness cutoff, app relaunch, cache refresh, delayed records, and simultaneous timestamp/source-status updates so a recency-only transition can never masquerade as a civic status change.
+- Add a terminal-state lifecycle for watched records instead of silently deleting them. When an explicitly watched request first becomes closed or completed, deliver the status-change alert, retain it through a default 30-day grace period, then move it to a restorable **Archived** section and stop routine polling. Auto-watched nearby items may use a shorter default grace period, such as 7 days, to control noise and refresh cost.
+- Base terminal-state decisions on source-specific normalized status semantics; do not assume identical wording across 311, Building Permits, and DDOT permits. If an item reopens during its grace period, cancel the pending archive and resume its normal watch lifecycle.
+- Preserve notification history and the last observed details after archival. Provide **Restore Watch**, **Archive Now**, and a preference such as 7 days, 30 days, 90 days, or Never for explicitly watched items; make automatic behavior understandable before enabling it.
+- Add deterministic clock-injected tests for closure, grace-period expiry, reopening, manual archive/restore, app relaunch, missing source records, and differing source status vocabularies. Archived items must not remain in normal background-refresh batches.
 
 ### Notification experience
 
@@ -119,6 +131,10 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 
 ## 7. Item-detail depth and civic actions — medium
 
+- Make the 311 **Request ID** actionable without pretending a stable per-record portal URL currently exists. Offer **Copy Request ID** and **Check in DC 311**; the latter should copy the identifier, open the official public Service Requests search page, and clearly tell the person to paste the copied ID. Consider a separate **Check by Text** action only if its exact 32311 message flow is verified against current official guidance.
+- Keep the official portal search handoff useful when the DC311 app is absent or the Salesforce site cannot render, preserve the request details already visible in DC Pulse, and provide accessible copied/opened confirmation. Test pasteboard behavior, failed URL opening, cancellation, and the physical-iPhone handoff without claiming that DC Pulse opened the exact source record.
+- Investigate whether the public Salesforce experience exposes a reasonably stable mapping from `SERVICEREQUESTID` to its request-detail navigation state through a public page response, supported API, documented mobile deep link, or another permissioned interface. Document the distinction between the public confirmation number and any internal Salesforce record identifier, authentication requirements, terms, rate limits, and whether anonymous deep links remain valid across sessions.
+- If the only candidate is undocumented but publicly observable, require a reliability and privacy review, representative live-ID verification, monitoring for portal changes, a remote disable/kill-switch strategy, and the official search-page fallback before considering it for production. Do not scrape authenticated pages, persist private Salesforce identifiers unnecessarily, automate account access, or construct guessed detail URLs.
 - Make every user-visible value in the general **Details** section selectable or explicitly copyable, not only the fields used for violation reporting. Provide accessible copy actions for identifiers, dates, agency, address, category/subtype, status, and dataset-specific values while preserving the existing visual hierarchy.
 - Consider a single **Copy Details** summary in addition to individual field actions, with source-aware labels and stable formatting. Copy only information already visible on screen; never include hidden attributes or undisplayed precise coordinates.
 - Make the fields shown under **Report a Possible Violation** deliberately copyable before opening the official reporting site. Support copying individual values such as permit/reference number, address, request type, and work description, plus a single **Copy Report Details** action that produces a concise labeled summary suitable for pasting into the destination form.

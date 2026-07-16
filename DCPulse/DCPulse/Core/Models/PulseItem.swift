@@ -25,6 +25,13 @@ struct PulseItem: Identifiable, Hashable, Codable, Sendable {
         case new, active, resolved, unknown
 
         var displayName: String { rawValue.capitalized }
+
+        /// "New" is an age-based presentation of an unresolved request. Aging into
+        /// "Active" is not a meaningful agency status change and should stay quiet.
+        func isNotificationWorthyTransition(from previous: Self) -> Bool {
+            guard self != previous else { return false }
+            return !([Self.new, .active].contains(self) && [.new, .active].contains(previous))
+        }
     }
 
     struct Coordinate: Hashable, Codable, Sendable {

@@ -105,7 +105,7 @@ struct PulseMapView: View {
             // the larger summary set. This keeps the tab responsive on first open.
             do {
                 try await Task.sleep(for: .milliseconds(300))
-                await store.prefetchSummary()
+                await store.prepareMapResults()
             } catch is CancellationError {
                 return
             } catch {
@@ -180,7 +180,7 @@ struct PulseMapView: View {
         viewModel.center(on: coordinate, radius: store.radius)
         Task {
             await store.load(coordinate: coordinate, placeName: "Map Center", force: true)
-            await store.prefetchSummary()
+            await store.prepareMapResults()
         }
     }
 
@@ -237,12 +237,13 @@ struct PulseMapView: View {
     }
 
     private var isMapUpdating: Bool {
-        store.isLoading || store.isLoadingMore || isCategoryLoading || store.isRequestInsightsLoading
+        store.isLoading || store.isLoadingMore || store.isMapCoverageLoading || isCategoryLoading || store.isRequestInsightsLoading
     }
 
     private var mapLoadingLabel: String {
         if isCategoryLoading { return "Loading \(requestTypeFilter ?? "category") requests…" }
         if store.isLoading { return "Updating map…" }
+        if store.isMapCoverageLoading { return "Checking close-in and nearby results…" }
         if store.isLoadingMore { return "Adding more nearby results…" }
         return "Loading complete category filters…"
     }
@@ -319,14 +320,20 @@ struct PulseMapView: View {
                 filterDisclosure(.time, title: "Time range", systemImage: "calendar") {
                     ForEach(PulseDataStore.Period.allCases) { period in
                         filterChoice(period.label, isSelected: store.period == period) {
-                            Task { await store.selectPeriod(period) }
+                            Task {
+                                await store.selectPeriod(period)
+                                await store.prepareMapResults()
+                            }
                         }
                     }
                 }
                 filterDisclosure(.radius, title: "Search radius", systemImage: "scope") {
                     ForEach(PulseDataStore.Radius.allCases) { radius in
                         filterChoice(radius.label, isSelected: store.radius == radius) {
-                            Task { await store.selectRadius(radius) }
+                            Task {
+                                await store.selectRadius(radius)
+                                await store.prepareMapResults()
+                            }
                         }
                         .accessibilityIdentifier("map.radius.\(radius.rawValue)")
                     }
@@ -345,6 +352,11 @@ struct PulseMapView: View {
             .navigationTitle("Map Filters")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Reset") { resetFilters() }
+                        .disabled(filtersAreDefault)
+                        .accessibilityIdentifier("map.filters.reset")
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { showingFilters = false }
                 }
@@ -392,6 +404,21 @@ struct PulseMapView: View {
                 else { expandedFilterSections.remove(section) }
             }
         )
+    }
+
+    private var filtersAreDefault: Bool {
+        selectedSources.isEmpty && statusFilter == nil && requestTypeFilter == nil &&
+        store.radius == .halfMile && store.period == .thirtyDays
+    }
+
+    private func resetFilters() {
+        selectedSources = []
+        statusFilter = nil
+        selectCategory(nil)
+        Task {
+            await store.resetSearchOptions()
+            await store.prepareMapResults()
+        }
     }
 
 }
