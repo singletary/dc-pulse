@@ -45,9 +45,11 @@ DC Pulse makes it easier to see recent DC 311 requests and public permit activit
 - Watch a newly opened request and confirm its automatic New-to-Active aging does not create a notification; confirm a meaningful Active-to-Resolved change still does.
 - Open **Restaurant Health Inspections** only to verify that its data-gated explanation is clear. Nearby restaurant report verification begins after a dependable source interface is approved.
 
-**Feedback email**
+**Feedback contact**
 
-`support@dcpulseapp.com`
+Use the monitored feedback email configured privately in App Store Connect;
+do not commit a private review or account address to the repository. Public
+support is available at `https://dcpulseapp.com/#support`.
 
 ## Physical-iPhone pass
 
