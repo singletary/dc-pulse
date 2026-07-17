@@ -23,4 +23,4 @@ Ordinary crashes, accessibility problems, incorrect public-data presentation, an
 
 ## Supported versions
 
-Until the first public App Store release, security and privacy fixes target the latest revision of the default branch and the latest internal TestFlight build. Version 1.0 (build 4) is the current installed beta; build 5 is the replacement external-beta candidate.
+Until the first public App Store release, security and privacy fixes target the latest revision of the default branch and the latest available TestFlight build. Version 1.0 (build 5) has completed its initial internal pass and is submitted for external TestFlight beta review.
