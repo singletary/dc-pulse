@@ -1,6 +1,6 @@
 # TestFlight release checklist
 
-DC Pulse 1.0 (5) is the external-TestFlight candidate. Complete this checklist internally before enabling an external group. It does not authorize changes to signing, the development team, provisioning, entitlements, or the bundle identifier.
+DC Pulse 1.0 (5) has completed its initial internal physical-iPhone pass and is submitted for external TestFlight beta review. Use this checklist for review follow-up, external distribution, and every replacement build. It does not authorize changes to signing, the development team, provisioning, entitlements, or the bundle identifier.
 
 ## Known issues
 
@@ -63,7 +63,7 @@ Notifications currently use on-device refresh checks rather than a push-notifica
 2. Keep the existing bundle identifier and signing configuration. Stop if Xcode requests a different team, certificate, profile, entitlement, or identifier.
 3. In App Store Connect, wait for processing, complete export-compliance and beta information, then add the build to an internal testing group.
 4. Install through TestFlight on the physical iPhone and complete the pass above.
-5. Keep build 5 internal for a short crash-free soak, then add it to an external group and submit it for Beta App Review.
+5. After Beta App Review approval, add build 5 to the intended external group, verify the public TestFlight link and tester-facing **What to Test** text, and monitor early feedback before broader promotion.
 6. Increment the build number before uploading any replacement build; the next 1.0 upload must be greater than build `5`.
 
-External testing can follow only after the internal pass is stable and Apple has approved any required beta review.
+External testing can begin after Apple approves the submitted beta review and the build is assigned to the intended external group.

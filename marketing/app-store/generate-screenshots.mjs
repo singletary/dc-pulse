@@ -8,13 +8,18 @@ const sharp = require("sharp");
 const root = path.dirname(new URL(import.meta.url).pathname);
 const sourceDirectory = path.join(root, "source");
 const screenshotDirectory = path.join(root, "screenshots", "en-US");
+const displayMaskPath = path.join(root, "device-masks", "iphone-17-pro-display-alpha.png");
 
 const width = 1320;
 const height = 2868;
-const screenWidth = 1020;
-const screenHeight = 2218;
-const screenLeft = 150;
-const screenTop = 620;
+// These proportions are measured from Apple Simulator's iPhone 17 Pro window.
+// The display itself still uses Simulator's exact alpha mask below.
+const screenWidth = 850;
+const screenHeight = 1848;
+const screenLeft = 235;
+const screenTop = 850;
+const sourceWidth = 1206;
+const sourceHeight = 2622;
 
 const outputProfiles = [
   { directory: "iPhone-6.9", width: 1320, height: 2868 },
@@ -26,33 +31,33 @@ const slides = [
     number: "01",
     source: "near-you.png",
     output: "01-near-you.png",
-    headline: ["Know what’s happening", "nearby."],
-    subhead: "311 requests, public permits and local trends—at a glance.",
-    colors: ["#4F46E5", "#A855F7", "#F43F5E"],
+    headline: ["Your neighborhood,", "at a glance."],
+    subhead: "Real public data in a familiar iPhone experience.",
+    colors: ["#4338CA", "#7C3AED", "#DB2777"],
   },
   {
     number: "02",
     source: "map.png",
     output: "02-map.png",
-    headline: ["See the city change", "in real time."],
-    subhead: "Explore a colorful, filterable map of the work around you.",
-    colors: ["#0F766E", "#06B6D4", "#4F46E5"],
+    headline: ["See what’s changing", "around you."],
+    subhead: "Explore nearby requests and permits on one clear map.",
+    colors: ["#075985", "#2563EB", "#6D28D9"],
   },
   {
     number: "03",
     source: "requests.png",
     output: "03-requests.png",
-    headline: ["Requests and permits.", "One clear timeline."],
-    subhead: "Sort nearby public records and open the details that matter.",
-    colors: ["#C2410C", "#F97316", "#EAB308"],
+    headline: ["Requests and permits,", "together."],
+    subhead: "Sort public activity and open the details that matter.",
+    colors: ["#C2410C", "#EA580C", "#DB2777"],
   },
   {
     number: "04",
     source: "places.png",
     output: "04-places.png",
     headline: ["Follow the places", "that matter."],
-    subhead: "Save Home, browse by ward, or return to any DC address.",
-    colors: ["#7E22CE", "#EC4899", "#F43F5E"],
+    subhead: "Save Home, follow places and return anytime.",
+    colors: ["#6D28D9", "#9333EA", "#E11D48"],
   },
 ];
 
@@ -69,58 +74,79 @@ function backgroundSVG(slide) {
       <defs>
         <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stop-color="${start}"/>
-          <stop offset="0.56" stop-color="${middle}"/>
+          <stop offset="0.55" stop-color="${middle}"/>
           <stop offset="1" stop-color="${end}"/>
         </linearGradient>
-        <radialGradient id="glow" cx="50%" cy="0%" r="85%">
-          <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.24"/>
+        <radialGradient id="glow" cx="50%" cy="0%" r="90%">
+          <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.28"/>
           <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
         </radialGradient>
-        <filter id="shadow" x="-30%" y="-20%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="32" stdDeviation="36" flood-color="#111827" flood-opacity="0.32"/>
+        <filter id="deviceShadow" x="-30%" y="-20%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="36" stdDeviation="42" flood-color="#130B2D" flood-opacity="0.38"/>
         </filter>
       </defs>
       <rect width="${width}" height="${height}" fill="url(#background)"/>
       <rect width="${width}" height="${height}" fill="url(#glow)"/>
-      <circle cx="1160" cy="230" r="330" fill="#FFFFFF" opacity="0.055"/>
-      <circle cx="80" cy="560" r="260" fill="#FFFFFF" opacity="0.045"/>
-
-      <g transform="translate(84 72)" fill="#FFFFFF">
-        <text x="0" y="33" font-family="Helvetica Neue, Arial, sans-serif" font-size="30" font-weight="700" letter-spacing="5">DC PULSE</text>
-        <text x="1100" y="33" text-anchor="end" font-family="Helvetica Neue, Arial, sans-serif" font-size="27" font-weight="700" opacity="0.72">${slide.number} / 04</text>
-      </g>
+      <circle cx="1190" cy="190" r="360" fill="#FFFFFF" opacity="0.09"/>
+      <circle cx="60" cy="730" r="290" fill="#FFFFFF" opacity="0.055"/>
+      <path d="M-120 530 C220 310 440 570 760 350 S1170 190 1460 330" fill="none" stroke="#FFFFFF" stroke-opacity="0.075" stroke-width="92"/>
 
       <g fill="#FFFFFF">
-        <text x="84" y="205" font-family="Helvetica Neue, Arial, sans-serif" font-size="82" font-weight="800" letter-spacing="-2">${escapeXML(slide.headline[0])}</text>
-        <text x="84" y="300" font-family="Helvetica Neue, Arial, sans-serif" font-size="82" font-weight="800" letter-spacing="-2">${escapeXML(slide.headline[1])}</text>
-        <text x="86" y="390" font-family="Helvetica Neue, Arial, sans-serif" font-size="35" font-weight="500" opacity="0.88">${escapeXML(slide.subhead)}</text>
+        <text x="72" y="78" font-family="Helvetica Neue, Arial, sans-serif" font-size="32" font-weight="750" letter-spacing="4.5">DC PULSE</text>
+        <text x="1248" y="78" text-anchor="end" font-family="Helvetica Neue, Arial, sans-serif" font-size="28" font-weight="650" opacity="0.76">${slide.number} / 04</text>
+        <g transform="translate(72 116)" opacity="0.94">
+          <text x="0" y="26" font-family="Helvetica Neue, Arial, sans-serif" font-size="28" letter-spacing="8">★★★</text>
+          <rect x="1" y="42" width="130" height="6" rx="3"/>
+          <rect x="1" y="57" width="130" height="6" rx="3"/>
+        </g>
+        <text x="72" y="300" font-family="Helvetica Neue, Arial, sans-serif" font-size="106" font-weight="800" letter-spacing="-3">${escapeXML(slide.headline[0])}</text>
+        <text x="72" y="416" font-family="Helvetica Neue, Arial, sans-serif" font-size="106" font-weight="800" letter-spacing="-3">${escapeXML(slide.headline[1])}</text>
+        <text x="76" y="495" font-family="Helvetica Neue, Arial, sans-serif" font-size="39" font-weight="520" opacity="0.92">${escapeXML(slide.subhead)}</text>
       </g>
 
-      <g transform="translate(88 462)" fill="#FFFFFF" opacity="0.72">
-        <text x="0" y="30" font-family="Helvetica Neue, Arial, sans-serif" font-size="36">★</text>
-        <text x="48" y="30" font-family="Helvetica Neue, Arial, sans-serif" font-size="36">★</text>
-        <text x="96" y="30" font-family="Helvetica Neue, Arial, sans-serif" font-size="36">★</text>
-        <rect x="158" y="7" width="132" height="7" rx="3.5"/>
-        <rect x="158" y="27" width="132" height="7" rx="3.5"/>
+      <!-- Proportions and controls follow Apple Simulator's iPhone 17 Pro bezel. -->
+      <g filter="url(#deviceShadow)">
+        <rect x="185" y="1030" width="11" height="112" rx="5.5" fill="#5A5B5F"/>
+        <rect x="185" y="1200" width="11" height="164" rx="5.5" fill="#5A5B5F"/>
+        <rect x="185" y="1412" width="11" height="164" rx="5.5" fill="#5A5B5F"/>
+        <rect x="1124" y="1184" width="11" height="238" rx="5.5" fill="#5A5B5F"/>
+        <rect x="194" y="814" width="932" height="1920" rx="180" fill="#707174"/>
+        <rect x="201" y="821" width="918" height="1906" rx="173" fill="#111214"/>
+        <rect x="218" y="838" width="884" height="1872" rx="154" fill="#000000"/>
+        <path d="M226 1005 C226 902 282 846 395 838" fill="none" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="4" stroke-linecap="round"/>
       </g>
-
-      <rect x="${screenLeft - 11}" y="${screenTop - 11}" width="${screenWidth + 22}" height="${screenHeight + 22}" rx="94" fill="#111827" opacity="0.9" filter="url(#shadow)"/>
     </svg>
   `);
 }
 
-async function roundedScreen(sourcePath) {
-  const screen = await sharp(sourcePath)
-    .resize(screenWidth, screenHeight, { fit: "fill" })
+async function displayMask() {
+  const { data, info } = await sharp(displayMaskPath)
+    .extractChannel(0)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  return sharp({
+    create: { width: sourceWidth, height: sourceHeight, channels: 3, background: "#FFFFFF" },
+  })
+    .joinChannel(data, { raw: { width: info.width, height: info.height, channels: 1 } })
     .png()
     .toBuffer();
-  const mask = Buffer.from(`
-    <svg width="${screenWidth}" height="${screenHeight}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${screenWidth}" height="${screenHeight}" rx="82" fill="#FFFFFF"/>
-    </svg>
-  `);
-  return sharp(screen)
+}
+
+async function maskedScreen(sourcePath, mask) {
+  const metadata = await sharp(sourcePath).metadata();
+  if (metadata.width !== sourceWidth || metadata.height !== sourceHeight) {
+    throw new Error(`Source capture must be ${sourceWidth}x${sourceHeight}: ${sourcePath}`);
+  }
+
+  const nativeScreen = await sharp(sourcePath)
+    .ensureAlpha()
     .composite([{ input: mask, blend: "dest-in" }])
+    .png()
+    .toBuffer();
+
+  return sharp(nativeScreen)
+    .resize(screenWidth, screenHeight, { fit: "fill" })
     .png()
     .toBuffer();
 }
@@ -129,9 +155,11 @@ await Promise.all(outputProfiles.map(({ directory }) =>
   fs.mkdir(path.join(screenshotDirectory, directory), { recursive: true })
 ));
 
+const mask = await displayMask();
+
 for (const slide of slides) {
   const sourcePath = path.join(sourceDirectory, slide.source);
-  const screen = await roundedScreen(sourcePath);
+  const screen = await maskedScreen(sourcePath, mask);
   const canonicalOutput = await sharp(backgroundSVG(slide))
     .composite([{ input: screen, left: screenLeft, top: screenTop }])
     .flatten({ background: "#FFFFFF" })
