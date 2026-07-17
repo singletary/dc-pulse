@@ -1,6 +1,6 @@
 # Contributing to DC Pulse
 
-Thank you for helping make DC public information easier to understand. DC Pulse is currently a pre-release project in internal TestFlight testing, so changes should stay focused, reviewable, and safe for a future App Store submission.
+Thank you for helping make DC public information easier to understand. DC Pulse is currently a pre-release project in TestFlight beta review and testing, so changes should stay focused, reviewable, and safe for a future App Store submission.
 
 ## Before starting
 
