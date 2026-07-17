@@ -4,7 +4,7 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 
 ## Current release state — July 16, 2026
 
-- Internal TestFlight: version 1.0 (build 4) is installed for physical-iPhone testing; build 5 is the external-beta candidate. No public App Store submission has been made.
+- TestFlight: version 1.0 (build 5) completed its initial internal physical-iPhone pass and is submitted for external beta review. No public App Store submission has been made.
 - Completed: Swift 6 actor-isolation warning cleanup for the current test suite.
 - Completed: live one-record schema smoke audit for all three ArcGIS layers.
 - Completed: privacy manifest with app-local UserDefaults required reason, copy-ready App Store metadata/review notes, and four privacy-reviewed 6.9-inch screenshots.
@@ -15,7 +15,7 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - Completed for build 4: Requests supports native pull-to-refresh; **Choose Photo** uses the privacy-preserving Photos picker while **Take Photo** remains a separate camera action.
 - Completed for build 4: an age-derived New-to-Active presentation change is silent for watched items and cannot create an inbox or system notification event.
 - Completed for build 5: cold launch waits briefly for the requested location instead of starting a redundant fallback search, Map coverage arrives progressively without a blocking overlay, watch synchronization is debounced, and slow individual data sources time out without withholding healthy results.
-- Immediate release gate: complete the build 5 physical-iPhone regression pass and a short internal soak before external TestFlight distribution.
+- Immediate release gate: address any Beta App Review feedback, then run a focused external TestFlight soak and triage tester-reported correctness, performance, navigation, and accessibility defects before public App Store review.
 - Remaining capability gate: `BGTaskScheduler` registration and Background Modes/background fetch approval.
 
 ## 1. Release stability and data correctness — critical
@@ -49,7 +49,7 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - **Completed package:** bundle display metadata, version/build inventory, privacy disclosure draft, support/privacy/marketing URLs, App Store copy, review notes, and screenshot sequence are documented in `app-store-listing.md`.
 - Complete accessibility, Dynamic Type, VoiceOver, Reduce Motion, Light/Dark Mode, and small-screen checks.
 - **Completed assets:** four colorful screenshot compositions use Apple’s Simulator-derived continuous display mask, Simulator-measured device proportions, and storefront-readable headlines; matching 6.9-inch and 6.5-inch sets are produced by a reproducible generator. Verify the production icon and any additional required device-class presentation before submission.
-- Build 5 is the validated external-TestFlight candidate; complete its external beta pass before public App Review submission.
+- Build 5 is submitted for external TestFlight beta review; complete its external beta pass before public App Review submission.
 - Complete App Store Connect age rating, privacy questionnaire, review contact, export-compliance, build selection, and manual-release configuration without submitting until the physical-device pass is stable.
 - Do not change signing, capabilities, entitlements, bundle identifiers, or Apple-account configuration without explicit approval.
 
