@@ -132,14 +132,14 @@ All launch screenshots use real application UI staged around a well-known public
 3. **Requests and permits, together.** — chronological Requests view
 4. **Follow the places that matter.** — Home, wards, address search, and followed places
 
-The light-mode compositions present each unmodified capture within Apple’s native
+The colorful light-mode compositions present each unmodified capture within Apple’s native
 iPhone 17 Pro continuous display geometry, generated from an iOS Simulator alpha
 mask. Their restrained device presentation uses proportions measured from the
 Simulator’s iPhone 17 Pro window, with large storefront-readable headlines.
 
-## Still required before App Review
+## Still required before public App Review
 
-- Physically verify build 5's distinct photo-library/camera actions and its official DC311 app handoff plus website fallback.
+- Complete the external TestFlight pass for build 5, including its distinct photo-library/camera actions and official DC311 app handoff plus website fallback.
 - Do not advertise nearby restaurant inspections until a useful map is backed by an approved source; remove or clearly limit the placeholder experience if it is not ready.
 - Confirm the monitored private contact form remains available at the public support URL.
 - Complete the age-rating questionnaire in App Store Connect.
