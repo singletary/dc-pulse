@@ -5,8 +5,8 @@
 - Display name: **DC Pulse**
 - Bundle identifier: `com.dcpulseapp.DCPulse`
 - Marketing version: `1.0`
-- Build number: `4`
-- Distribution state: external-TestFlight candidate; internal physical-iPhone validation is required before inviting external testers
+- Build number: `5`
+- Distribution state: initial internal physical-iPhone pass complete; submitted for external TestFlight beta review
 - Supported device family: iPhone
 - Location permission: When In Use only
 - Camera permission: requested only when the person chooses **Take Photo** in the 311 draft flow
@@ -17,11 +17,11 @@ Signing, capabilities, entitlements, bundle identifiers, and Apple-account confi
 
 ## Current external-beta gates
 
-- Physically verify build 4's map radius/filter-reset behavior, coherent Near You totals, Requests pull-to-refresh, and distinct Photos/Camera actions.
-- Complete the physical-device regression and accessibility pass, then monitor the internal build for a crash-free day before enabling external access.
+- Address any Beta App Review feedback, then verify build 5's map radius/filter-reset behavior, coherent Near You totals, Requests pull-to-refresh, distinct Photos/Camera actions, and progressive initial loading with external testers.
+- Monitor the external beta for correctness, performance, crash, navigation, accessibility, and public-data reliability feedback before public App Store review.
 - Keep restaurant inspection language data-gated until a nearby report map is backed by a dependable, reviewed source.
 
-The copy-ready listing, review notes, privacy recommendation, and final light-mode screenshot sequences for the 6.9-inch and 6.5-inch App Store slots are maintained in `docs/app-store-listing.md` and `marketing/app-store`.
+The copy-ready listing, review notes, privacy recommendation, and final colorful light-mode screenshot sequences for the 6.9-inch and 6.5-inch App Store slots are maintained in `docs/app-store-listing.md` and `marketing/app-store`.
 
 ## Privacy behavior and draft disclosure
 
