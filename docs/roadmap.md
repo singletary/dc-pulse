@@ -48,8 +48,8 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 
 - **Completed package:** bundle display metadata, version/build inventory, privacy disclosure draft, support/privacy/marketing URLs, App Store copy, review notes, and screenshot sequence are documented in `app-store-listing.md`.
 - Complete accessibility, Dynamic Type, VoiceOver, Reduce Motion, Light/Dark Mode, and small-screen checks.
-- **Completed assets:** four final light-mode screenshot compositions, generated for both the 6.9-inch and 6.5-inch App Store slots, and a reproducible generator are checked in; verify the production icon and any additional required device-class presentation before submission.
-- Archive and validate the replacement build after the critical 311 fixes, then complete internal TestFlight testing before App Review submission.
+- **Completed assets:** four colorful screenshot compositions use Apple’s Simulator-derived continuous display mask, Simulator-measured device proportions, and storefront-readable headlines; matching 6.9-inch and 6.5-inch sets are produced by a reproducible generator. Verify the production icon and any additional required device-class presentation before submission.
+- Build 5 is the validated external-TestFlight candidate; complete its external beta pass before public App Review submission.
 - Complete App Store Connect age rating, privacy questionnaire, review contact, export-compliance, build selection, and manual-release configuration without submitting until the physical-device pass is stable.
 - Do not change signing, capabilities, entitlements, bundle identifiers, or Apple-account configuration without explicit approval.
 

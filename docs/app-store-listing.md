@@ -127,19 +127,24 @@ App Review contact first/last name, telephone number, and account email must be 
 
 All launch screenshots use real application UI staged around a well-known public landmark in **Downtown DC**. Any visible addresses are public records in that demonstration area. They contain no coordinate, saved Home, email, or location associated with the developer or tester. Matching sets are generated for App Store Connect's 6.9-inch (1320 × 2868) and 6.5-inch (1284 × 2778) portrait slots.
 
-1. **Know what’s happening nearby.** — Near You overview, status totals, categories, and trends
-2. **See the city change in real time.** — clustered map, search radius, and mixed public sources
-3. **Requests and permits. One clear timeline.** — chronological Requests view
+1. **Your neighborhood, at a glance.** — Near You overview, status totals, categories, and trends
+2. **See what’s changing around you.** — clustered map, search radius, and mixed public sources
+3. **Requests and permits, together.** — chronological Requests view
 4. **Follow the places that matter.** — Home, wards, address search, and followed places
+
+The light-mode compositions present each unmodified capture within Apple’s native
+iPhone 17 Pro continuous display geometry, generated from an iOS Simulator alpha
+mask. Their restrained device presentation uses proportions measured from the
+Simulator’s iPhone 17 Pro window, with large storefront-readable headlines.
 
 ## Still required before App Review
 
-- Physically verify build 4's distinct photo-library/camera actions and its official DC311 app handoff plus website fallback.
+- Physically verify build 5's distinct photo-library/camera actions and its official DC311 app handoff plus website fallback.
 - Do not advertise nearby restaurant inspections until a useful map is backed by an approved source; remove or clearly limit the placeholder experience if it is not ready.
-- Add a visible support email to the public support section.
+- Confirm the monitored private contact form remains available at the public support URL.
 - Complete the age-rating questionnaire in App Store Connect.
 - Complete the App Privacy questionnaire using the audited answers above.
 - Enter the private App Review contact phone number and email.
 - Select build 1.0, complete export compliance, and choose manual release.
 - Finish the physical-device quality gates in `docs/app-store-readiness.md`.
-- Do not submit for public App Review until the internal TestFlight pass is stable and the repository privacy-history audit is closed.
+- Do not submit for public App Review until the external TestFlight pass is stable.
