@@ -23,6 +23,12 @@ final class PulseDataStore {
         let requestTrendSnapshot: RequestTrendSnapshot?
     }
 
+    private enum MapCoverageAttempt {
+        case success([String])
+        case failed(String)
+        case cancelled
+    }
+
     enum Period: Int, CaseIterable, Identifiable, Codable {
         case thirtyDays = 30
         case ninetyDays = 90
@@ -236,6 +242,8 @@ final class PulseDataStore {
     /// Prepares a denser, monotonic result set for the map. A larger search radius
     /// first includes the close-in quarter-mile results so zooming out cannot hide
     /// a nearby record merely because newer, farther-away records filled a page.
+    /// The selected radius then receives its own independent page budget; merged
+    /// close-in items must never consume that wider-radius budget.
     func prepareMapResults() async {
         mapCoverageSequence += 1
         let coverageSequence = mapCoverageSequence
@@ -248,36 +256,40 @@ final class PulseDataStore {
             if coverageSequence == mapCoverageSequence { isMapCoverageLoading = false }
         }
 
-        do {
-            if selectedRadius != .quarterMile {
-                try await mergeCoverageItems(
-                    coordinate: coordinate,
-                    radius: .quarterMile,
-                    period: selectedPeriod,
-                    limit: Self.mapResultLimit,
-                    requestSequence: requestSequence,
-                    selectedRadius: selectedRadius
-                )
-                try Task.checkCancellation()
-                guard requestSequence == loadSequence,
-                      coordinate == searchCoordinate,
-                      selectedRadius == radius,
-                      selectedPeriod == period else { return }
-            }
-
-            await prefetchSummary(
-                maximumItemCount: Self.mapResultLimit,
-                pageSize: Self.mapPageSize
+        if selectedRadius != .quarterMile {
+            async let closeInAttempt = mapCoverageAttempt(
+                coordinate: coordinate,
+                radius: .quarterMile,
+                period: selectedPeriod,
+                requestSequence: requestSequence,
+                coverageSequence: coverageSequence,
+                selectedRadius: selectedRadius,
+                failureMessage: "Some close-in map results could not be verified. Pull to refresh and try again."
             )
-            saveCache()
-        } catch is CancellationError {
-            return
-        } catch {
-            guard requestSequence == loadSequence else { return }
-            sourceWarnings = Array(Set(sourceWarnings + [
-                "Some close-in map results could not be verified. Pull to refresh and try again."
-            ])).sorted()
+            async let selectedAttempt = mapCoverageAttempt(
+                coordinate: coordinate,
+                radius: selectedRadius,
+                period: selectedPeriod,
+                requestSequence: requestSequence,
+                coverageSequence: coverageSequence,
+                selectedRadius: selectedRadius,
+                failureMessage: "Some map results could not be loaded. Pull to refresh and try again."
+            )
+            let attempts = await [closeInAttempt, selectedAttempt]
+            guard finishMapCoverage(attempts, coverageSequence: coverageSequence) else { return }
+        } else {
+            let attempt = await mapCoverageAttempt(
+                coordinate: coordinate,
+                radius: selectedRadius,
+                period: selectedPeriod,
+                requestSequence: requestSequence,
+                coverageSequence: coverageSequence,
+                selectedRadius: selectedRadius,
+                failureMessage: "Some map results could not be loaded. Pull to refresh and try again."
+            )
+            guard finishMapCoverage([attempt], coverageSequence: coverageSequence) else { return }
         }
+        saveCache()
     }
 
     func retry() async {
@@ -352,11 +364,13 @@ final class PulseDataStore {
         period: Period,
         limit: Int,
         requestSequence: Int,
+        coverageSequence: Int,
         selectedRadius: Radius
-    ) async throws {
+    ) async throws -> [String] {
         var loadedCount = 0
         var offset = 0
         var hasMore = true
+        var warnings: [String] = []
         while hasMore, loadedCount < limit {
             try Task.checkCancellation()
             let page = try await repository.nearbyItems(
@@ -367,15 +381,61 @@ final class PulseDataStore {
                 limit: Self.mapPageSize
             )
             guard requestSequence == loadSequence,
+                  coverageSequence == mapCoverageSequence,
                   coordinate == searchCoordinate,
                   selectedRadius == self.radius,
                   period == self.period else { throw CancellationError() }
             merge(page.items)
+            warnings += page.warnings
             loadedCount += page.items.count
             guard page.nextOffset > offset || !page.hasMore else { break }
             offset = page.nextOffset
             hasMore = page.hasMore
         }
+        return warnings
+    }
+
+    private func mapCoverageAttempt(
+        coordinate: PulseItem.Coordinate,
+        radius: Radius,
+        period: Period,
+        requestSequence: Int,
+        coverageSequence: Int,
+        selectedRadius: Radius,
+        failureMessage: String
+    ) async -> MapCoverageAttempt {
+        do {
+            return .success(try await mergeCoverageItems(
+                coordinate: coordinate,
+                radius: radius,
+                period: period,
+                limit: Self.mapResultLimit,
+                requestSequence: requestSequence,
+                coverageSequence: coverageSequence,
+                selectedRadius: selectedRadius
+            ))
+        } catch is CancellationError {
+            return .cancelled
+        } catch {
+            return .failed(failureMessage)
+        }
+    }
+
+    private func finishMapCoverage(
+        _ attempts: [MapCoverageAttempt],
+        coverageSequence: Int
+    ) -> Bool {
+        guard coverageSequence == mapCoverageSequence,
+              !attempts.contains(where: { if case .cancelled = $0 { true } else { false } }) else { return false }
+        let warnings = attempts.flatMap { attempt -> [String] in
+            switch attempt {
+            case .success(let warnings): warnings
+            case .failed(let warning): [warning]
+            case .cancelled: []
+            }
+        }
+        sourceWarnings = Array(Set(sourceWarnings + warnings)).sorted()
+        return true
     }
 
     private func merge(_ additionalItems: [PulseItem]) {
