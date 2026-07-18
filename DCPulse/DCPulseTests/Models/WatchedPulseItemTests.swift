@@ -79,13 +79,14 @@ struct WatchedPulseItemTests {
         #expect(!watched.isArchived)
     }
 
-    @Test func legacyWatchWithoutOriginDefaultsToExplicit() {
+    @Test func legacyWatchWithoutOriginDefaultsToExplicit() throws {
         let now = Date(timeIntervalSince1970: 1_700_000_000)
         let watched = WatchedPulseItem(item: makeItem(status: .active, openedAt: now), now: now)
         watched.originRawValue = nil
 
         #expect(watched.origin == .explicit)
-        #expect(WatchLifecyclePolicy.gracePeriod(for: watched.origin) == 30 * 24 * 60 * 60)
+        let gracePeriod = try #require(WatchLifecyclePolicy.gracePeriod(for: watched.origin))
+        #expect(gracePeriod == WatchLifecyclePolicy.defaultExplicitGracePeriod)
     }
 
     @Test func legacyResolvedWatchStartsGraceFromLastSeenDate() {
@@ -97,6 +98,21 @@ struct WatchedPulseItemTests {
         #expect(watched.archiveIfGracePeriodExpired(now: now.addingTimeInterval(31 * 24 * 60 * 60)))
         #expect(watched.terminalAt == now)
         #expect(watched.isArchived)
+    }
+
+    @Test func explicitWatchHonorsCustomGraceAndNeverChoices() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let watched = WatchedPulseItem(item: makeItem(status: .active, openedAt: now), now: now)
+        watched.update(from: makeItem(status: .resolved, openedAt: now), now: now.addingTimeInterval(60))
+
+        #expect(!watched.archiveIfGracePeriodExpired(
+            now: now.addingTimeInterval(120 * 24 * 60 * 60),
+            explicitGracePeriod: nil
+        ))
+        #expect(watched.archiveIfGracePeriodExpired(
+            now: now.addingTimeInterval(8 * 24 * 60 * 60),
+            explicitGracePeriod: 7 * 24 * 60 * 60
+        ))
     }
 
     private func makeItem(status: PulseItem.Status, openedAt: Date) -> PulseItem {

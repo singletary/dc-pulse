@@ -52,12 +52,19 @@ final class WatchedPulseItem {
     }
 
     @MainActor @discardableResult
-    func archiveIfGracePeriodExpired(now: Date = .now) -> Bool {
+    func archiveIfGracePeriodExpired(
+        now: Date = .now,
+        explicitGracePeriod: TimeInterval? = WatchLifecyclePolicy.defaultExplicitGracePeriod
+    ) -> Bool {
         if terminalAt == nil, statusRawValue == PulseItem.Status.resolved.rawValue {
             terminalAt = lastSeenAt
         }
         guard archivedAt == nil, let terminalAt,
-              now.timeIntervalSince(terminalAt) >= WatchLifecyclePolicy.gracePeriod(for: origin) else {
+              let gracePeriod = WatchLifecyclePolicy.gracePeriod(
+                for: origin,
+                explicitGracePeriod: explicitGracePeriod
+              ),
+              now.timeIntervalSince(terminalAt) >= gracePeriod else {
             return false
         }
         archivedAt = now
@@ -84,10 +91,13 @@ final class WatchedPulseItem {
 }
 
 enum WatchLifecyclePolicy {
-    static let explicitGracePeriod: TimeInterval = 30 * 24 * 60 * 60
+    static let defaultExplicitGracePeriod: TimeInterval = 30 * 24 * 60 * 60
     static let automaticGracePeriod: TimeInterval = 7 * 24 * 60 * 60
 
-    static func gracePeriod(for origin: WatchedPulseItem.Origin) -> TimeInterval {
+    static func gracePeriod(
+        for origin: WatchedPulseItem.Origin,
+        explicitGracePeriod: TimeInterval? = defaultExplicitGracePeriod
+    ) -> TimeInterval? {
         switch origin {
         case .explicit: explicitGracePeriod
         case .automatic: automaticGracePeriod
