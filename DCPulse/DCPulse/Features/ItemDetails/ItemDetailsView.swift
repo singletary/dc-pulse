@@ -6,8 +6,10 @@ import UIKit
 struct ItemDetailsView: View {
     let item: PulseItem
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.openURL) private var openURL
     @Query private var watchedItems: [WatchedPulseItem]
     @State private var copyConfirmation: String?
+    @State private var showing311Handoff = false
 
     var body: some View {
         List {
@@ -66,8 +68,13 @@ struct ItemDetailsView: View {
                 switch item.id.source {
                 case .serviceRequests311:
                     Label("Public record supplied by DC 311 and DC Open Data", systemImage: "building.columns")
-                    Text("Use the request ID above when checking with DC 311.").font(.caption).foregroundStyle(.secondary)
-                    Link("Submit or check a request with DC 311", destination: URL(string: "https://311.dc.gov")!)
+                    Button { prepare311Handoff() } label: {
+                        Label("Check This Request in DC 311", systemImage: "magnifyingglass")
+                    }
+                    Text("Copies the request ID, then opens the official DC 311 service so you can paste it into the status search.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Link("Submit a new request with DC 311", destination: DC311RequestHandoff.officialURL)
                     Button { openXComposer() } label: {
                         Label("Ask for a status update on X", systemImage: "bubble.left.and.bubble.right")
                     }
@@ -106,6 +113,12 @@ struct ItemDetailsView: View {
         }
         .navigationTitle("Item Details")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Request ID copied", isPresented: $showing311Handoff) {
+            Button("Open DC 311") { openURL(DC311RequestHandoff.officialURL) }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(DC311RequestHandoff.instruction(for: item.id.sourceIdentifier))
+        }
         .overlay(alignment: .bottom) {
             if let copyConfirmation {
                 Label(copyConfirmation, systemImage: "checkmark.circle.fill")
@@ -145,6 +158,11 @@ struct ItemDetailsView: View {
             guard !opened else { return }
             UIApplication.shared.open(webURL)
         }
+    }
+
+    private func prepare311Handoff() {
+        UIPasteboard.general.string = item.id.sourceIdentifier
+        showing311Handoff = true
     }
 
     private func toggleWatch() {
