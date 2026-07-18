@@ -18,6 +18,7 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - Completed after build 5: location-denied and unavailable launches retain useful, labeled Downtown DC results with Settings, ward, address, and retry recovery; nearby out-of-area coordinates route to an inset supported DC search center, while distant locations use the same stable fallback. Adjusted coordinates remain distinct from current location and cannot be saved as Home. Four deterministic routing tests cover in-area, nearby, distant, and malformed-longitude inputs.
 - Completed after build 5: complete 311 status/category summaries retry once after a transient failure, and Near You explicitly withholds unavailable totals instead of substituting misleading counts from the first loaded page. Focused tests cover persistent and recoverable summary failures.
 - Completed after build 5: Places now links to a native About DC Pulse surface with installed version/build, public website/support/privacy/GitHub links, offline MIT terms, DC public-data attribution, and the independent-app disclaimer. URL and offline-content tests cover the trust boundary.
+- Completed after build 5: notification rows use the same tested request-category symbols as Near You, while unread state remains a separate accessible indicator.
 - Immediate release gate: address any Beta App Review feedback, then run a focused external TestFlight soak and triage tester-reported correctness, performance, navigation, and accessibility defects before public App Store review.
 - Remaining capability gate: `BGTaskScheduler` registration and Background Modes/background fetch approval.
 
@@ -115,7 +116,7 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 - Keep notification permission tied to explicit alert or auto-watch opt-in.
 - Add separate preferences for watched-item status changes and new items near Home.
 - Preserve the completed notification-to-Item Details routing and explicit unavailable-record fallback.
-- Replace generic notification-row dots with source/category icons shared with Near You, while preserving unread state through a separate tint or indicator and accessible labels.
+- **Completed:** notification rows use source/category symbols shared with Near You, preserve unread state separately, and expose an accessible category label.
 - Use source-aware titles and include only non-sensitive context on the lock screen.
 - Add an in-app explanation that delivery timing is controlled by iOS Background App Refresh settings.
 - Provide recovery UI when notifications or Background App Refresh are disabled in Settings.

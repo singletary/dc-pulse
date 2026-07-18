@@ -66,7 +66,7 @@ struct PulseView: View {
                 ForEach(topCategories, id: \.name) { category in
                     Button { showOnMap(category.name) } label: {
                         HStack(spacing: 12) {
-                            Text(categoryEmoji(category.name)).font(.title2)
+                            Text(PulseCategoryVisual.emoji(for: category.name)).font(.title2)
                                 .frame(width: 34, height: 34).background(.thinMaterial, in: Circle())
                             Text(categorySummary(name: category.name, count: category.count))
                                 .foregroundStyle(.primary)
@@ -91,7 +91,7 @@ struct PulseView: View {
                     ForEach(requestTrends.prefix(3)) { trend in
                         Button { showOnMap(trend.category) } label: {
                             HStack(spacing: 12) {
-                                Text(categoryEmoji(trend.category))
+                                Text(PulseCategoryVisual.emoji(for: trend.category))
                                     .font(.title2).frame(width: 32)
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(trend.category).font(.subheadline.weight(.semibold))
@@ -438,19 +438,6 @@ struct PulseView: View {
 
     private func normalized(_ value: String) -> String {
         String(value.lowercased().filter { $0.isLetter || $0.isNumber })
-    }
-
-    private func categoryEmoji(_ name: String) -> String {
-        let value = name.lowercased()
-        if value.contains("rodent") || value.contains("rat") { return "🐀" }
-        if value.contains("trash") || value.contains("dump") || value.contains("collection") { return "🗑️" }
-        if value.contains("graffiti") { return "🎨" }
-        if value.contains("tree") { return "🌳" }
-        if value.contains("pothole") || value.contains("street") { return "🚧" }
-        if value.contains("light") { return "💡" }
-        if value.contains("ddot") || value.contains("construction") { return "🚧" }
-        if value.contains("building") || value.contains("permit") { return "🏗️" }
-        return "📍"
     }
 
     private func categorySummary(name: String, count: Int) -> String {
