@@ -40,6 +40,65 @@ struct WatchedPulseItemTests {
         #expect(!watched.hasUnseenStatusChange)
     }
 
+    @Test func explicitWatchArchivesAfterThirtyDayResolvedGraceAndCanRestore() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let watched = WatchedPulseItem(item: makeItem(status: .active, openedAt: now), now: now)
+        watched.update(from: makeItem(status: .resolved, openedAt: now), now: now.addingTimeInterval(60))
+
+        #expect(!watched.archiveIfGracePeriodExpired(now: now.addingTimeInterval(29 * 24 * 60 * 60)))
+        #expect(watched.archiveIfGracePeriodExpired(now: now.addingTimeInterval(31 * 24 * 60 * 60)))
+        #expect(watched.isArchived)
+
+        let restoredAt = now.addingTimeInterval(32 * 24 * 60 * 60)
+        watched.restore(now: restoredAt)
+        #expect(!watched.isArchived)
+        #expect(watched.terminalAt == restoredAt)
+    }
+
+    @Test func automaticWatchUsesSevenDayGrace() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let watched = WatchedPulseItem(
+            item: makeItem(status: .active, openedAt: now),
+            origin: .automatic,
+            now: now
+        )
+        watched.update(from: makeItem(status: .resolved, openedAt: now), now: now.addingTimeInterval(60))
+
+        #expect(!watched.archiveIfGracePeriodExpired(now: now.addingTimeInterval(6 * 24 * 60 * 60)))
+        #expect(watched.archiveIfGracePeriodExpired(now: now.addingTimeInterval(8 * 24 * 60 * 60)))
+    }
+
+    @Test func reopeningDuringGraceCancelsPendingArchive() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let watched = WatchedPulseItem(item: makeItem(status: .active, openedAt: now), now: now)
+        watched.update(from: makeItem(status: .resolved, openedAt: now), now: now.addingTimeInterval(60))
+        watched.update(from: makeItem(status: .active, openedAt: now), now: now.addingTimeInterval(120))
+
+        #expect(watched.terminalAt == nil)
+        #expect(!watched.archiveIfGracePeriodExpired(now: now.addingTimeInterval(90 * 24 * 60 * 60)))
+        #expect(!watched.isArchived)
+    }
+
+    @Test func legacyWatchWithoutOriginDefaultsToExplicit() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let watched = WatchedPulseItem(item: makeItem(status: .active, openedAt: now), now: now)
+        watched.originRawValue = nil
+
+        #expect(watched.origin == .explicit)
+        #expect(WatchLifecyclePolicy.gracePeriod(for: watched.origin) == 30 * 24 * 60 * 60)
+    }
+
+    @Test func legacyResolvedWatchStartsGraceFromLastSeenDate() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let watched = WatchedPulseItem(item: makeItem(status: .resolved, openedAt: now), now: now)
+        watched.originRawValue = nil
+        watched.terminalAt = nil
+
+        #expect(watched.archiveIfGracePeriodExpired(now: now.addingTimeInterval(31 * 24 * 60 * 60)))
+        #expect(watched.terminalAt == now)
+        #expect(watched.isArchived)
+    }
+
     private func makeItem(status: PulseItem.Status, openedAt: Date) -> PulseItem {
         PulseItem(
             id: .init(source: .serviceRequests311, sourceIdentifier: "311-42"),

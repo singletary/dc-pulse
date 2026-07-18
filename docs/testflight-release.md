@@ -40,6 +40,7 @@ DC Pulse makes it easier to see recent DC 311 requests and public permit activit
 - Browse and sort Requests, including requests around followed places, then pull to refresh and confirm the active location and sort/filter choices remain intact.
 - Save Home, follow a place, watch an item, and exercise notification permission and manual refresh flows.
 - In Places > Alerts, independently toggle **Watched status changes** and **New items near Home**. Confirm the nearby choice is unavailable until auto-watch is enabled and that each preference survives a relaunch.
+- In Places, swipe an active watch to **Archive**, restore it from the **Archived** section, and confirm its Item Details watch action changes to **Restore Watch** while archived. Archived records should remain readable but should not be included in **Check Watched Items Now**.
 - Try denied, approximate, and out-of-DC location paths, plus offline and slow-network recovery.
 - Verify the X status-update composer and DC reporting handoffs, but do not submit a real report solely for testing.
 - Open **Report an Issue to 311** and verify **Choose Photo** opens Photos while **Take Photo** opens the camera. Use a non-sensitive test image, confirm the suggested type remains editable, dismiss the keyboard, and verify the continuation control stays reachable. Confirm the handoff offers the official app and website fallback without claiming submission.

@@ -32,12 +32,9 @@ struct ItemDetailsView: View {
                 Button {
                     toggleWatch()
                 } label: {
-                    Label(isWatched ? "Stop Watching" : "Watch This Item",
-                          systemImage: isWatched ? "bell.slash" : "bell.badge")
+                    Label(watchActionTitle, systemImage: watchActionIcon)
                 }
-                Text(isWatched
-                     ? "DC Pulse will track changes when fresh data is available."
-                     : "Watch this item to keep it available in Places and track status changes.")
+                Text(watchActionDescription)
                     .font(.caption).foregroundStyle(.secondary)
             }
             if let coordinate = item.coordinate {
@@ -149,7 +146,26 @@ struct ItemDetailsView: View {
         return watchedItems.first { $0.stableKey == key }
     }
 
-    private var isWatched: Bool { matchingWatch != nil }
+    private var isWatched: Bool { matchingWatch != nil && matchingWatch?.isArchived == false }
+
+    private var watchActionTitle: String {
+        if matchingWatch?.isArchived == true { return "Restore Watch" }
+        return isWatched ? "Stop Watching" : "Watch This Item"
+    }
+
+    private var watchActionIcon: String {
+        if matchingWatch?.isArchived == true { return "arrow.uturn.backward.circle" }
+        return isWatched ? "bell.slash" : "bell.badge"
+    }
+
+    private var watchActionDescription: String {
+        if matchingWatch?.isArchived == true {
+            return "Restore this item to active watch checks in Places."
+        }
+        return isWatched
+            ? "DC Pulse will track changes when fresh data is available."
+            : "Watch this item to keep it available in Places and track status changes."
+    }
 
     private func openXComposer() {
         guard let nativeURL = XPostComposer.nativeComposeURL(message: statusUpdateMessage),
@@ -167,7 +183,11 @@ struct ItemDetailsView: View {
 
     private func toggleWatch() {
         if let matchingWatch {
-            modelContext.delete(matchingWatch)
+            if matchingWatch.isArchived {
+                matchingWatch.restore()
+            } else {
+                modelContext.delete(matchingWatch)
+            }
         } else {
             modelContext.insert(WatchedPulseItem(item: item))
         }
