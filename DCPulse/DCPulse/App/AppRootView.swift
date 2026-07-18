@@ -134,11 +134,12 @@ struct AppRootView: View {
 
     private func synchronizeWatches(with items: [PulseItem]) {
         let currentItems = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
-        for watchedItem in watchedItems {
+        for watchedItem in activeWatchedItems {
             guard let watchedID = watchedItem.item?.id,
                   let current = currentItems[watchedID] else { continue }
             let previousStatus = PulseItem.Status(rawValue: watchedItem.statusRawValue)
             watchedItem.update(from: current)
+            watchedItem.archiveIfGracePeriodExpired()
             if let previousStatus,
                current.status.isNotificationWorthyTransition(from: previousStatus) {
                 recordStatusChange(item: current, previousStatus: previousStatus)
@@ -178,24 +179,25 @@ struct AppRootView: View {
             excluding: watchedKeys
         ) {
             let key = WatchedPulseItem.stableKey(for: item.id)
-            modelContext.insert(WatchedPulseItem(item: item))
+            modelContext.insert(WatchedPulseItem(item: item, origin: .automatic))
             recordNewNearbyItem(item)
             watchedKeys.insert(key)
         }
     }
 
     private func refreshWatchedItems() async {
-        let snapshots = watchedItems.compactMap(\.item)
+        let snapshots = activeWatchedItems.compactMap(\.item)
         guard !snapshots.isEmpty, !watchRefreshStatus.isRefreshing else { return }
         watchRefreshStatus.begin()
         do {
             let result = try await WatchedItemRefreshCoordinator.live.refresh(snapshots)
             let transitions = Dictionary(uniqueKeysWithValues: result.transitions.map { ($0.item.id, $0) })
             for item in result.refreshedItems {
-                guard let watched = watchedItems.first(where: { $0.stableKey == WatchedPulseItem.stableKey(for: item.id) }) else {
+                guard let watched = activeWatchedItems.first(where: { $0.stableKey == WatchedPulseItem.stableKey(for: item.id) }) else {
                     continue
                 }
                 watched.update(from: item)
+                watched.archiveIfGracePeriodExpired()
                 if let transition = transitions[item.id] {
                     recordStatusChange(item: transition.item, previousStatus: transition.previousStatus)
                     await notificationService.notifyStatusChange(
@@ -211,6 +213,10 @@ struct AppRootView: View {
         } catch {
             watchRefreshStatus.complete(success: false)
         }
+    }
+
+    private var activeWatchedItems: [WatchedPulseItem] {
+        watchedItems.filter { !$0.isArchived }
     }
 
     private func refreshWatchedItemsIfNeeded(now: Date = .now) async {

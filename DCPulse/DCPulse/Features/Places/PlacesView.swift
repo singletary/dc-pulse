@@ -106,14 +106,16 @@ struct PlacesView: View {
                 }
             } header: { Text("Saved places") }
             Section("Watched items") {
-                if watchedItems.isEmpty {
+                if activeWatchedItems.isEmpty {
                     ContentUnavailableView(
                         "No watched items",
                         systemImage: "bell",
-                        description: Text("Open a request or permit and choose Watch This Item.")
+                        description: Text(archivedWatchedItems.isEmpty
+                                          ? "Open a request or permit and choose Watch This Item."
+                                          : "Restore an archived item or watch another request or permit.")
                     )
                 } else {
-                    ForEach(watchedItems) { watched in
+                    ForEach(activeWatchedItems) { watched in
                         if let item = watched.item {
                             NavigationLink(value: item) {
                                 VStack(alignment: .leading, spacing: 5) {
@@ -126,16 +128,49 @@ struct PlacesView: View {
                                         }
                                     }
                                     Text(item.title).font(.subheadline).lineLimit(2)
-                                    Label(item.status.displayName, systemImage: "bell.fill")
+                                    HStack(spacing: 8) {
+                                        Label(item.status.displayName, systemImage: "bell.fill")
+                                        if watched.origin == .automatic {
+                                            Label("Near Home", systemImage: "house")
+                                        }
+                                    }
+                                    .font(.caption).foregroundStyle(.secondary)
+                                }
+                                .padding(.vertical, 3)
+                            }
+                            .swipeActions {
+                                Button("Delete", role: .destructive) { modelContext.delete(watched) }
+                                Button("Archive") { archive(watched) }
+                                    .tint(.indigo)
+                            }
+                        }
+                    }
+                }
+            }
+            if !archivedWatchedItems.isEmpty {
+                Section {
+                    ForEach(archivedWatchedItems) { watched in
+                        if let item = watched.item {
+                            NavigationLink(value: item) {
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text(item.category).font(.headline)
+                                    Text(item.title).font(.subheadline).lineLimit(2)
+                                    Label("Archived · \(item.status.displayName)", systemImage: "archivebox.fill")
                                         .font(.caption).foregroundStyle(.secondary)
                                 }
                                 .padding(.vertical, 3)
                             }
                             .swipeActions {
                                 Button("Delete", role: .destructive) { modelContext.delete(watched) }
+                                Button("Restore") { restore(watched) }
+                                    .tint(.green)
                             }
                         }
                     }
+                } header: {
+                    Text("Archived")
+                } footer: {
+                    Text("Resolved watches move here after 30 days, or after 7 days when added by auto-watch. Swipe to restore one at any time.")
                 }
             }
             Section("Alerts") {
@@ -146,7 +181,7 @@ struct PlacesView: View {
                     Button { navigation.requestWatchRefresh() } label: {
                         Label("Check Watched Items Now", systemImage: "arrow.clockwise")
                     }
-                    .disabled(watchedItems.isEmpty)
+                    .disabled(activeWatchedItems.isEmpty)
                 }
                 if let lastSuccess = watchRefreshStatus.lastSuccess {
                     LabeledContent("Last watch check") {
@@ -179,6 +214,24 @@ struct PlacesView: View {
     private func markSeen(_ item: PulseItem) {
         let key = WatchedPulseItem.stableKey(for: item.id)
         watchedItems.first { $0.stableKey == key }?.markStatusChangeSeen()
+        try? modelContext.save()
+    }
+
+    private var activeWatchedItems: [WatchedPulseItem] {
+        watchedItems.filter { !$0.isArchived }
+    }
+
+    private var archivedWatchedItems: [WatchedPulseItem] {
+        watchedItems.filter(\.isArchived)
+    }
+
+    private func archive(_ watched: WatchedPulseItem) {
+        watched.archive()
+        try? modelContext.save()
+    }
+
+    private func restore(_ watched: WatchedPulseItem) {
+        watched.restore()
         try? modelContext.save()
     }
 
