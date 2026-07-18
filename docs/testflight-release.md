@@ -9,7 +9,8 @@ DC Pulse 1.0 (5) has completed its initial internal physical-iPhone pass and is 
 - Watch alerts are evaluated when DC Pulse refreshes matching data. Immediate remote push and guaranteed background delivery are not part of this build.
 - Map coverage is deliberately bounded for performance. The app guarantees that its close-in quarter-mile pass is merged into wider-radius results, but very dense long-range searches may not display every older record.
 - Public DC datasets can be delayed, incomplete, temporarily unavailable, or use inconsistent status wording. Healthy sources remain visible when another source fails.
-- Notification rows still use generic unread dots; category icons and automatic watch archival remain planned refinements.
+- Notification rows now use category-aware symbols and direct detail navigation. Automatic archival of completed watches remains planned.
+- **Check This Request in DC 311** copies the public request ID and opens the official service for manual paste/search; it does not claim an unverified record-specific deep link.
 
 ## Before upload
 
@@ -43,6 +44,11 @@ DC Pulse makes it easier to see recent DC 311 requests and public permit activit
 - Open **Report an Issue to 311** and verify **Choose Photo** opens Photos while **Take Photo** opens the camera. Use a non-sensitive test image, confirm the suggested type remains editable, dismiss the keyboard, and verify the continuation control stays reachable. Confirm the handoff offers the official app and website fallback without claiming submission.
 - Verify camera denial, a photo without location metadata, current-location fallback, and manual address entry. Do not use a personal photo in App Store screenshots or shared test evidence.
 - Watch a newly opened request and confirm its automatic New-to-Active aging does not create a notification; confirm a meaningful Active-to-Resolved change still does.
+- Open the notification inbox and confirm each row has an appropriate category/source symbol, unread state remains distinguishable, and tapping opens the referenced details.
+- From Item Details, copy individual fields and **Copy All Details**; for a permit, verify **Copy Report Details** prepares useful, displayed context without hidden coordinates.
+- From a 311 item, verify the request-ID confirmation copies the exact identifier and opens the official search destination without implying a direct record link.
+- Open **About DC Pulse** from Places and verify version/build, website, support, privacy, GitHub, license, attribution, and independent-app disclosure both online and offline where applicable.
+- With system alerts enabled, confirm lock-screen notification text does not contain a street address while the in-app inbox retains the useful record detail.
 - Open **Restaurant Health Inspections** only to verify that its data-gated explanation is clear. Nearby restaurant report verification begins after a dependable source interface is approved.
 
 **Feedback contact**

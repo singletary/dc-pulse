@@ -66,10 +66,12 @@ The privacy policy should explain location use, direct DC ArcGIS requests, on-de
 
 - Location: allow, deny, approximate location, out-of-DC location, and Settings recovery.
 - Notifications: allow, deny, manual watched-item check, foreground banner, and notification tap routing.
+- Notification privacy: confirm system alert previews omit street addresses while the private in-app inbox retains the record context.
 - Appearance: Light/Dark Mode, large accessibility text, Reduce Motion, and VoiceOver.
 - Networking: Wi-Fi, cellular, airplane mode, slow connection, and recovery after returning online.
 - Persistence: cold launch, reinstall expectations, Home/follow/watch retention, and cache expiration.
 - External handoffs: X native composer, DC 311, DOB violation form, and DDOT/DC 311 reporting.
+- Trust and attribution: verify About links, installed version/build, offline MIT terms, public-data credits, and independent-app disclaimer.
 - Camera/photo draft: camera permission, Photos picker, location permission/denial, current-location fallback, manual address, and official-portal handoff.
 - Release: archive validation, privacy report review, TestFlight install, and crash-free smoke test.
 

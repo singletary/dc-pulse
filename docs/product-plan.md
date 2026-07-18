@@ -27,7 +27,7 @@ The current ranked execution plan is maintained in [roadmap.md](roadmap.md). Ver
 - **Building Permits:** verified live 2026 source with an independent adapter, combined nearby results, source filters, partial-failure handling, and permit-specific details.
 - **DDOT permits:** verified live 2026 source with an independent adapter, application-date semantics, combined nearby results, source filters, partial-failure handling, and permit-specific details.
 - **Map depth:** native MapKit clustering now groups dense nearby annotations dynamically while retaining source glyphs and lifecycle colors for individual items.
-- **Product depth:** Home and followed places, item watches, auto-watch rules, an on-device notification inbox, local alerts on detected refresh changes, and complete nearby 311 trend/category queries are implemented. Background scheduling, notification preferences, notification-row category icons, and widgets remain planned.
+- **Product depth:** Home and followed places, item watches, auto-watch rules, an on-device notification inbox with category-aware rows, privacy-bounded local alerts on detected refresh changes, and complete nearby 311 trend/category queries are implemented. Background scheduling, notification preferences, automatic watch archival, and widgets remain planned.
 
 ## Planned product depth
 

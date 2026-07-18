@@ -30,24 +30,27 @@ DC Pulse is a native, map-forward iPhone app for exploring recent public activit
 - **Places** saves Home and other meaningful DC locations on-device for quick return visits.
 - **Item Details** normalizes dates, status, agency, address, source attributes, and official civic-action destinations.
 - **Watches** track selected public records on-device and can produce local alerts when an in-app refresh detects a status change.
+- **Notifications** keep an on-device history with category-aware symbols and direct navigation back to the affected public record.
 - **Report to 311 (beta)** turns a deliberately selected or captured photo into an editable, on-device request draft before an official DC app or website handoff.
+- **Item actions** make public details easy to copy, prepare permit-violation context, and provide an honest copy-and-search handoff for 311 request IDs.
+- **About DC Pulse** keeps the website, support, privacy policy, source code, MIT terms, public-data attribution, and installed build information available inside the app.
 - **Restaurant Health (data-gated)** models DC's real pass/fail and violation terminology. Nearby inspection reports and a useful inspection map will ship only after a dependable source contract or a separately reviewed ingestion approach is established.
 
 Location is requested only to perform a nearby search. If access is unavailable, DC Pulse loads a clearly labeled Downtown DC view instead of leaving the app empty; people can open Settings, browse by ward, or search around a DC address. A device just outside the supported DC area is routed to a nearby search center inside DC without being represented or saved as the person's current location. The default search covers **half a mile** and the **last 30 days**, with additional radius and time options available on Map.
 
 ## Current TestFlight focus
 
-Build 5 is intentionally focused on reliability rather than adding another broad feature. External beta review is pending; once approved, testing should concentrate on:
+Build 5 is intentionally focused on reliability rather than another broad feature. External beta review is pending. The current post-build improvements include:
 
-1. Preserve close-in map records at wider radii, progressively load denser coverage, and expose an atomic **Reset** for all filters.
-2. Keep Near You status and category summaries coherent by using complete grouped totals rather than a partial first page.
-3. Add native pull-to-refresh to Requests, separate photo-library and camera actions, and suppress recency-only New-to-Active watch alerts.
-4. Repeat the physical-iPhone regression pass for location, filters, watched-item navigation, local alerts, photo input, and external handoffs before opening external testing.
-5. Investigate a durable restaurant-inspection feed and supported direct-311 contract after the external-beta stabilization pass.
+1. Independent close-in and selected-radius Map coverage, progressive loading feedback, stale-response rejection, and an atomic **Reset Filters** action.
+2. Complete grouped 311 status and category summaries with explicit unavailable states instead of misleading first-page totals.
+3. Native Requests pull-to-refresh, distinct Photos and Camera inputs, and silent age-derived New-to-Active watch transitions.
+4. Useful denied/unavailable/out-of-area location routing without mislabeling an adjusted search center as the person's current location.
+5. Category-aware notification rows, address-free lock-screen alert copy, copyable Item Details, an honest 311 ID lookup handoff, and an in-app About surface.
 
-Build 5 also removes redundant cold-launch requests, lets the Map become interactive while additional coverage arrives progressively, and isolates slow public-data sources so healthy results are not held up indefinitely.
+The next release gate is a focused physical-iPhone and external TestFlight soak covering location, filters, dense map coverage, watched-item navigation, local alerts, photo input, accessibility, and official external handoffs. Durable restaurant-inspection ingestion and supported direct 311 submission remain contract-gated follow-on work.
 
-Notification category icons, richer trends, widgets, and optional civic overlays remain planned, but they follow the submission-path and release-quality work above. See the [ranked roadmap](docs/roadmap.md) for acceptance criteria and dependency gates.
+Automatic watch archival, richer trends, widgets, and optional civic overlays remain planned, but they follow the submission-path and release-quality work above. See the [ranked roadmap](docs/roadmap.md) for acceptance criteria and dependency gates.
 
 ## Data sources
 
