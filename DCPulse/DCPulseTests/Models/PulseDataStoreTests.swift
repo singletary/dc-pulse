@@ -184,18 +184,39 @@ struct PulseDataStoreTests {
     @Test func largerMapRadiusAlsoIncludesCloseInCoverage() async throws {
         let broadItem = try #require(SampleData.items.first)
         let closeItem = try #require(SampleData.items.dropFirst().first)
+        let laterBroadItem = try #require(SampleData.items.dropFirst(2).first)
         let repository = StubPulseRepository(results: [
             .success(.init(items: [broadItem], nextOffset: 1, hasMore: false)),
-            .success(.init(items: [closeItem], nextOffset: 1, hasMore: false))
+            .success(.init(items: [closeItem], nextOffset: 1, hasMore: false)),
+            .success(.init(items: [broadItem, laterBroadItem], nextOffset: 2, hasMore: false))
         ])
         let store = PulseDataStore(repository: repository)
 
         await store.load()
         await store.prepareMapResults()
 
-        #expect(Set(store.items.map(\.id)) == Set([broadItem.id, closeItem.id]))
-        #expect(repository.radiusRequests == [0.5, 0.25])
-        #expect(repository.limitRequests == [30, 150])
+        #expect(Set(store.items.map(\.id)) == Set([broadItem.id, closeItem.id, laterBroadItem.id]))
+        #expect(repository.radiusRequests == [0.5, 0.25, 0.5])
+        #expect(repository.limitRequests == [30, 150, 150])
+        #expect(!store.isMapCoverageLoading)
+    }
+
+    @Test func selectedRadiusCoverageStillLoadsWhenCloseInVerificationFails() async throws {
+        let broadItem = try #require(SampleData.items.first)
+        let laterBroadItem = try #require(SampleData.items.dropFirst().first)
+        let repository = StubPulseRepository(results: [
+            .success(.init(items: [broadItem], nextOffset: 1, hasMore: false)),
+            .failure(TestError.expected),
+            .success(.init(items: [laterBroadItem], nextOffset: 1, hasMore: false))
+        ])
+        let store = PulseDataStore(repository: repository)
+
+        await store.load()
+        await store.prepareMapResults()
+
+        #expect(Set(store.items.map(\.id)) == Set([broadItem.id, laterBroadItem.id]))
+        #expect(repository.radiusRequests == [0.5, 0.25, 0.5])
+        #expect(store.sourceWarnings.contains { $0.contains("close-in") })
         #expect(!store.isMapCoverageLoading)
     }
 
