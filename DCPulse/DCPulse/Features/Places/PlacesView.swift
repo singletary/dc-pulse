@@ -156,6 +156,15 @@ struct PlacesView: View {
             }
         }
         .navigationTitle("Places")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink { AboutView() } label: {
+                    Image(systemName: "info.circle")
+                }
+                .accessibilityLabel("About DC Pulse")
+                .accessibilityIdentifier("places.about")
+            }
+        }
         .navigationDestination(for: PulseItem.self) { item in
             ItemDetailsView(item: item)
                 .onAppear { markSeen(item) }
