@@ -62,6 +62,47 @@ struct PulseDataStoreTests {
         #expect(!store.isRequestInsightsLoading)
     }
 
+    @Test func doesNotPresentPartialPageCountsAsCompleteWhenSummariesFail() async throws {
+        let loadedItem = try #require(SampleData.items.first)
+        let repository = StubPulseRepository(results: [
+            .success(.init(items: [loadedItem], nextOffset: 1, hasMore: true))
+        ])
+        let store = PulseDataStore(
+            repository: repository,
+            requestStatusSummaryRepository: FailingStatusSummaryRepository(),
+            requestTrendSummaryRepository: FailingTrendSummaryRepository()
+        )
+
+        await store.load()
+
+        #expect(store.state == .loaded)
+        #expect(store.requestStatusCountsUnavailable)
+        #expect(store.requestInsightsUnavailable)
+        #expect(store.requestCategoryCounts.isEmpty)
+        #expect(!store.isRequestSummaryLoading)
+        #expect(!store.isRequestInsightsLoading)
+    }
+
+    @Test func retriesATransientStatusSummaryFailureOnce() async throws {
+        let loadedItem = try #require(SampleData.items.first)
+        let repository = StubPulseRepository(results: [
+            .success(.init(items: [loadedItem], nextOffset: 1, hasMore: false))
+        ])
+        let summary = TransientStatusSummaryRepository(
+            counts: .init(new: 7, active: 11, resolved: 3)
+        )
+        let store = PulseDataStore(
+            repository: repository,
+            requestStatusSummaryRepository: summary
+        )
+
+        await store.load()
+
+        #expect(store.requestCount(for: .new) == 7)
+        #expect(!store.requestStatusCountsUnavailable)
+        #expect(await summary.attempts == 2)
+    }
+
     @Test func preservesContextInEmptyAndErrorStates() async throws {
         let coordinate = try #require(PulseItem.Coordinate(latitude: 38.90, longitude: -77.02))
         let emptyStore = PulseDataStore(repository: StubPulseRepository(results: [.success(.init(items: [], nextOffset: 0, hasMore: false))]))
@@ -235,5 +276,30 @@ private struct StubTrendSummaryRepository: RequestTrendSummaryRepositoryProtocol
 
     func trendSnapshot(coordinate: PulseItem.Coordinate, radiusMiles: Double, days: Int) async throws -> RequestTrendSnapshot {
         snapshot
+    }
+}
+
+private struct FailingStatusSummaryRepository: RequestStatusSummaryRepositoryProtocol {
+    func statusCounts(coordinate: PulseItem.Coordinate, radiusMiles: Double, days: Int) async throws -> RequestStatusCounts {
+        throw TestError.expected
+    }
+}
+
+private struct FailingTrendSummaryRepository: RequestTrendSummaryRepositoryProtocol {
+    func trendSnapshot(coordinate: PulseItem.Coordinate, radiusMiles: Double, days: Int) async throws -> RequestTrendSnapshot {
+        throw TestError.expected
+    }
+}
+
+private actor TransientStatusSummaryRepository: RequestStatusSummaryRepositoryProtocol {
+    private(set) var attempts = 0
+    let counts: RequestStatusCounts
+
+    init(counts: RequestStatusCounts) { self.counts = counts }
+
+    func statusCounts(coordinate: PulseItem.Coordinate, radiusMiles: Double, days: Int) async throws -> RequestStatusCounts {
+        attempts += 1
+        if attempts == 1 { throw TestError.expected }
+        return counts
     }
 }
