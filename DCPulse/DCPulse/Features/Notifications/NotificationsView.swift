@@ -117,11 +117,11 @@ private struct NotificationRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
+            Text(PulseCategoryVisual.emoji(for: category))
                 .font(.headline)
-                .foregroundStyle(color)
                 .frame(width: 32, height: 32)
                 .background(color.opacity(0.12), in: Circle())
+                .accessibilityLabel("\(category) request")
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(notification.title)
@@ -141,12 +141,7 @@ private struct NotificationRow: View {
         .padding(.vertical, 3)
     }
 
-    private var icon: String {
-        switch notification.kind {
-        case .statusChanged: "arrow.triangle.2.circlepath"
-        case .newNearbyItem: "location.badge.plus"
-        }
-    }
+    private var category: String { notification.item?.category ?? notification.title }
 
     private var color: Color {
         switch notification.kind {
