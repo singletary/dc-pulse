@@ -110,6 +110,25 @@ final class DCPulseUITests: XCTestCase {
     }
 
     @MainActor
+    func testAboutOpensFromPlacesWithTrustInformation() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let placesTab = app.tabBars.buttons["Places"]
+        XCTAssertTrue(placesTab.waitForExistence(timeout: 10))
+        placesTab.tap()
+        let about = app.buttons["places.about"]
+        XCTAssertTrue(about.waitForExistence(timeout: 10))
+        about.tap()
+
+        XCTAssertTrue(app.navigationBars["About DC Pulse"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["DC Pulse"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["about.website"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["about.privacy"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["about.source-code"].exists)
+    }
+
+    @MainActor
     func testCivicActionDestinationsOpenFromNearYou() throws {
         let app = XCUIApplication()
         app.launch()
