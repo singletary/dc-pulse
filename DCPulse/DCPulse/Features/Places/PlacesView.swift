@@ -215,9 +215,13 @@ struct PlacesView: View {
                 guard enabled else { return }
                 switch notificationService.authorizationState {
                 case .notDetermined, .unknown:
-                    Task { await notificationService.requestAuthorization() }
+                    Task {
+                        if await notificationService.requestAuthorization() {
+                            notificationService.newNearbyAlertsEnabled = true
+                        }
+                    }
                 case .authorized:
-                    notificationService.alertsEnabled = true
+                    notificationService.newNearbyAlertsEnabled = true
                 case .denied:
                     break
                 }
@@ -239,11 +243,16 @@ struct PlacesView: View {
             HStack { Spacer(); ProgressView(); Spacer() }
         case .notDetermined:
             Button {
-                Task { await notificationService.requestAuthorization() }
+                Task {
+                    if await notificationService.requestAuthorization() {
+                        notificationService.statusChangeAlertsEnabled = true
+                        notificationService.newNearbyAlertsEnabled = true
+                    }
+                }
             } label: {
-                Label("Enable Watched Item Alerts", systemImage: "bell.badge")
+                Label("Enable System Alerts", systemImage: "bell.badge")
             }
-            Text("DC Pulse will ask before sending alerts and only notifies you after a refresh detects a status change.")
+            Text("DC Pulse will ask before sending alerts and only notifies you after a data refresh finds a change.")
                 .font(.caption).foregroundStyle(.secondary)
         case .denied:
             Label("Notifications are off in Settings", systemImage: "bell.slash")
@@ -252,8 +261,14 @@ struct PlacesView: View {
                 Label("Open Settings", systemImage: "gear")
             }
         case .authorized:
-            Toggle("Watched item status alerts", isOn: $notifications.alertsEnabled)
-            Text("Alerts are sent after DC Pulse refreshes and finds that a watched request or permit changed status. Delivery is not immediate.")
+            Toggle("Watched status changes", isOn: $notifications.statusChangeAlertsEnabled)
+            Toggle("New items near Home", isOn: $notifications.newNearbyAlertsEnabled)
+                .disabled(!autoWatchSettings.isEnabled)
+            if !autoWatchSettings.isEnabled {
+                Text("Turn on Auto-watch nearby items to receive new-item alerts near Home.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Text("System alerts are sent only after DC Pulse refreshes and finds matching activity. Delivery is not immediate.")
                 .font(.caption).foregroundStyle(.secondary)
         }
     }

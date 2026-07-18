@@ -24,6 +24,7 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - Completed after build 5: Map close-in coverage and selected-radius coverage use independent, concurrent bounded page budgets, so merged quarter-mile items cannot suppress wider-radius pagination or double the wait serially; either pass can succeed independently and stale coverage passes are rejected.
 - Completed after build 5: Map keeps visible progress active through dense coverage, rejects stale category presentation during rapid changes, and uses context-correct compact, plural, hyphenated, and VoiceOver-friendly radius wording.
 - Completed after build 5: system status notifications omit street addresses from lock-screen content, while the private in-app inbox retains useful detail; Alerts and Notifications now state that updates arrive only after refresh and are not immediate.
+- Completed after build 5: system-alert preferences independently control watched status changes and new auto-watched items near Home. Newly discovered nearby-item alerts use privacy-safe lock-screen copy and open the saved public record; existing watched-alert preferences migrate forward.
 - Immediate release gate: address any Beta App Review feedback, then run a focused external TestFlight soak and triage tester-reported correctness, performance, navigation, and accessibility defects before public App Store review.
 - Remaining capability gate: `BGTaskScheduler` registration and Background Modes/background fetch approval.
 
@@ -117,7 +118,7 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 ### Notification experience
 
 - Keep notification permission tied to explicit alert or auto-watch opt-in.
-- Add separate preferences for watched-item status changes and new items near Home.
+- **Completed:** separate persisted system-alert preferences control watched-item status changes and new items near Home. Auto-watch opt-in enables the nearby choice after authorization, and disabling system permission does not erase the person's saved preferences.
 - Preserve the completed notification-to-Item Details routing and explicit unavailable-record fallback.
 - **Completed:** notification rows use source/category symbols shared with Near You, preserve unread state separately, and expose an accessible category label.
 - **Completed privacy boundary:** system notifications use source/category-aware titles and status transitions but omit street addresses from lock-screen content; full details remain in the in-app inbox.

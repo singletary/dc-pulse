@@ -6,25 +6,32 @@ import UserNotifications
 final class NotificationService {
     enum AuthorizationState { case unknown, notDetermined, denied, authorized }
 
-    private enum Key { static let alertsEnabled = "dcPulse.notifications.watchedItemsEnabled" }
+    private enum Key {
+        static let statusChangeAlertsEnabled = "dcPulse.notifications.watchedItemsEnabled"
+        static let newNearbyAlertsEnabled = "dcPulse.notifications.newNearbyItemsEnabled"
+    }
     private let center: UNUserNotificationCenter
     private let defaults: UserDefaults
 
     private(set) var authorizationState: AuthorizationState = .unknown
-    var alertsEnabled: Bool {
-        didSet { defaults.set(alertsEnabled, forKey: Key.alertsEnabled) }
+    var statusChangeAlertsEnabled: Bool {
+        didSet { defaults.set(statusChangeAlertsEnabled, forKey: Key.statusChangeAlertsEnabled) }
+    }
+    var newNearbyAlertsEnabled: Bool {
+        didSet { defaults.set(newNearbyAlertsEnabled, forKey: Key.newNearbyAlertsEnabled) }
     }
 
     init(center: UNUserNotificationCenter = .current(), defaults: UserDefaults = .standard) {
         self.center = center
         self.defaults = defaults
-        alertsEnabled = defaults.bool(forKey: Key.alertsEnabled)
+        let legacyPreference = defaults.bool(forKey: Key.statusChangeAlertsEnabled)
+        statusChangeAlertsEnabled = legacyPreference
+        newNearbyAlertsEnabled = defaults.object(forKey: Key.newNearbyAlertsEnabled) as? Bool ?? legacyPreference
     }
 
     func refreshAuthorizationState() async {
         let settings = await center.notificationSettings()
         authorizationState = Self.state(for: settings.authorizationStatus)
-        if authorizationState == .denied { alertsEnabled = false }
     }
 
     @discardableResult
@@ -32,11 +39,9 @@ final class NotificationService {
         do {
             let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
             await refreshAuthorizationState()
-            alertsEnabled = granted
             return granted
         } catch {
             await refreshAuthorizationState()
-            alertsEnabled = false
             return false
         }
     }
@@ -46,13 +51,18 @@ final class NotificationService {
         previousStatus: PulseItem.Status,
         changedAt: Date = .now
     ) async {
-        guard alertsEnabled, authorizationState == .authorized else { return }
+        guard statusChangeAlertsEnabled, authorizationState == .authorized else { return }
         let request = WatchedItemNotification.request(
             item: item,
             previousStatus: previousStatus,
             changedAt: changedAt
         )
         try? await center.add(request)
+    }
+
+    func notifyNewNearbyItem(item: PulseItem, discoveredAt: Date = .now) async {
+        guard newNearbyAlertsEnabled, authorizationState == .authorized else { return }
+        try? await center.add(NewNearbyItemNotification.request(item: item, discoveredAt: discoveredAt))
     }
 
     static func state(for status: UNAuthorizationStatus) -> AuthorizationState {
@@ -62,6 +72,21 @@ final class NotificationService {
         case .authorized, .provisional, .ephemeral: .authorized
         @unknown default: .unknown
         }
+    }
+}
+
+enum NewNearbyItemNotification {
+    static func request(item: PulseItem, discoveredAt: Date) -> UNNotificationRequest {
+        let content = UNMutableNotificationContent()
+        content.title = "New near Home · \(item.category)"
+        content.body = "Open DC Pulse for public record details."
+        content.sound = .default
+        content.userInfo = [
+            "source": item.id.source.rawValue,
+            "sourceIdentifier": item.id.sourceIdentifier
+        ]
+        let identifier = "nearby.\(WatchedPulseItem.stableKey(for: item.id)).\(discoveredAt.timeIntervalSince1970)"
+        return UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
     }
 }
 
