@@ -29,8 +29,8 @@ DC Pulse is a native, map-forward iPhone app for exploring recent public activit
 - **Requests** provides a chronological, sortable list for the current search or a followed place.
 - **Places** saves Home and other meaningful DC locations on-device for quick return visits.
 - **Item Details** normalizes dates, status, agency, address, source attributes, and official civic-action destinations.
-- **Watches** track selected public records on-device and can produce local alerts when an in-app refresh detects a status change.
-- **Notifications** keep an on-device history with category-aware symbols and direct navigation back to the affected public record.
+- **Watches** track selected public records on-device and can auto-watch new activity close to Home.
+- **Notifications** keep an on-device history with category-aware symbols and direct navigation back to the affected public record. Optional, privacy-safe system alerts can be chosen separately for watched status changes and new items near Home.
 - **Report to 311 (beta)** turns a deliberately selected or captured photo into an editable, on-device request draft before an official DC app or website handoff.
 - **Item actions** make public details easy to copy, prepare permit-violation context, and provide an honest copy-and-search handoff for 311 request IDs.
 - **About DC Pulse** keeps the website, support, privacy policy, source code, MIT terms, public-data attribution, and installed build information available inside the app.
@@ -47,6 +47,7 @@ Build 5 is intentionally focused on reliability rather than another broad featur
 3. Native Requests pull-to-refresh, distinct Photos and Camera inputs, and silent age-derived New-to-Active watch transitions.
 4. Useful denied/unavailable/out-of-area location routing without mislabeling an adjusted search center as the person's current location.
 5. Category-aware notification rows, address-free lock-screen alert copy, copyable Item Details, an honest 311 ID lookup handoff, and an in-app About surface.
+6. Independent system-alert choices for watched status changes and new auto-watched items near Home, with existing preferences migrated forward.
 
 The next release gate is a focused physical-iPhone and external TestFlight soak covering location, filters, dense map coverage, watched-item navigation, local alerts, photo input, accessibility, and official external handoffs. Durable restaurant-inspection ingestion and supported direct 311 submission remain contract-gated follow-on work.
 

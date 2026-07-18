@@ -231,6 +231,7 @@ struct AppRootView: View {
 
     private func recordNewNearbyItem(_ item: PulseItem) {
         insertNotificationIfNeeded(.newNearbyItem(item: item))
+        Task { await notificationService.notifyNewNearbyItem(item: item) }
     }
 
     private func insertNotificationIfNeeded(_ notification: InAppNotification) {

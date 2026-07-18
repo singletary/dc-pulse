@@ -39,6 +39,7 @@ DC Pulse makes it easier to see recent DC 311 requests and public permit activit
 - Open single and grouped map markers and confirm detail navigation and dismissal.
 - Browse and sort Requests, including requests around followed places, then pull to refresh and confirm the active location and sort/filter choices remain intact.
 - Save Home, follow a place, watch an item, and exercise notification permission and manual refresh flows.
+- In Places > Alerts, independently toggle **Watched status changes** and **New items near Home**. Confirm the nearby choice is unavailable until auto-watch is enabled and that each preference survives a relaunch.
 - Try denied, approximate, and out-of-DC location paths, plus offline and slow-network recovery.
 - Verify the X status-update composer and DC reporting handoffs, but do not submit a real report solely for testing.
 - Open **Report an Issue to 311** and verify **Choose Photo** opens Photos while **Take Photo** opens the camera. Use a non-sensitive test image, confirm the suggested type remains editable, dismiss the keyboard, and verify the continuation control stays reachable. Confirm the handoff offers the official app and website fallback without claiming submission.
@@ -49,6 +50,7 @@ DC Pulse makes it easier to see recent DC 311 requests and public permit activit
 - From a 311 item, verify the request-ID confirmation copies the exact identifier and opens the official search destination without implying a direct record link.
 - Open **About DC Pulse** from Places and verify version/build, website, support, privacy, GitHub, license, attribution, and independent-app disclosure both online and offline where applicable.
 - With system alerts enabled, confirm lock-screen notification text does not contain a street address while the in-app inbox retains the useful record detail.
+- With auto-watch enabled, confirm a newly discovered nearby item can create a privacy-safe system alert and that tapping it opens the saved record.
 - Open **Restaurant Health Inspections** only to verify that its data-gated explanation is clear. Nearby restaurant report verification begins after a dependable source interface is approved.
 
 **Feedback contact**
