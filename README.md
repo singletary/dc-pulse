@@ -33,7 +33,7 @@ DC Pulse is a native, map-forward iPhone app for exploring recent public activit
 - **Report to 311 (beta)** turns a deliberately selected or captured photo into an editable, on-device request draft before an official DC app or website handoff.
 - **Restaurant Health (data-gated)** models DC's real pass/fail and violation terminology. Nearby inspection reports and a useful inspection map will ship only after a dependable source contract or a separately reviewed ingestion approach is established.
 
-Location is requested only to perform a nearby search. If a usable DC location is unavailable, people can browse by ward or search around a DC address. The default search covers **half a mile** and the **last 30 days**, with additional radius and time options available on Map.
+Location is requested only to perform a nearby search. If access is unavailable, DC Pulse loads a clearly labeled Downtown DC view instead of leaving the app empty; people can open Settings, browse by ward, or search around a DC address. A device just outside the supported DC area is routed to a nearby search center inside DC without being represented or saved as the person's current location. The default search covers **half a mile** and the **last 30 days**, with additional radius and time options available on Map.
 
 ## Current TestFlight focus
 
