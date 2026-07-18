@@ -58,7 +58,16 @@ final class PulseDataStore {
         case oneMile = 1
 
         var id: Double { rawValue }
-        var label: String { rawValue == 1 ? "1 mile" : "\(rawValue.formatted()) mile" }
+        var compactLabel: String { "\(rawValue.formatted()) mi" }
+        var distanceLabel: String { rawValue == 1 ? "1 mile" : "\(rawValue.formatted()) miles" }
+        var radiusLabel: String { rawValue == 1 ? "1-mile radius" : "\(rawValue.formatted())-mile radius" }
+        var accessibilityLabel: String {
+            switch self {
+            case .quarterMile: "quarter-mile radius"
+            case .halfMile: "half-mile radius"
+            case .oneMile: "one-mile radius"
+            }
+        }
     }
 
     enum State: Equatable { case idle, loading, loaded, empty, failed(String) }

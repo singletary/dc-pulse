@@ -23,7 +23,7 @@ struct PlacesView: View {
                 Label {
                     VStack(alignment: .leading) {
                         Text(store.placeName).font(.headline)
-                        Text("\(store.radius.label) · \(store.period.label)").font(.subheadline).foregroundStyle(.secondary)
+                        Text("\(store.radius.compactLabel) · \(store.period.label)").font(.subheadline).foregroundStyle(.secondary)
                         if store.placeName == "Current Location", let label = locationService.locationLabel {
                             Text(label).font(.caption).foregroundStyle(.secondary)
                         }

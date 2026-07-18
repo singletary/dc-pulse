@@ -23,7 +23,7 @@ struct PulseView: View {
             Section {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(alignment: .firstTextBaseline) {
-                        Label("Within \(store.radius.label)", systemImage: "location.circle.fill")
+                        Label("Within \(store.radius.distanceLabel)", systemImage: "location.circle.fill")
                         Text("· Within the last \(store.period.queryDays) days")
                     }
                     .font(.subheadline).foregroundStyle(.secondary)

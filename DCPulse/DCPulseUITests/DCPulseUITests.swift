@@ -50,10 +50,16 @@ final class DCPulseUITests: XCTestCase {
         let radiusMenu = app.buttons["map.filter.radius"]
         XCTAssertTrue(radiusMenu.waitForExistence(timeout: 5))
         radiusMenu.tap()
-        XCTAssertTrue(app.buttons["0.25 mile"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["0.5 mile"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["1 mile"].waitForExistence(timeout: 5))
-        app.buttons["0.25 mile"].tap()
+        let quarterMile = app.buttons["map.radius.0.25"]
+        let halfMile = app.buttons["map.radius.0.5"]
+        let oneMile = app.buttons["map.radius.1.0"]
+        XCTAssertTrue(quarterMile.waitForExistence(timeout: 5))
+        XCTAssertTrue(halfMile.waitForExistence(timeout: 5))
+        XCTAssertTrue(oneMile.waitForExistence(timeout: 5))
+        XCTAssertEqual(quarterMile.label, "quarter-mile radius")
+        XCTAssertEqual(halfMile.label, "half-mile radius")
+        XCTAssertEqual(oneMile.label, "one-mile radius")
+        quarterMile.tap()
         let reset = app.buttons["map.filters.reset"]
         XCTAssertTrue(reset.waitForExistence(timeout: 5))
         XCTAssertTrue(reset.isEnabled)

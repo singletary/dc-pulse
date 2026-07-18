@@ -130,6 +130,14 @@ struct PulseDataStoreTests {
         #expect(repository.radiusRequests == [0.5, 0.25])
     }
 
+    @Test func radiusCopyMatchesControlAndAccessibilityContexts() {
+        #expect(PulseDataStore.Radius.quarterMile.compactLabel == "0.25 mi")
+        #expect(PulseDataStore.Radius.halfMile.distanceLabel == "0.5 miles")
+        #expect(PulseDataStore.Radius.halfMile.radiusLabel == "0.5-mile radius")
+        #expect(PulseDataStore.Radius.halfMile.accessibilityLabel == "half-mile radius")
+        #expect(PulseDataStore.Radius.oneMile.distanceLabel == "1 mile")
+    }
+
     @Test func reloadsSelectedTimeRange() async {
         let emptyPage = PulsePage(items: [], nextOffset: 0, hasMore: false)
         let repository = StubPulseRepository(results: [.success(emptyPage), .success(emptyPage)])
