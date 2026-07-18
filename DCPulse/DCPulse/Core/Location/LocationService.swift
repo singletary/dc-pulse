@@ -12,10 +12,12 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
         case located
         case denied
         case restricted
+        case outsideDC(DCLocationRoutingPolicy.Resolution)
         case failed(String)
     }
 
     private let manager: CLLocationManager
+    private let routingPolicy: DCLocationRoutingPolicy
     private var geocodingRequest: MKReverseGeocodingRequest?
     private(set) var state: State = .idle
     private(set) var coordinate: PulseItem.Coordinate?
@@ -26,8 +28,12 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
         state == .requestingPermission || state == .locating
     }
 
-    init(manager: CLLocationManager = CLLocationManager()) {
+    init(
+        manager: CLLocationManager = CLLocationManager(),
+        routingPolicy: DCLocationRoutingPolicy = .init()
+    ) {
         self.manager = manager
+        self.routingPolicy = routingPolicy
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
@@ -71,11 +77,13 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
             failLocation("Your location could not be determined.")
             return
         }
-        guard coordinate.isWithinDCServiceArea else {
-            let message = coordinate.longitude > 0
-                ? "You appear to be outside Washington, DC. In Simulator, use a negative longitude such as -77.03."
-                : "You appear to be outside the Washington, DC service area."
-            failLocation(message)
+        let resolution = routingPolicy.resolve(coordinate)
+        guard case .current = resolution else {
+            geocodingRequest?.cancel()
+            self.coordinate = nil
+            locationLabel = nil
+            state = .outsideDC(resolution)
+            updateSequence += 1
             return
         }
         self.coordinate = coordinate

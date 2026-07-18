@@ -35,6 +35,9 @@ struct PulseItem: Identifiable, Hashable, Codable, Sendable {
     }
 
     struct Coordinate: Hashable, Codable, Sendable {
+        static let dcLatitudeRange = 38.79...39.00
+        static let dcLongitudeRange = -77.13 ... -76.90
+
         let latitude: Double
         let longitude: Double
 
@@ -49,7 +52,7 @@ struct PulseItem: Identifiable, Hashable, Codable, Sendable {
         }
 
         var isWithinDCServiceArea: Bool {
-            (38.79...39.00).contains(latitude) && (-77.13 ... -76.90).contains(longitude)
+            Self.dcLatitudeRange.contains(latitude) && Self.dcLongitudeRange.contains(longitude)
         }
     }
 

@@ -52,10 +52,7 @@ struct AppRootView: View {
             await refreshWatchedItemsAfterLaunchDelay()
         }
         .onChange(of: locationService.updateSequence) { _, _ in
-            guard let coordinate = locationService.coordinate else { return }
-            Task {
-                await store.load(coordinate: coordinate, placeName: "Current Location")
-            }
+            Task { await loadResolvedLocation() }
         }
         .onChange(of: store.items) { _, items in
             scheduleWatchSynchronization(with: items)
@@ -101,10 +98,22 @@ struct AppRootView: View {
             try? await Task.sleep(for: .milliseconds(150))
             if Task.isCancelled { return }
         }
+        await loadResolvedLocation()
+    }
+
+    private func loadResolvedLocation() async {
         if let coordinate = locationService.coordinate {
             await store.load(coordinate: coordinate, placeName: "Current Location")
+        } else if case .outsideDC(let resolution) = locationService.state {
+            await store.load(
+                coordinate: resolution.searchCoordinate,
+                placeName: resolution.placeName
+            )
         } else {
-            await store.load()
+            await store.load(
+                coordinate: DCLocationRoutingPolicy.defaultCoordinate,
+                placeName: "Downtown DC"
+            )
         }
     }
 

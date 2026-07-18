@@ -1,12 +1,14 @@
 import CoreLocation
 import SwiftData
 import SwiftUI
+import UIKit
 
 struct PulseView: View {
     @Environment(PulseDataStore.self) private var store
     @Environment(LocationService.self) private var locationService
     @Environment(AppNavigation.self) private var navigation
     @Environment(HomeLocationStore.self) private var homeLocation
+    @Environment(\.openURL) private var openURL
     @Query private var inAppNotifications: [InAppNotification]
     @State private var showingWardPicker = false
     @State private var showingAddressSearch = false
@@ -42,6 +44,7 @@ struct PulseView: View {
                         }
                     }
                     locationControl
+                    locationGuidance
                 }
                 .padding(.vertical, 6)
             }
@@ -298,13 +301,81 @@ struct PulseView: View {
             Label("Finding your location…", systemImage: "location.fill").font(.subheadline).foregroundStyle(.secondary)
         case .located where store.placeName == "Current Location": EmptyView()
         case .denied:
-            Button("Use My Location") { locationService.requestCurrentLocation() }
+            EmptyView()
+        case .restricted:
+            EmptyView()
+        case .outsideDC:
+            EmptyView()
         case .failed:
             HStack { Button("Try Location Again") { locationService.requestCurrentLocation() }; Button("Choose Ward") { showingWardPicker = true } }
                 .buttonStyle(.borderless)
         default:
             Button("Use My Location") { locationService.requestCurrentLocation() }
         }
+    }
+
+    @ViewBuilder private var locationGuidance: some View {
+        switch locationService.state {
+        case .denied:
+            guidanceCard(
+                title: "Location is off",
+                message: "You’re browsing Downtown DC. Turn on location for requests near you.",
+                systemImage: "location.slash.fill",
+                showsSettings: true
+            )
+        case .restricted:
+            guidanceCard(
+                title: "Location is unavailable",
+                message: "You’re browsing Downtown DC. You can still choose a ward or search around an address.",
+                systemImage: "location.slash.fill"
+            )
+        case .failed:
+            guidanceCard(
+                title: "We couldn’t find your location",
+                message: "You’re browsing Downtown DC for now. Try again or choose another area.",
+                systemImage: "location.magnifyingglass"
+            )
+        case .outsideDC(let resolution):
+            guidanceCard(
+                title: "You appear to be outside DC",
+                message: resolution.placeName == "Near the DC Border"
+                    ? "Showing requests near the closest supported area inside DC."
+                    : "You’re too far away for a nearby DC search, so we’re showing Downtown DC.",
+                systemImage: "map.fill"
+            )
+        default:
+            EmptyView()
+        }
+    }
+
+    private func guidanceCard(
+        title: String,
+        message: String,
+        systemImage: String,
+        showsSettings: Bool = false
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(title, systemImage: systemImage)
+                .font(.subheadline.weight(.semibold))
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            HStack(spacing: 14) {
+                if showsSettings,
+                   let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                    Button("Open Settings") { openURL(settingsURL) }
+                } else {
+                    Button("Try Again") { locationService.requestCurrentLocation() }
+                }
+                Button("Choose Ward") { showingWardPicker = true }
+                Button("Search Address") { showingAddressSearch = true }
+            }
+            .font(.caption.weight(.semibold))
+            .buttonStyle(.borderless)
+        }
+        .padding(12)
+        .background(.indigo.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .contain)
     }
 
     private func metricButton(_ status: PulseItem.Status, _ color: Color) -> some View {
