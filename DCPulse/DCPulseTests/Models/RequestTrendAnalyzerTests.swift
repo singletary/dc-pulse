@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import DCPulse
 
@@ -40,5 +41,38 @@ struct RequestTrendAnalyzerTests {
 
         #expect(snapshot.trends.map(\.category) == ["Bulk", "Trees"])
         #expect(snapshot.trends[1].direction == .decreased)
+    }
+
+    @Test func provenanceSurvivesCacheEncoding() throws {
+        let coordinate = try #require(PulseItem.Coordinate(latitude: 38.90, longitude: -77.03))
+        let refreshedAt = Date(timeIntervalSince1970: 1_783_980_000)
+        var snapshot = RequestTrendAnalyzer.snapshot(
+            currentCounts: ["Bulk": 8],
+            previousCounts: ["Bulk": 4]
+        )
+        snapshot.provenance = .init(
+            source: .serviceRequests311,
+            coordinate: coordinate,
+            radiusMiles: 0.5,
+            selectedDays: 30,
+            currentPeriod: DateInterval(start: refreshedAt.addingTimeInterval(-1_296_000), end: refreshedAt),
+            previousPeriod: DateInterval(start: refreshedAt.addingTimeInterval(-2_592_000), end: refreshedAt.addingTimeInterval(-1_296_000)),
+            refreshedAt: refreshedAt
+        )
+
+        let restored = try JSONDecoder().decode(
+            RequestTrendSnapshot.self,
+            from: JSONEncoder().encode(snapshot)
+        )
+
+        #expect(restored == snapshot)
+    }
+
+    @Test func decodesLegacyCachedSnapshotWithoutProvenance() throws {
+        let data = Data(#"{"trends":[],"categories":["Bulk"],"categoryCounts":{"Bulk":4}}"#.utf8)
+        let restored = try JSONDecoder().decode(RequestTrendSnapshot.self, from: data)
+
+        #expect(restored.categories == ["Bulk"])
+        #expect(restored.provenance == nil)
     }
 }

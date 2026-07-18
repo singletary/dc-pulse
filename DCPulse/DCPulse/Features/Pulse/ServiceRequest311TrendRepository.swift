@@ -26,7 +26,17 @@ struct ServiceRequest311TrendRepository: RequestTrendSummaryRepositoryProtocol, 
 
         async let current = counts(where: currentClause, coordinate: coordinate, radiusMiles: radiusMiles)
         async let previous = counts(where: previousClause, coordinate: coordinate, radiusMiles: radiusMiles)
-        return try await RequestTrendAnalyzer.snapshot(currentCounts: current, previousCounts: previous)
+        var snapshot = try await RequestTrendAnalyzer.snapshot(currentCounts: current, previousCounts: previous)
+        snapshot.provenance = .init(
+            source: .serviceRequests311,
+            coordinate: coordinate,
+            radiusMiles: radiusMiles,
+            selectedDays: days,
+            currentPeriod: DateInterval(start: midpoint, end: currentDate),
+            previousPeriod: DateInterval(start: periodStart, end: midpoint),
+            refreshedAt: currentDate
+        )
+        return snapshot
     }
 
     private func counts(
