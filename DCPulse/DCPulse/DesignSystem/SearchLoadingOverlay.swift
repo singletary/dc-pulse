@@ -11,7 +11,7 @@ struct SearchLoadingOverlay: View {
                 .controlSize(.large)
             Text("Loading nearby requests")
                 .font(.headline)
-            Text("\(placeName) · \(radius.label) · \(period.label)")
+            Text("\(placeName) · \(radius.compactLabel) · \(period.label)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -19,6 +19,6 @@ struct SearchLoadingOverlay: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18))
         .shadow(radius: 10, y: 4)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Loading requests near \(placeName), within \(radius.label)")
+        .accessibilityLabel("Loading requests near \(placeName), within a \(radius.accessibilityLabel)")
     }
 }

@@ -237,12 +237,13 @@ struct PulseMapView: View {
     }
 
     private var isMapUpdating: Bool {
-        store.isLoading || isCategoryLoading
+        store.isLoading || store.isMapCoverageLoading || isCategoryLoading
     }
 
     private var mapLoadingLabel: String {
         if isCategoryLoading { return "Loading \(requestTypeFilter ?? "category") requests…" }
         if store.isLoading { return "Updating map…" }
+        if store.isMapCoverageLoading { return "Loading more map results…" }
         return "Updating map…"
     }
 
@@ -263,8 +264,11 @@ struct PulseMapView: View {
             isCategoryLoading = false
             return
         }
+        categoryItems = nil
         isCategoryLoading = true
-        defer { isCategoryLoading = false }
+        defer {
+            if categoryLoadContext == context { isCategoryLoading = false }
+        }
         do {
             let items = try await store.requestItems(in: context.category)
             try Task.checkCancellation()
@@ -286,7 +290,7 @@ struct PulseMapView: View {
         }
         if let statusFilter { parts.append(statusFilter.displayName) }
         if let requestTypeFilter { parts.append(requestTypeFilter) }
-        parts.append(store.radius.label)
+        parts.append(store.radius.compactLabel)
         parts.append(store.period.label)
         return parts.joined(separator: " · ")
     }
@@ -327,13 +331,14 @@ struct PulseMapView: View {
                 }
                 filterDisclosure(.radius, title: "Search radius", systemImage: "scope") {
                     ForEach(PulseDataStore.Radius.allCases) { radius in
-                        filterChoice(radius.label, isSelected: store.radius == radius) {
+                        filterChoice(radius.distanceLabel, isSelected: store.radius == radius) {
                             Task {
                                 await store.selectRadius(radius)
                                 await store.prepareMapResults()
                             }
                         }
                         .accessibilityIdentifier("map.radius.\(radius.rawValue)")
+                        .accessibilityLabel(radius.accessibilityLabel)
                     }
                 }
                 filterDisclosure(.category, title: "Category", systemImage: "tag") {

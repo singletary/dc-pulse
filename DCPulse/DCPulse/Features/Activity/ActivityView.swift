@@ -24,7 +24,7 @@ struct ActivityView: View {
                     Label {
                         VStack(alignment: .leading, spacing: 3) {
                             Text(store.placeName).font(.headline)
-                            Text("Within \(store.radius.label) · \(store.period.label)")
+                            Text("Within \(store.radius.distanceLabel) · \(store.period.label)")
                                 .font(.subheadline).foregroundStyle(.secondary)
                         }
                     } icon: {
