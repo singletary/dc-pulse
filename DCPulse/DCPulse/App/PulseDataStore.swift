@@ -308,6 +308,12 @@ final class PulseDataStore {
     var requestTrends: [RequestTrendAnalyzer.Trend] { requestTrendSnapshot?.trends ?? [] }
     var requestCategories: [String] { requestTrendSnapshot?.categories ?? [] }
     var requestCategoryCounts: [String: Int] { requestTrendSnapshot?.categoryCounts ?? [:] }
+    var requestStatusCountsUnavailable: Bool {
+        requestStatusSummaryRepository != nil && !isRequestSummaryLoading && requestStatusCounts == nil
+    }
+    var requestInsightsUnavailable: Bool {
+        requestTrendSummaryRepository != nil && !isRequestInsightsLoading && requestTrendSnapshot == nil
+    }
 
     func requestItems(in category: String, limit: Int = 250) async throws -> [PulseItem] {
         guard let requestCategoryRepository else {
@@ -440,11 +446,13 @@ final class PulseDataStore {
         days: Int
     ) async -> RequestStatusCounts? {
         guard let repository else { return nil }
-        return try? await repository.statusCounts(
-            coordinate: coordinate,
-            radiusMiles: radiusMiles,
-            days: days
-        )
+        return await retrySummary {
+            try await repository.statusCounts(
+                coordinate: coordinate,
+                radiusMiles: radiusMiles,
+                days: days
+            )
+        }
     }
 
     private nonisolated static func loadTrendSnapshot(
@@ -454,10 +462,32 @@ final class PulseDataStore {
         days: Int
     ) async -> RequestTrendSnapshot? {
         guard let repository else { return nil }
-        return try? await repository.trendSnapshot(
-            coordinate: coordinate,
-            radiusMiles: radiusMiles,
-            days: days
-        )
+        return await retrySummary {
+            try await repository.trendSnapshot(
+                coordinate: coordinate,
+                radiusMiles: radiusMiles,
+                days: days
+            )
+        }
+    }
+
+    private nonisolated static func retrySummary<Value: Sendable>(
+        _ operation: @escaping @Sendable () async throws -> Value
+    ) async -> Value? {
+        for attempt in 0..<2 {
+            do {
+                return try await operation()
+            } catch is CancellationError {
+                return nil
+            } catch {
+                guard attempt == 0 else { return nil }
+                do {
+                    try await Task.sleep(for: .milliseconds(150))
+                } catch {
+                    return nil
+                }
+            }
+        }
+        return nil
     }
 }

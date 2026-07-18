@@ -55,6 +55,14 @@ struct PulseView: View {
                     metricButton(.active, .orange)
                     metricButton(.resolved, .green)
                 }
+                if store.requestStatusCountsUnavailable || store.requestInsightsUnavailable {
+                    Button { Task { await store.retry() } } label: {
+                        Label("Refresh complete request counts", systemImage: "arrow.clockwise.circle")
+                    }
+                    Text("Some summary totals are temporarily unavailable. DC Pulse won’t substitute partial page counts.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 ForEach(topCategories, id: \.name) { category in
                     Button { showOnMap(category.name) } label: {
                         HStack(spacing: 12) {
@@ -102,6 +110,12 @@ struct PulseView: View {
                     Text("What’s trending nearby")
                 } footer: {
                     Text("Complete 311 totals from the latest \(trendWindowDays) days compared with the preceding \(trendWindowDays) days. Tap a trend to explore it on the map.")
+                }
+            } else if store.requestInsightsUnavailable {
+                Section("What’s trending nearby") {
+                    Label("Trend summary temporarily unavailable", systemImage: "chart.line.downtrend.xyaxis")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -246,6 +260,7 @@ struct PulseView: View {
     }
 
     private var topCategories: [(name: String, count: Int)] {
+        if store.requestInsightsUnavailable { return [] }
         if !store.requestCategoryCounts.isEmpty {
             return store.requestCategoryCounts
                 .map { (name: $0.key, count: $0.value) }
@@ -384,6 +399,8 @@ struct PulseView: View {
                 Group {
                     if store.isRequestSummaryLoading {
                         ProgressView().controlSize(.small)
+                    } else if store.requestStatusCountsUnavailable {
+                        Text("—")
                     } else {
                         Text("\(store.requestCount(for: status))")
                     }
@@ -400,6 +417,9 @@ struct PulseView: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("pulse.status.\(status.rawValue)")
+        .accessibilityValue(store.requestStatusCountsUnavailable
+                            ? "Complete count temporarily unavailable"
+                            : "\(store.requestCount(for: status))")
     }
 
     private func showOnMap(_ category: String) {
