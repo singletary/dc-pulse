@@ -16,6 +16,16 @@ struct ServiceRequest311TrendRepositoryTests {
 
         #expect(snapshot.categories == ["Bulk Collection", "Graffiti Removal", "Tree Pruning"])
         #expect(snapshot.trends.contains { $0.category == "Graffiti Removal" && $0.direction == .newlyObserved })
+        let provenance = try #require(snapshot.provenance)
+        #expect(provenance.source == .serviceRequests311)
+        #expect(provenance.coordinate == coordinate)
+        #expect(provenance.radiusMiles == 0.5)
+        #expect(provenance.selectedDays == 30)
+        #expect(provenance.refreshedAt == now)
+        #expect(provenance.currentPeriod.end == now)
+        let expectedDuration: TimeInterval = 1_296_000
+        #expect(provenance.currentPeriod.duration == expectedDuration)
+        #expect(provenance.previousPeriod.duration == expectedDuration)
         let queries = await client.queries
         #expect(queries.count == 2)
         #expect(queries.allSatisfy { $0.statistics.first?.statisticType == "count" })

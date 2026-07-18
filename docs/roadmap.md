@@ -25,6 +25,7 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - Completed after build 5: Map keeps visible progress active through dense coverage, rejects stale category presentation during rapid changes, and uses context-correct compact, plural, hyphenated, and VoiceOver-friendly radius wording.
 - Completed after build 5: system status notifications omit street addresses from lock-screen content, while the private in-app inbox retains useful detail; Alerts and Notifications now state that updates arrive only after refresh and are not immediate.
 - Completed after build 5: system-alert preferences independently control watched status changes and new auto-watched items near Home. Newly discovered nearby-item alerts use privacy-safe lock-screen copy and open the saved public record; existing watched-alert preferences migrate forward.
+- Completed after build 5: trend snapshots retain their DC 311 source, search coordinate, radius, selected period, comparison windows, and refresh date. Near You presents that context without exposing raw coordinates, so cached comparisons remain explainable.
 - Immediate release gate: address any Beta App Review feedback, then run a focused external TestFlight soak and triage tester-reported correctness, performance, navigation, and accessibility defects before public App Store review.
 - Remaining capability gate: `BGTaskScheduler` registration and Background Modes/background fetch approval.
 
@@ -137,7 +138,7 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 - Keep `PulseObservationRecord` as the on-device normalized request index, but separate “records observed” from historical state snapshots.
 - Add observation snapshots only where status-history analysis needs them; avoid unbounded duplicate storage.
 - **Completed foundation:** nearby 311 trends and the Map category catalog now use complete grouped ArcGIS statistics for two equal comparison periods; trend rows open the selected category on Map, where a targeted query retrieves its records.
-- Store trend query provenance, geography, period, and refresh date so the UI can explain exactly what a percentage represents.
+- **Completed:** store trend query provenance for data source, geography, radius, selected period, comparison windows, and refresh date; Near You explains the current context and cached freshness without showing raw coordinates.
 - Add retention and migration rules and verify trend calculations across radius, followed-place, and time-range changes.
 
 ## 7. Item-detail depth and civic actions — medium

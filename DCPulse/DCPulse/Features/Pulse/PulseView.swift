@@ -109,7 +109,10 @@ struct PulseView: View {
                 } header: {
                     Text("What’s trending nearby")
                 } footer: {
-                    Text("Complete 311 totals from the latest \(trendWindowDays) days compared with the preceding \(trendWindowDays) days. Tap a trend to explore it on the map.")
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(trendContextDescription)
+                        Text("Tap a trend to explore it on the map.")
+                    }
                 }
             } else if store.requestInsightsUnavailable {
                 Section("What’s trending nearby") {
@@ -234,6 +237,34 @@ struct PulseView: View {
     }
 
     private var trendWindowDays: Int { max(1, store.period.queryDays / 2) }
+
+    private var trendContextDescription: String {
+        guard let provenance = store.requestTrendSnapshot?.provenance else {
+            return "Complete DC 311 totals from the latest \(trendWindowDays) days compared with the preceding \(trendWindowDays) days."
+        }
+        let current = Self.trendPeriodFormatter.string(from: provenance.currentPeriod.start)
+            + "–" + Self.trendPeriodFormatter.string(from: provenance.currentPeriod.end)
+        let previous = Self.trendPeriodFormatter.string(from: provenance.previousPeriod.start)
+            + "–" + Self.trendPeriodFormatter.string(from: provenance.previousPeriod.end)
+        let refreshed = Self.trendRefreshFormatter.string(from: provenance.refreshedAt)
+        let radius = provenance.radiusMiles == 1 ? "1 mile" : "\(provenance.radiusMiles.formatted()) miles"
+        return "DC 311 totals within \(radius) of \(store.placeName). \(current) compared with \(previous). Updated \(refreshed)."
+    }
+
+    private static let trendPeriodFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = .current
+        formatter.setLocalizedDateFormatFromTemplate("MMM d")
+        return formatter
+    }()
+
+    private static let trendRefreshFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = .current
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter
+    }()
 
     private func trendDescription(_ trend: RequestTrendAnalyzer.Trend) -> String {
         switch trend.direction {

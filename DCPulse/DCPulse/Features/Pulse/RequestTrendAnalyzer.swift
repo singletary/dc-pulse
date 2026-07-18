@@ -1,10 +1,22 @@
 import Foundation
 
 struct RequestTrendSnapshot: Codable, Equatable, Sendable {
+    struct Provenance: Codable, Equatable, Sendable {
+        let source: PulseItem.Source
+        let coordinate: PulseItem.Coordinate
+        let radiusMiles: Double
+        let selectedDays: Int
+        let currentPeriod: DateInterval
+        let previousPeriod: DateInterval
+        let refreshedAt: Date
+    }
+
     var trends: [RequestTrendAnalyzer.Trend]
     var categories: [String]
     /// Complete counts for the selected period, not merely the first loaded page.
     var categoryCounts: [String: Int]
+    /// Exact query context for explaining the comparison and its freshness.
+    var provenance: Provenance? = nil
 }
 
 protocol RequestTrendSummaryRepositoryProtocol: Sendable {
