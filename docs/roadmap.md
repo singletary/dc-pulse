@@ -2,7 +2,7 @@
 
 This roadmap orders work by release value, correctness risk, and dependency. Items inside a priority are listed in recommended execution order.
 
-## Current release state — July 16, 2026
+## Current release state — July 18, 2026
 
 - TestFlight: version 1.0 (build 5) completed its initial internal physical-iPhone pass and is submitted for external beta review. No public App Store submission has been made.
 - Completed: Swift 6 actor-isolation warning cleanup for the current test suite.
@@ -40,13 +40,10 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - **Completed foundation:** use one stable, privacy-safe Downtown DC fallback for denied, restricted, unavailable, and distant location states; show non-blocking Settings, retry, ward, and address recovery; never launch a repeated ward chooser.
 - **Completed foundation:** keep raw device coordinates distinct from the effective query center. Nearby out-of-area locations route to an inset point in the supported service envelope, while adjusted and fallback searches are never labeled current location or persisted as Home.
 - Before App Store release, validate the 25-mile near/far threshold, approximate-location behavior, every side of the actual District boundary, banner recovery, relaunch, and later transition to a valid in-DC location on physical iPhones. Replace the rectangular service envelope with an authoritative local DC boundary polygon if edge testing finds misleading centers.
-- Diagnose intermittent incomplete Map results after changing source, category, status, radius, or time filters. Verify request cancellation, stale-response rejection, pagination reset, targeted-category loading, cache keys, loading-state transitions, and rapid successive changes without assuming which layer is responsible.
-- Make each accepted filter change produce one coherent result transaction: retain or clearly cover the previous annotations while loading, replace them only with results for the current filter state, complete required pagination, and never allow an older request to overwrite a newer selection.
-- Add a prominent **Reset Filters** action distinct from the current-location control. It should atomically restore the documented Map defaults—every default data source, all statuses and request types, the default radius, and the last-30-days period—then force a trustworthy reload for the active search center.
-- Keep location behavior separate: resetting filters must not unexpectedly move the map or change the active search center; the existing current-location action remains responsible for returning to the user's location.
-- Add deterministic tests for individual changes, reset behavior, cancellation races, cache separation, empty responses, partial source failures, and rapid multi-filter changes. Include a physical-iPhone regression that compares fresh launch, changed filters, and reset results for the same location.
-- After the current data-coherence defects are resolved, add native pull-to-refresh to the **Requests** timeline. Refresh the active location or followed place using its current radius, period, source, category, status, and sort choices rather than silently returning to defaults.
-- Keep the existing list visible while refreshing, show standard refresh progress, reject stale completions, avoid duplicate rows, preserve the user's scroll/navigation context where practical, and provide an accessible failure state with the last successful results intact. Share the same coherent refresh transaction and cache-update rules used by Near You and Map, with tests for rapid repeated pulls, cancellation, offline failure, partial source failure, and an empty response.
+- **Completed foundation:** filter changes reject stale category presentation, reset pagination correctly, keep loading feedback visible through dense coverage, and preserve healthy source results during partial failure. Continue a physical-iPhone stress pass with rapid source, category, status, radius, and time changes.
+- **Completed:** **Reset Filters** is distinct from current location and atomically restores every source, all statuses and categories, the half-mile radius, and last 30 days without moving the search center.
+- **Completed:** Requests supports native pull-to-refresh for the active location or followed place while preserving the current browsing and sort context.
+- Continue deterministic and physical-device coverage for cancellation races, cache separation, rapid repeated changes, offline recovery, empty responses, partial source failures, and the same-center radius inclusion invariant.
 - **Completed in build 3:** the new-311 draft supports keyboard dismissal, keeps its continuation action reachable, and has UI coverage for continuing while the keyboard is visible.
 - **Completed in build 3:** the 311 handoff offers the official DC311 app as its primary route and retains the official website as an explicit fallback instead of silently opening a blank page.
 - Run a repeatable physical-iPhone regression pass covering location authorization, out-of-DC recovery, initial loading, radius/time changes, followed-place browsing, map clustering, X compose, and notification authorization.
