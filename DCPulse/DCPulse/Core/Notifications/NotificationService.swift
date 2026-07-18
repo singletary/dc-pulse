@@ -73,9 +73,7 @@ enum WatchedItemNotification {
     ) -> UNNotificationRequest {
         let content = UNMutableNotificationContent()
         content.title = "Status changed · \(item.category)"
-        var body = "\(previousStatus.displayName) → \(item.status.displayName)"
-        if let address = item.address { body += "\n\(address)" }
-        content.body = body
+        content.body = "\(previousStatus.displayName) → \(item.status.displayName)"
         content.sound = .default
         content.userInfo = [
             "source": item.id.source.rawValue,

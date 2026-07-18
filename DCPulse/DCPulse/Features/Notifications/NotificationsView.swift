@@ -14,7 +14,7 @@ struct NotificationsView: View {
                 ContentUnavailableView(
                     "No notifications yet",
                     systemImage: "bell",
-                    description: Text("Updates to watched requests and new items discovered near home will appear here.")
+                    description: Text("Updates to watched requests and new items discovered near home will appear here after DC Pulse refreshes. Delivery is not immediate.")
                 )
             } else {
                 List {
@@ -29,6 +29,11 @@ struct NotificationsView: View {
                             ForEach(read) { notificationRow($0) }
                                 .onDelete { delete($0, from: read) }
                         }
+                    }
+                    Section {
+                        Label("Updates appear after DC Pulse refreshes its public data. Delivery is not immediate.", systemImage: "clock.arrow.circlepath")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }

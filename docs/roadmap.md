@@ -23,6 +23,7 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - Completed after build 5: a 311 item can copy its exact request ID and, after explicit confirmation, open the official DC 311 service with clear paste/search guidance instead of pretending a stable per-record URL exists.
 - Completed after build 5: Map close-in coverage and selected-radius coverage use independent, concurrent bounded page budgets, so merged quarter-mile items cannot suppress wider-radius pagination or double the wait serially; either pass can succeed independently and stale coverage passes are rejected.
 - Completed after build 5: Map keeps visible progress active through dense coverage, rejects stale category presentation during rapid changes, and uses context-correct compact, plural, hyphenated, and VoiceOver-friendly radius wording.
+- Completed after build 5: system status notifications omit street addresses from lock-screen content, while the private in-app inbox retains useful detail; Alerts and Notifications now state that updates arrive only after refresh and are not immediate.
 - Immediate release gate: address any Beta App Review feedback, then run a focused external TestFlight soak and triage tester-reported correctness, performance, navigation, and accessibility defects before public App Store review.
 - Remaining capability gate: `BGTaskScheduler` registration and Background Modes/background fetch approval.
 
@@ -122,8 +123,8 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 - Add separate preferences for watched-item status changes and new items near Home.
 - Preserve the completed notification-to-Item Details routing and explicit unavailable-record fallback.
 - **Completed:** notification rows use source/category symbols shared with Near You, preserve unread state separately, and expose an accessible category label.
-- Use source-aware titles and include only non-sensitive context on the lock screen.
-- Add an in-app explanation that delivery timing is controlled by iOS Background App Refresh settings.
+- **Completed privacy boundary:** system notifications use source/category-aware titles and status transitions but omit street addresses from lock-screen content; full details remain in the in-app inbox.
+- **Completed current-build disclosure:** Alerts and Notifications explain that updates arrive after a data refresh and are not immediate. Once background refresh is enabled, expand this copy to explain that scheduling is controlled by iOS.
 - Provide recovery UI when notifications or Background App Refresh are disabled in Settings.
 
 ### Verification and capability gate

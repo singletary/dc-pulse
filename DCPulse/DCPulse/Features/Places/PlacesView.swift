@@ -253,7 +253,7 @@ struct PlacesView: View {
             }
         case .authorized:
             Toggle("Watched item status alerts", isOn: $notifications.alertsEnabled)
-            Text("Alerts are sent when a refresh finds that a watched request or permit changed status.")
+            Text("Alerts are sent after DC Pulse refreshes and finds that a watched request or permit changed status. Delivery is not immediate.")
                 .font(.caption).foregroundStyle(.secondary)
         }
     }

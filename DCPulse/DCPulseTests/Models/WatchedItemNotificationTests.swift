@@ -22,8 +22,8 @@ struct WatchedItemNotificationTests {
         )
 
         #expect(request.content.title == "Status changed · Graffiti Removal")
-        #expect(request.content.body.contains("Active → Resolved"))
-        #expect(request.content.body.contains("9999 Example Avenue NW"))
+        #expect(request.content.body == "Active → Resolved")
+        #expect(!request.content.body.contains("9999 Example Avenue NW"))
         #expect(request.content.userInfo["sourceIdentifier"] as? String == "311-42")
         #expect(request.trigger == nil)
     }
