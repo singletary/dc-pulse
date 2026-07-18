@@ -29,7 +29,7 @@ DC Pulse is a native, map-forward iPhone app for exploring recent public activit
 - **Requests** provides a chronological, sortable list for the current search or a followed place.
 - **Places** saves Home and other meaningful DC locations on-device for quick return visits.
 - **Item Details** normalizes dates, status, agency, address, source attributes, and official civic-action destinations.
-- **Watches** track selected public records on-device, can auto-watch new activity close to Home, and move resolved records into a visible, restorable archive after a grace period.
+- **Watches** track selected public records on-device, can auto-watch new activity close to Home, and move resolved records into a visible, restorable archive after a configurable grace period.
 - **Notifications** keep an on-device history with category-aware symbols and direct navigation back to the affected public record. Optional, privacy-safe system alerts can be chosen separately for watched status changes and new items near Home.
 - **Report to 311 (beta)** turns a deliberately selected or captured photo into an editable, on-device request draft before an official DC app or website handoff.
 - **Item actions** make public details easy to copy, prepare permit-violation context, and provide an honest copy-and-search handoff for 311 request IDs.

@@ -20,6 +20,7 @@ struct AppRootView: View {
     @State private var navigation = AppNavigation()
     @State private var homeLocation = HomeLocationStore()
     @State private var autoWatchSettings = AutoWatchSettingsStore()
+    @State private var watchLifecycleSettings = WatchLifecycleSettingsStore()
     @State private var notificationService = NotificationService()
     @State private var watchRefreshStatus = WatchRefreshStatusStore()
     @State private var notificationPresentation: NotificationPresentation?
@@ -43,6 +44,7 @@ struct AppRootView: View {
         .environment(navigation)
         .environment(homeLocation)
         .environment(autoWatchSettings)
+        .environment(watchLifecycleSettings)
         .environment(notificationService)
         .environment(watchRefreshStatus)
         .task {
@@ -139,7 +141,9 @@ struct AppRootView: View {
                   let current = currentItems[watchedID] else { continue }
             let previousStatus = PulseItem.Status(rawValue: watchedItem.statusRawValue)
             watchedItem.update(from: current)
-            watchedItem.archiveIfGracePeriodExpired()
+            watchedItem.archiveIfGracePeriodExpired(
+                explicitGracePeriod: watchLifecycleSettings.explicitWatchGracePeriod.timeInterval
+            )
             if let previousStatus,
                current.status.isNotificationWorthyTransition(from: previousStatus) {
                 recordStatusChange(item: current, previousStatus: previousStatus)
@@ -197,7 +201,9 @@ struct AppRootView: View {
                     continue
                 }
                 watched.update(from: item)
-                watched.archiveIfGracePeriodExpired()
+                watched.archiveIfGracePeriodExpired(
+                    explicitGracePeriod: watchLifecycleSettings.explicitWatchGracePeriod.timeInterval
+                )
                 if let transition = transitions[item.id] {
                     recordStatusChange(item: transition.item, previousStatus: transition.previousStatus)
                     await notificationService.notifyStatusChange(

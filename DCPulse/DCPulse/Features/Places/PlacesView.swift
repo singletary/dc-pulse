@@ -7,6 +7,7 @@ struct PlacesView: View {
     @Environment(LocationService.self) private var locationService
     @Environment(HomeLocationStore.self) private var homeLocation
     @Environment(AutoWatchSettingsStore.self) private var autoWatchSettings
+    @Environment(WatchLifecycleSettingsStore.self) private var watchLifecycleSettings
     @Environment(AppNavigation.self) private var navigation
     @Environment(NotificationService.self) private var notificationService
     @Environment(WatchRefreshStatusStore.self) private var watchRefreshStatus
@@ -189,6 +190,17 @@ struct PlacesView: View {
                     }
                 }
             }
+            Section("Watch history") {
+                Picker("Archive resolved watches", selection: explicitWatchGraceBinding) {
+                    ForEach(WatchLifecycleSettingsStore.GracePeriod.allCases) { period in
+                        Text(period.label).tag(period)
+                    }
+                }
+                .accessibilityIdentifier("places.watchArchivePreference")
+                Text("This setting applies to items you choose to watch. Auto-watched items near Home archive after 7 days. Archived records remain available to restore.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .navigationTitle("Places")
         .toolbar {
@@ -286,6 +298,13 @@ struct PlacesView: View {
         Binding(
             get: { autoWatchSettings.distance },
             set: { autoWatchSettings.distance = $0 }
+        )
+    }
+
+    private var explicitWatchGraceBinding: Binding<WatchLifecycleSettingsStore.GracePeriod> {
+        Binding(
+            get: { watchLifecycleSettings.explicitWatchGracePeriod },
+            set: { watchLifecycleSettings.explicitWatchGracePeriod = $0 }
         )
     }
 
