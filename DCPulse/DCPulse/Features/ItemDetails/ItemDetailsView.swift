@@ -7,6 +7,7 @@ struct ItemDetailsView: View {
     let item: PulseItem
     @Environment(\.modelContext) private var modelContext
     @Query private var watchedItems: [WatchedPulseItem]
+    @State private var copyConfirmation: String?
 
     var body: some View {
         List {
@@ -20,6 +21,7 @@ struct ItemDetailsView: View {
                             Text(item.id.source == .serviceRequests311 ? "Submitted details" : "Work description")
                                 .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                             Text(summary)
+                                .textSelection(.enabled)
                         }
                     }
                 }.padding(.vertical, 6)
@@ -41,18 +43,24 @@ struct ItemDetailsView: View {
                     Map(initialPosition: .region(MKCoordinateRegion(center: coordinate.clLocationCoordinate, span: .init(latitudeDelta: 0.01, longitudeDelta: 0.01)))) {
                         Marker(item.title, coordinate: coordinate.clLocationCoordinate)
                     }.frame(height: 180).clipShape(RoundedRectangle(cornerRadius: 12))
-                    if let address = item.address { Label(address, systemImage: "mappin.and.ellipse") }
-                    if let area = item.wardOrNeighborhood { LabeledContent("Area", value: area) }
+                    if let address = item.address {
+                        CopyableDetailRow(label: "Address", value: address) { copy(address, label: "Address") }
+                    }
+                    if let area = item.wardOrNeighborhood {
+                        CopyableDetailRow(label: "Area", value: area) { copy(area, label: "Area") }
+                    }
                 }
             }
             Section("Details") {
-                LabeledContent("Source", value: item.id.source.displayName)
-                LabeledContent(identifierLabel, value: item.id.sourceIdentifier)
-                LabeledContent(primaryDateLabel) { Text(item.openedAt, format: .dateTime.month().day().year()) }
-                if let updatedAt = item.updatedAt { LabeledContent("Updated") { Text(updatedAt, format: .dateTime.month().day().year()) } }
-                if let closedAt = item.closedAt { LabeledContent("Completed") { Text(closedAt, format: .dateTime.month().day().year()) } }
-                if let agency = item.responsibleAgency { LabeledContent("Agency", value: agency) }
-                ForEach(item.sourceAttributes) { LabeledContent($0.label, value: $0.value) }
+                ForEach(detailFields) { field in
+                    CopyableDetailRow(label: field.label, value: field.value) {
+                        copy(field.value, label: field.label)
+                    }
+                }
+                Button { copy(ItemDetailsContent.summary(for: detailFields), label: "Details") } label: {
+                    Label("Copy All Details", systemImage: "doc.on.doc")
+                }
+                .accessibilityIdentifier("item-details.copy-all")
             }
             Section("Source") {
                 switch item.id.source {
@@ -84,32 +92,37 @@ struct ItemDetailsView: View {
                     Text(reportingDestination.guidance)
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    LabeledContent("Reference", value: item.id.sourceIdentifier)
-                    if let address = item.address {
-                        LabeledContent("Location", value: address)
+                    ForEach(violationFields) { field in
+                        CopyableDetailRow(label: field.label, value: field.value) {
+                            copy(field.value, label: field.label)
+                        }
                     }
+                    Button { copy(ItemDetailsContent.summary(for: violationFields), label: "Report details") } label: {
+                        Label("Copy Report Details", systemImage: "doc.on.doc")
+                    }
+                    .accessibilityIdentifier("item-details.copy-report")
                 }
             }
         }
         .navigationTitle("Item Details")
         .navigationBarTitleDisplayMode(.inline)
-    }
-
-    private var identifierLabel: String {
-        switch item.id.source {
-        case .serviceRequests311: "Request ID"
-        case .buildingPermits2026: "Permit ID"
-        case .ddotConstructionPermits2026: "Tracking or permit ID"
+        .overlay(alignment: .bottom) {
+            if let copyConfirmation {
+                Label(copyConfirmation, systemImage: "checkmark.circle.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(.regularMaterial, in: Capsule())
+                    .shadow(radius: 6, y: 2)
+                    .padding(.bottom, 12)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .accessibilityIdentifier("item-details.copy-confirmation")
+            }
         }
     }
 
-    private var primaryDateLabel: String {
-        switch item.id.source {
-        case .serviceRequests311: "Opened"
-        case .buildingPermits2026: "Issued"
-        case .ddotConstructionPermits2026: "Applied"
-        }
-    }
+    private var detailFields: [ItemDetailField] { ItemDetailsContent.fields(for: item) }
+    private var violationFields: [ItemDetailField] { ItemDetailsContent.violationFields(for: item) }
 
     private var statusUpdateMessage: String {
         var parts = ["@311DCGov Could you provide an update on DC 311 request \(item.id.sourceIdentifier)?", item.title]
@@ -141,5 +154,39 @@ struct ItemDetailsView: View {
             modelContext.insert(WatchedPulseItem(item: item))
         }
         try? modelContext.save()
+    }
+
+    private func copy(_ value: String, label: String) {
+        UIPasteboard.general.string = value
+        let confirmation = "\(label) copied"
+        withAnimation { copyConfirmation = confirmation }
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            guard copyConfirmation == confirmation else { return }
+            withAnimation { copyConfirmation = nil }
+        }
+    }
+}
+
+private struct CopyableDetailRow: View {
+    let label: String
+    let value: String
+    let copy: () -> Void
+
+    var body: some View {
+        LabeledContent {
+            HStack(spacing: 8) {
+                Text(value)
+                    .multilineTextAlignment(.trailing)
+                    .textSelection(.enabled)
+                Button(action: copy) {
+                    Image(systemName: "doc.on.doc")
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Copy \(label)")
+            }
+        } label: {
+            Text(label)
+        }
     }
 }
