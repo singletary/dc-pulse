@@ -98,6 +98,8 @@ struct PlacesView: View {
                         }
                     }
                     .foregroundStyle(.primary)
+                    .accessibilityIdentifier("places.savedPlace")
+                    .accessibilityValue(place.address)
                     .swipeActions {
                         Button("Delete", role: .destructive) { modelContext.delete(place) }
                     }

@@ -52,7 +52,7 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - **Completed in build 3:** the 311 handoff offers the official DC311 app as its primary route and retains the official website as an explicit fallback instead of silently opening a blank page.
 - Run a repeatable physical-iPhone regression pass covering location authorization, out-of-DC recovery, initial loading, radius/time changes, followed-place browsing, map clustering, X compose, and notification authorization.
 - Keep the Swift 6 actor-isolation warning baseline clean as new tests and concurrency boundaries are added.
-- **Completed:** deterministic UI coverage proves an archived watch can be restored and remains active after app relaunch without relying on live ArcGIS data. Continue adding UI coverage for followed-place selection, loading/error recovery, and item-detail actions.
+- **Completed:** deterministic UI coverage proves an archived watch can be restored across relaunch and a followed place opens the Map with its saved search context, without relying on live ArcGIS data. Continue adding UI coverage for loading/error recovery and item-detail actions.
 - Repeat the live 311, Building Permit, and DDOT field audit before each TestFlight release and update fixtures when a schema changes.
 - Add lightweight diagnostics for refresh failures without collecting precise location or home-address telemetry.
 

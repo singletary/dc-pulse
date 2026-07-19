@@ -27,6 +27,8 @@ struct PulseMapView: View {
             onSelection: { selectedGroup = $0 }
         )
         .accessibilityIdentifier("map.clustered")
+        .accessibilityLabel("Requests map")
+        .accessibilityValue(store.placeName)
         .ignoresSafeArea(edges: .vertical)
         .safeAreaInset(edge: .top) {
             Button {
