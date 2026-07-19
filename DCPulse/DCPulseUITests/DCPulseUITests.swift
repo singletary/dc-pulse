@@ -159,6 +159,27 @@ final class DCPulseUITests: XCTestCase {
     }
 
     @MainActor
+    func testFollowedPlaceSelectionOpensItsMapContext() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["DCPULSE_UI_TEST_SCENARIO"] = "followed-place-navigation"
+        app.launch()
+
+        openPlaces(in: app)
+        let savedPlace = app.buttons["places.savedPlace"]
+        scrollToElement(savedPlace, in: app)
+        XCTAssertEqual(savedPlace.value as? String, "Synthetic saved place, Washington, DC")
+        savedPlace.tap()
+
+        XCTAssertTrue(app.tabBars.buttons["Map"].isSelected)
+        XCTAssertTrue(app.navigationBars["Map"].waitForExistence(timeout: 10))
+        let map = app.otherElements["map.clustered"]
+        XCTAssertTrue(map.waitForExistence(timeout: 10))
+        let selectedContext = NSPredicate(format: "value == %@", "Synthetic saved place, Washington, DC")
+        expectation(for: selectedContext, evaluatedWith: map)
+        waitForExpectations(timeout: 10)
+    }
+
+    @MainActor
     func testCivicActionDestinationsOpenFromNearYou() throws {
         let app = XCUIApplication()
         app.launch()
