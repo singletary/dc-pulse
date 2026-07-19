@@ -27,4 +27,11 @@ struct WatchLifecycleSettingsStoreTests {
                 == WatchLifecyclePolicy.automaticGracePeriod
         )
     }
+
+    @Test func archiveDescriptionsMatchEveryPreference() {
+        #expect(WatchLifecycleSettingsStore.GracePeriod.sevenDays.archiveDescription == "7 days after resolution")
+        #expect(WatchLifecycleSettingsStore.GracePeriod.thirtyDays.archiveDescription == "30 days after resolution")
+        #expect(WatchLifecycleSettingsStore.GracePeriod.ninetyDays.archiveDescription == "90 days after resolution")
+        #expect(WatchLifecycleSettingsStore.GracePeriod.never.archiveDescription == "only when you archive them")
+    }
 }

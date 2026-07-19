@@ -135,6 +135,30 @@ final class DCPulseUITests: XCTestCase {
     }
 
     @MainActor
+    func testArchivedWatchCanBeRestoredAndSurvivesRelaunch() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["DCPULSE_UI_TEST_SCENARIO"] = "watch-restoration"
+        app.launch()
+
+        openPlaces(in: app)
+        let archivedWatch = app.buttons["places.watch.archived"]
+        scrollToElement(archivedWatch, in: app)
+        archivedWatch.swipeLeft()
+        let restore = app.buttons["places.watch.restore"]
+        XCTAssertTrue(restore.waitForExistence(timeout: 5))
+        restore.tap()
+        XCTAssertTrue(app.buttons["places.watch.active"].waitForExistence(timeout: 5))
+
+        app.terminate()
+        app.launchEnvironment.removeValue(forKey: "DCPULSE_UI_TEST_SCENARIO")
+        app.launch()
+
+        openPlaces(in: app)
+        XCTAssertTrue(app.buttons["places.watch.active"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["places.watch.archived"].exists)
+    }
+
+    @MainActor
     func testCivicActionDestinationsOpenFromNearYou() throws {
         let app = XCUIApplication()
         app.launch()
@@ -178,5 +202,12 @@ final class DCPulseUITests: XCTestCase {
         for _ in 0..<8 where !element.isHittable { app.swipeUp() }
         XCTAssertTrue(element.waitForExistence(timeout: 5))
         XCTAssertTrue(element.isHittable)
+    }
+
+    private func openPlaces(in app: XCUIApplication) {
+        let placesTab = app.tabBars.buttons["Places"]
+        XCTAssertTrue(placesTab.waitForExistence(timeout: 10))
+        placesTab.tap()
+        XCTAssertTrue(app.navigationBars["Places"].waitForExistence(timeout: 10))
     }
 }
