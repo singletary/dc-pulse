@@ -24,6 +24,15 @@ final class WatchLifecycleSettingsStore {
             guard self != .never else { return nil }
             return TimeInterval(rawValue * 24 * 60 * 60)
         }
+
+        var archiveDescription: String {
+            switch self {
+            case .sevenDays: "7 days after resolution"
+            case .thirtyDays: "30 days after resolution"
+            case .ninetyDays: "90 days after resolution"
+            case .never: "only when you archive them"
+            }
+        }
     }
 
     private enum Key {

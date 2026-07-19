@@ -48,6 +48,9 @@ struct AppRootView: View {
         .environment(notificationService)
         .environment(watchRefreshStatus)
         .task {
+#if DEBUG
+            UITestScenario.prepareIfRequested(in: modelContext)
+#endif
             await notificationService.refreshAuthorizationState()
             locationService.requestCurrentLocation()
             await loadInitialLocation()

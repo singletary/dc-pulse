@@ -52,7 +52,7 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - **Completed in build 3:** the 311 handoff offers the official DC311 app as its primary route and retains the official website as an explicit fallback instead of silently opening a blank page.
 - Run a repeatable physical-iPhone regression pass covering location authorization, out-of-DC recovery, initial loading, radius/time changes, followed-place browsing, map clustering, X compose, and notification authorization.
 - Keep the Swift 6 actor-isolation warning baseline clean as new tests and concurrency boundaries are added.
-- Add UI coverage for followed-place selection, loading/error recovery, item detail actions, and watched-item state restoration.
+- **Completed:** deterministic UI coverage proves an archived watch can be restored and remains active after app relaunch without relying on live ArcGIS data. Continue adding UI coverage for followed-place selection, loading/error recovery, and item-detail actions.
 - Repeat the live 311, Building Permit, and DDOT field audit before each TestFlight release and update fixtures when a schema changes.
 - Add lightweight diagnostics for refresh failures without collecting precise location or home-address telemetry.
 
@@ -116,7 +116,7 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 - **Completed foundation:** terminal-state watches are never silently deleted. Explicit watches retain a normalized resolved record for 30 days by default and automatic watches for 7 days before moving to a restorable **Archived** section and leaving routine refresh batches.
 - **Completed foundation:** terminal decisions use the adapters' normalized `.resolved` state, so source-specific raw wording stays outside the lifecycle policy. A record that reopens during its grace period cancels pending archival and resumes normal watch behavior.
 - **Completed preference:** notification history and the last observed details survive archival; Places provides **Archive** and **Restore** actions plus a persisted 7-day, 30-day, 90-day, or Never preference for explicit watches. Auto-watches remain fixed at seven days. Add bounded archive retention only after external-beta behavior is understood.
-- Add deterministic clock-injected tests for closure, grace-period expiry, reopening, manual archive/restore, app relaunch, missing source records, and differing source status vocabularies. Archived items must not remain in normal background-refresh batches.
+- **Completed restoration boundary:** clock-injected model tests cover closure, configurable grace-period expiry, reopening, and manual archive/restore; deterministic UI coverage verifies restoration across app relaunch. Continue coverage for missing source records, differing source status vocabularies, and explicit exclusion of archived items from normal refresh batches.
 
 ### Notification experience
 

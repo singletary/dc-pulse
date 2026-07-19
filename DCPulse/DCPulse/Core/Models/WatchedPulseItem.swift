@@ -91,10 +91,10 @@ final class WatchedPulseItem {
 }
 
 enum WatchLifecyclePolicy {
-    static let defaultExplicitGracePeriod: TimeInterval = 30 * 24 * 60 * 60
-    static let automaticGracePeriod: TimeInterval = 7 * 24 * 60 * 60
+    nonisolated static let defaultExplicitGracePeriod: TimeInterval = 30 * 24 * 60 * 60
+    nonisolated static let automaticGracePeriod: TimeInterval = 7 * 24 * 60 * 60
 
-    static func gracePeriod(
+    nonisolated static func gracePeriod(
         for origin: WatchedPulseItem.Origin,
         explicitGracePeriod: TimeInterval? = defaultExplicitGracePeriod
     ) -> TimeInterval? {

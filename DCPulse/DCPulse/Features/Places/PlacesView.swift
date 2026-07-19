@@ -139,10 +139,12 @@ struct PlacesView: View {
                                 }
                                 .padding(.vertical, 3)
                             }
+                            .accessibilityIdentifier("places.watch.active")
                             .swipeActions {
                                 Button("Delete", role: .destructive) { modelContext.delete(watched) }
                                 Button("Archive") { archive(watched) }
                                     .tint(.indigo)
+                                    .accessibilityIdentifier("places.watch.archive")
                             }
                         }
                     }
@@ -161,17 +163,19 @@ struct PlacesView: View {
                                 }
                                 .padding(.vertical, 3)
                             }
+                            .accessibilityIdentifier("places.watch.archived")
                             .swipeActions {
                                 Button("Delete", role: .destructive) { modelContext.delete(watched) }
                                 Button("Restore") { restore(watched) }
                                     .tint(.green)
+                                    .accessibilityIdentifier("places.watch.restore")
                             }
                         }
                     }
                 } header: {
                     Text("Archived")
                 } footer: {
-                    Text("Resolved watches move here after 30 days, or after 7 days when added by auto-watch. Swipe to restore one at any time.")
+                    Text("Resolved watches you choose move here \(watchLifecycleSettings.explicitWatchGracePeriod.archiveDescription). Auto-watched items move here after 7 days. Swipe to restore one at any time.")
                 }
             }
             Section("Alerts") {
