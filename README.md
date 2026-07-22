@@ -13,7 +13,7 @@
 
 DC Pulse is a native, map-forward iPhone app for exploring recent public activity around a location in Washington, DC. It turns DC’s ArcGIS and Open Data services into one approachable view of 311 service requests, building permits, and DDOT construction permits—without exposing people to raw GIS complexity.
 
-> **Project status:** Pre-release. Version 1.0 (build 5) is available to external TestFlight testers. Build 6 was uploaded on July 21, 2026. Build 7 is the next repository candidate, with additional summary consistency and bounded lifecycle-history improvements, and has not yet been archived or uploaded. DC Pulse has not been submitted for public App Store review.
+> **Project status:** Pre-release. Version 1.0 (build 6) is available to external TestFlight testers. Build 7 has been uploaded and is available to internal TestFlight testers, but has not yet been assigned to external testers. DC Pulse has not been submitted for public App Store review.
 
 <p align="center">
   <img src="marketing/app-store/screenshots/en-US/iPhone-6.9/01-near-you.png" width="23%" alt="DC Pulse Near You screen">
@@ -50,9 +50,9 @@ Build 6 packages the reliability and trust work completed after build 5:
 6. Independent system-alert choices for watched status changes and new auto-watched items near Home, with existing preferences migrated forward.
 7. Explainable trend provenance, reversible watched-item archival, configurable resolved-watch retention, and deterministic archive/restore and followed-place navigation coverage.
 
-The build 7 candidate additionally isolates auxiliary pagination warnings from primary source availability, makes the nearby category summary status-scoped and expandable, separates lifecycle transition history from the current observation index, and applies a documented one-year on-device retention and migration policy.
+Build 7 additionally isolates auxiliary pagination warnings from primary source availability, makes the nearby category summary status-scoped and expandable, separates lifecycle transition history from the current observation index, and applies a documented one-year on-device retention and migration policy.
 
-The next release gate is a focused physical-iPhone and external TestFlight soak of build 7 covering location, filters, dense map coverage, watched-item navigation, local alerts, photo input, accessibility, migration from an installed prior build, and official external handoffs. Durable restaurant-inspection ingestion and supported direct 311 submission remain contract-gated follow-on work.
+The next release gate is to complete build 7's internal TestFlight verification, assign it to the intended external group, and run a focused physical-iPhone and external TestFlight soak covering location, filters, dense map coverage, watched-item navigation, local alerts, photo input, accessibility, migration from an installed prior build, and official external handoffs. Durable restaurant-inspection ingestion and supported direct 311 submission remain contract-gated follow-on work.
 
 Richer long-term trends, widgets, and optional civic overlays remain planned, but they follow the submission-path and release-quality work above. See the [ranked roadmap](docs/roadmap.md) for acceptance criteria and dependency gates.
 

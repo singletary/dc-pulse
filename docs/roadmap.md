@@ -4,7 +4,7 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 
 ## Current release state — July 22, 2026
 
-- TestFlight: version 1.0 (build 5) is available to external testers. Build 6 was uploaded on July 21, 2026 and awaits processing/manual assignment to the intended testing group. Build 7 is the next repository candidate and has not yet been archived or uploaded. No public App Store submission has been made.
+- TestFlight: version 1.0 (build 6) is available to external testers. Build 7 has been uploaded and is available to internal TestFlight testers, but has not yet been assigned to external testers. No public App Store submission has been made.
 - Completed: Swift 6 actor-isolation warning cleanup for the current test suite.
 - Completed: live one-record schema smoke audit for all three ArcGIS layers.
 - Completed: privacy manifest with app-local UserDefaults required reason, copy-ready App Store metadata/review notes, and four privacy-reviewed 6.9-inch screenshots.
@@ -28,7 +28,7 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - Completed after build 5: trend snapshots retain their DC 311 source, search coordinate, radius, selected period, comparison windows, and refresh date. Near You presents that context without exposing raw coordinates, so cached comparisons remain explainable.
 - Completed after build 5: watched records now distinguish explicit and automatic origin, retain resolved items through default 30- and 7-day grace windows respectively, move expired watches into a visible restorable archive, and exclude archived items from routine refresh batches. Manual Archive and Restore actions preserve the saved record and notification history.
 - Completed after build 5: Places offers a persisted 7-, 30-, 90-day, or Never archive preference for explicitly watched resolved items. Auto-watched items retain their documented seven-day window independently.
-- Immediate release gate: archive, validate, and upload build 7, manually assign it after processing, then run a focused external TestFlight soak and triage tester-reported correctness, performance, migration, navigation, and accessibility defects before public App Store review.
+- Immediate release gate: complete build 7's internal TestFlight verification, assign it to the intended external testing group, then run a focused external TestFlight soak and triage tester-reported correctness, performance, migration, navigation, and accessibility defects before public App Store review.
 - Remaining capability gate: `BGTaskScheduler` registration and Background Modes/background fetch approval.
 
 ## Near-term discovery TODO — prioritized
@@ -75,7 +75,7 @@ The measurement plan, test matrix, home-screen concepts, and decision gates for 
 - Complete accessibility, Dynamic Type, VoiceOver, Reduce Motion, Light/Dark Mode, and small-screen checks.
 - **Completed assets:** four colorful screenshot compositions use Apple’s Simulator-derived continuous display mask, Simulator-measured device proportions, and storefront-readable headlines; matching 6.9-inch and 6.5-inch sets are produced by a reproducible generator. Verify the production icon and any additional required device-class presentation before submission.
 - **Completed:** About DC Pulse is reachable from Places and includes installed version/build, public website/support/privacy/GitHub links, offline MIT terms, DC public-data attribution, the independent/non-government-service disclaimer, and a clear distinction between app-source licensing and publisher-owned data terms. If package dependencies are added later, generate dependency-specific notices from verified license metadata.
-- Build 5 is externally available and build 6 is uploaded; build 7 is the next repository candidate. Complete build 7's focused external beta pass before public App Review submission.
+- Build 6 is externally available and build 7 is available to internal TestFlight testers. Complete build 7's internal verification and focused external beta pass before public App Review submission.
 - Complete App Store Connect age rating, privacy questionnaire, review contact, export-compliance, build selection, and manual-release configuration without submitting until the physical-device pass is stable.
 - Do not change signing, capabilities, entitlements, bundle identifiers, or Apple-account configuration without explicit approval.
 
