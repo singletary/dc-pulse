@@ -145,6 +145,6 @@ Simulator’s iPhone 17 Pro window, with large storefront-readable headlines.
 - Complete the age-rating questionnaire in App Store Connect.
 - Complete the App Privacy questionnaire using the audited answers above.
 - Enter the private App Review contact phone number and email.
-- Select build 1.0, complete export compliance, and choose manual release.
+- Select version 1.0 and the internally verified release build, complete export compliance, and choose manual release.
 - Finish the physical-device quality gates in `docs/app-store-readiness.md`.
 - Do not submit for public App Review until the external TestFlight pass is stable.
