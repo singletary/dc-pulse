@@ -29,3 +29,9 @@ xcodebuild -project DCPulse/DCPulse.xcodeproj -scheme DCPulse -destination 'plat
 - Add fixture-backed tests for transport and adapter boundary behavior; never claim live integration from fixture-only verification.
 - Check `git diff` and preserve unrelated/user-owned changes.
 - Never change signing settings, development teams, certificates, provisioning, entitlements, bundle identifiers, or Apple account configuration without explicit approval.
+
+## GitHub workflow
+- Use the authenticated GitHub connector as the default for GitHub reads and mutations, including pull request creation. Use `gh` only when the connector cannot perform the required operation.
+- Use local Git for branch creation, staging, commits, rebases, and pushes.
+- After completing and verifying an authorized project task, commit the intended changes, push the feature branch, and open a draft pull request without waiting for a separate publishing request.
+- Keep unrelated changes in separate branches and pull requests.
