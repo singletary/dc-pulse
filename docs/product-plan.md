@@ -17,7 +17,7 @@ DC Pulse answers “What’s changing around me today?” with a professional na
 
 ## Delivery sequence
 
-The current ranked execution plan is maintained in [roadmap.md](roadmap.md). Version 1.0 (build 5) is available to external TestFlight testers, and build 6 was uploaded on July 21, 2026 with the completed location recovery, map coverage, notification privacy, watch lifecycle, trend context, Item Details, and in-app trust improvements. Opportunistic Background App Refresh remains the first planned notification delivery model; server-backed APNs are deferred until product use justifies them.
+The current ranked execution plan is maintained in [roadmap.md](roadmap.md). Version 1.0 (build 5) is available to external TestFlight testers, build 6 was uploaded on July 21, 2026, and build 7 is the next repository candidate with status-scoped summaries, expandable complete categories, isolated auxiliary warnings, and bounded lifecycle-history migration. Opportunistic Background App Refresh remains the first planned notification delivery model; server-backed APNs are deferred until product use justifies them.
 - **Phase 0 — foundation:** documentation, feature MVVM layout, domain model, reusable ArcGIS query/client, fixture tests, and polished sample-data shell.
 - **Current live product slice:** query 311, Building Permit, and DDOT Construction Permit sources independently; render normalized results in Near You, Requests, Map, and Item Details; preserve healthy sources during partial failures; and load additional records progressively.
 - **Status semantics:** unresolved records opened within 48 hours are New; older unresolved records are Active; source statuses containing closed, completed, or resolved are Resolved.
@@ -27,7 +27,7 @@ The current ranked execution plan is maintained in [roadmap.md](roadmap.md). Ver
 - **Building Permits:** verified live 2026 source with an independent adapter, combined nearby results, source filters, partial-failure handling, and permit-specific details.
 - **DDOT permits:** verified live 2026 source with an independent adapter, application-date semantics, combined nearby results, source filters, partial-failure handling, and permit-specific details.
 - **Map depth:** native MapKit clustering now groups dense nearby annotations dynamically while retaining source glyphs and lifecycle colors for individual items.
-- **Product depth:** Home and followed places, item watches, auto-watch rules, an on-device notification inbox with category-aware rows, privacy-bounded local alerts on detected refresh changes, and complete nearby 311 trend/category queries are implemented. Background scheduling, notification preferences, automatic watch archival, and widgets remain planned.
+- **Product depth:** Home and followed places, item watches, auto-watch rules, independent notification preferences, automatic watch archival, an on-device notification inbox with category-aware rows, privacy-bounded local alerts on detected refresh changes, and complete nearby 311 trend/category queries are implemented. Background scheduling and widgets remain planned.
 
 ## Planned product depth
 
