@@ -34,6 +34,7 @@ xcodebuild -project DCPulse/DCPulse.xcodeproj -scheme DCPulse -destination 'plat
 - Use the authenticated GitHub connector as the default for GitHub reads and mutations, including pull request creation. Use `gh` only when the connector cannot perform the required operation.
 - Use local Git for branch creation, staging, commits, rebases, and pushes.
 - After completing and verifying an authorized project task, commit the intended changes, push the feature branch, and open a draft pull request without waiting for a separate publishing request.
+- When a pull request is verified, mergeable, appropriately scoped, and has no unresolved checks or review blockers, mark it ready and merge it without waiting for a separate merge request. Keep it open when review, CI, dependencies, or risk still require attention.
 - Keep unrelated changes in separate branches and pull requests.
 - Keep only branches that are actively useful: the default branch, the current working branch, and branches backing active pull requests or unique unmerged work.
 - After confirming a branch is merged, superseded, or has no unique work, delete it locally and remotely without waiting for a separate cleanup request.
