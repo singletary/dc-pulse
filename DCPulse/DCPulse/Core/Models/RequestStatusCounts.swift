@@ -22,3 +22,12 @@ protocol RequestStatusSummaryRepositoryProtocol: Sendable {
         days: Int
     ) async throws -> RequestStatusCounts
 }
+
+protocol RequestCategorySummaryRepositoryProtocol: Sendable {
+    func categoryCounts(
+        status: PulseItem.Status?,
+        coordinate: PulseItem.Coordinate,
+        radiusMiles: Double,
+        days: Int
+    ) async throws -> [String: Int]
+}

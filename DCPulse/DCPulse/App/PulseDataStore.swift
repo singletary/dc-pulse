@@ -21,6 +21,7 @@ final class PulseDataStore {
         let warnings: [String]
         let requestStatusCounts: RequestStatusCounts?
         let requestTrendSnapshot: RequestTrendSnapshot?
+        let requestCategoryCounts: [String: Int]?
     }
 
     private struct MapCoverageResult {
@@ -80,10 +81,12 @@ final class PulseDataStore {
     private let repository: any PulseRepositoryProtocol
     private let requestStatusSummaryRepository: (any RequestStatusSummaryRepositoryProtocol)?
     private let requestTrendSummaryRepository: (any RequestTrendSummaryRepositoryProtocol)?
+    private let requestCategorySummaryRepository: (any RequestCategorySummaryRepositoryProtocol)?
     private let requestCategoryRepository: (any ServiceRequestCategoryRepositoryProtocol)?
     private let defaults: UserDefaults
     private let now: () -> Date
     private var loadSequence = 0
+    private var requestCategorySequence = 0
     private var mapCoverageSequence = 0
     private var nextOffset = 0
     var items: [PulseItem] = []
@@ -98,6 +101,11 @@ final class PulseDataStore {
     private(set) var isRequestSummaryLoading = false
     private(set) var requestTrendSnapshot: RequestTrendSnapshot?
     private(set) var isRequestInsightsLoading = false
+    private(set) var selectedRequestStatus: PulseItem.Status?
+    private(set) var isRequestCategorySummaryLoading = false
+    private(set) var requestCategorySummaryUnavailable = false
+    private var allRequestCategoryCounts: [String: Int]?
+    private var requestCategoryCountsByStatus: [PulseItem.Status: [String: Int]] = [:]
     private(set) var searchCoordinate = SampleData.center
     private(set) var placeName = "Downtown DC"
     private(set) var radius: Radius = .halfMile
@@ -111,6 +119,7 @@ final class PulseDataStore {
         ])
         requestStatusSummaryRepository = ServiceRequest311SummaryRepository()
         requestTrendSummaryRepository = ServiceRequest311TrendRepository()
+        requestCategorySummaryRepository = ServiceRequest311CategorySummaryRepository()
         requestCategoryRepository = ServiceRequest311Repository()
         defaults = .standard
         now = { .now }
@@ -120,6 +129,7 @@ final class PulseDataStore {
         repository: any PulseRepositoryProtocol,
         requestStatusSummaryRepository: (any RequestStatusSummaryRepositoryProtocol)? = nil,
         requestTrendSummaryRepository: (any RequestTrendSummaryRepositoryProtocol)? = nil,
+        requestCategorySummaryRepository: (any RequestCategorySummaryRepositoryProtocol)? = nil,
         requestCategoryRepository: (any ServiceRequestCategoryRepositoryProtocol)? = nil,
         defaults: UserDefaults? = nil,
         now: @escaping () -> Date = { .now }
@@ -127,6 +137,7 @@ final class PulseDataStore {
         self.repository = repository
         self.requestStatusSummaryRepository = requestStatusSummaryRepository
         self.requestTrendSummaryRepository = requestTrendSummaryRepository
+        self.requestCategorySummaryRepository = requestCategorySummaryRepository
         self.requestCategoryRepository = requestCategoryRepository
         self.defaults = defaults ?? UserDefaults(suiteName: "DCPulseTests.\(UUID().uuidString)")!
         self.now = now
@@ -155,6 +166,12 @@ final class PulseDataStore {
         isRequestSummaryLoading = requestStatusSummaryRepository != nil
         requestTrendSnapshot = nil
         isRequestInsightsLoading = requestTrendSummaryRepository != nil
+        requestCategorySequence += 1
+        selectedRequestStatus = nil
+        allRequestCategoryCounts = nil
+        requestCategoryCountsByStatus = [:]
+        requestCategorySummaryUnavailable = false
+        isRequestCategorySummaryLoading = requestCategorySummaryRepository != nil
         nextOffset = 0
         if !force, restoreFreshCache(for: coordinate, placeName: placeName) { return }
         do {
@@ -177,6 +194,13 @@ final class PulseDataStore {
                 radiusMiles: radius.rawValue,
                 days: period.queryDays
             )
+            async let categoryCountsRequest = Self.loadCategoryCounts(
+                using: requestCategorySummaryRepository,
+                status: nil,
+                coordinate: coordinate,
+                radiusMiles: radius.rawValue,
+                days: period.queryDays
+            )
             let page = try await pageRequest
             guard requestSequence == loadSequence else { return }
             items = page.items
@@ -194,16 +218,25 @@ final class PulseDataStore {
             guard requestSequence == loadSequence else { return }
             requestTrendSnapshot = trendSnapshot
             isRequestInsightsLoading = false
+            let categoryCounts = await categoryCountsRequest
+            guard requestSequence == loadSequence else { return }
+            if let categoryCounts {
+                allRequestCategoryCounts = categoryCounts
+            }
+            requestCategorySummaryUnavailable = requestCategorySummaryRepository != nil && categoryCounts == nil
+            isRequestCategorySummaryLoading = false
             saveCache()
         } catch is CancellationError {
             guard requestSequence == loadSequence else { return }
             isRequestSummaryLoading = false
             isRequestInsightsLoading = false
+            isRequestCategorySummaryLoading = false
             state = .idle
         } catch {
             guard requestSequence == loadSequence else { return }
             isRequestSummaryLoading = false
             isRequestInsightsLoading = false
+            isRequestCategorySummaryLoading = false
             state = .failed(error.localizedDescription)
         }
     }
@@ -339,12 +372,52 @@ final class PulseDataStore {
     var isLoading: Bool { state == .loading }
     var requestTrends: [RequestTrendAnalyzer.Trend] { requestTrendSnapshot?.trends ?? [] }
     var requestCategories: [String] { requestTrendSnapshot?.categories ?? [] }
-    var requestCategoryCounts: [String: Int] { requestTrendSnapshot?.categoryCounts ?? [:] }
+    var requestCategoryCounts: [String: Int] {
+        if let selectedRequestStatus {
+            return requestCategoryCountsByStatus[selectedRequestStatus] ?? [:]
+        }
+        return allRequestCategoryCounts ?? requestTrendSnapshot?.categoryCounts ?? [:]
+    }
     var requestStatusCountsUnavailable: Bool {
         requestStatusSummaryRepository != nil && !isRequestSummaryLoading && requestStatusCounts == nil
     }
     var requestInsightsUnavailable: Bool {
         requestTrendSummaryRepository != nil && !isRequestInsightsLoading && requestTrendSnapshot == nil
+    }
+
+    func selectRequestStatus(_ status: PulseItem.Status?, force: Bool = false) async {
+        guard status != .unknown, force || status != selectedRequestStatus else { return }
+        selectedRequestStatus = status
+        requestCategorySequence += 1
+        let sequence = requestCategorySequence
+        requestCategorySummaryUnavailable = false
+
+        if (status.map { requestCategoryCountsByStatus[$0] != nil } ?? (allRequestCategoryCounts != nil)) ||
+            (status == nil && requestCategorySummaryRepository == nil && requestTrendSnapshot != nil) {
+            isRequestCategorySummaryLoading = false
+            return
+        }
+
+        guard let requestCategorySummaryRepository else {
+            isRequestCategorySummaryLoading = false
+            requestCategorySummaryUnavailable = requestTrendSnapshot == nil
+            return
+        }
+        isRequestCategorySummaryLoading = true
+        let counts = await Self.loadCategoryCounts(
+            using: requestCategorySummaryRepository,
+            status: status,
+            coordinate: searchCoordinate,
+            radiusMiles: radius.rawValue,
+            days: period.queryDays
+        )
+        guard sequence == requestCategorySequence, status == selectedRequestStatus else { return }
+        if let counts {
+            if let status { requestCategoryCountsByStatus[status] = counts }
+            else { allRequestCategoryCounts = counts }
+        }
+        requestCategorySummaryUnavailable = counts == nil
+        isRequestCategorySummaryLoading = false
     }
 
     func requestItems(in category: String, limit: Int = 250) async throws -> [PulseItem] {
@@ -508,6 +581,7 @@ final class PulseDataStore {
               entry.radius == radius, entry.period == period,
               requestStatusSummaryRepository == nil || entry.requestStatusCounts != nil,
               requestTrendSummaryRepository == nil || entry.requestTrendSnapshot != nil,
+              requestCategorySummaryRepository == nil || entry.requestCategoryCounts != nil,
               abs(entry.coordinate.latitude - coordinate.latitude) < 0.0005,
               abs(entry.coordinate.longitude - coordinate.longitude) < 0.0005 else { return false }
         items = entry.items
@@ -518,6 +592,11 @@ final class PulseDataStore {
         isRequestSummaryLoading = false
         requestTrendSnapshot = entry.requestTrendSnapshot
         isRequestInsightsLoading = false
+        selectedRequestStatus = nil
+        allRequestCategoryCounts = entry.requestCategoryCounts
+        requestCategoryCountsByStatus = [:]
+        isRequestCategorySummaryLoading = false
+        requestCategorySummaryUnavailable = false
         self.placeName = placeName == "Downtown DC" ? entry.placeName : placeName
         state = items.isEmpty ? .empty : .loaded
         return true
@@ -528,7 +607,8 @@ final class PulseDataStore {
               let entry = try? JSONDecoder().decode(CacheEntry.self, from: data),
               now().timeIntervalSince(entry.savedAt) < Self.cacheLifetime,
               requestStatusSummaryRepository == nil || entry.requestStatusCounts != nil,
-              requestTrendSummaryRepository == nil || entry.requestTrendSnapshot != nil else { return false }
+              requestTrendSummaryRepository == nil || entry.requestTrendSnapshot != nil,
+              requestCategorySummaryRepository == nil || entry.requestCategoryCounts != nil else { return false }
         searchCoordinate = entry.coordinate
         radius = entry.radius
         period = entry.period
@@ -541,6 +621,11 @@ final class PulseDataStore {
         isRequestSummaryLoading = false
         requestTrendSnapshot = entry.requestTrendSnapshot
         isRequestInsightsLoading = false
+        selectedRequestStatus = nil
+        allRequestCategoryCounts = entry.requestCategoryCounts
+        requestCategoryCountsByStatus = [:]
+        isRequestCategorySummaryLoading = false
+        requestCategorySummaryUnavailable = false
         state = items.isEmpty ? .empty : .loaded
         return true
     }
@@ -549,7 +634,8 @@ final class PulseDataStore {
         let entry = CacheEntry(savedAt: now(), coordinate: searchCoordinate, radius: radius, period: period,
                                placeName: placeName, items: items, nextOffset: nextOffset, hasMore: hasMore,
                                warnings: sourceWarnings, requestStatusCounts: requestStatusCounts,
-                               requestTrendSnapshot: requestTrendSnapshot)
+                               requestTrendSnapshot: requestTrendSnapshot,
+                               requestCategoryCounts: allRequestCategoryCounts)
         if let data = try? JSONEncoder().encode(entry) { defaults.set(data, forKey: cacheKey) }
     }
 
@@ -578,6 +664,24 @@ final class PulseDataStore {
         guard let repository else { return nil }
         return await retrySummary {
             try await repository.trendSnapshot(
+                coordinate: coordinate,
+                radiusMiles: radiusMiles,
+                days: days
+            )
+        }
+    }
+
+    private nonisolated static func loadCategoryCounts(
+        using repository: (any RequestCategorySummaryRepositoryProtocol)?,
+        status: PulseItem.Status?,
+        coordinate: PulseItem.Coordinate,
+        radiusMiles: Double,
+        days: Int
+    ) async -> [String: Int]? {
+        guard let repository else { return nil }
+        return await retrySummary {
+            try await repository.categoryCounts(
+                status: status,
                 coordinate: coordinate,
                 radiusMiles: radiusMiles,
                 days: days
