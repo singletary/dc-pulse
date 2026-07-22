@@ -164,14 +164,31 @@ struct AppRootView: View {
         try? modelContext.save()
     }
 
-    private func recordObservations(from items: [PulseItem]) {
-        let existing = Dictionary(uniqueKeysWithValues: observations.map { ($0.stableKey, $0) })
+    private func recordObservations(
+        from items: [PulseItem],
+        knownPreviousStatuses: [String: PulseItem.Status] = [:],
+        observedAt: Date = .now
+    ) {
+        var existing = Dictionary(uniqueKeysWithValues: observations.map { ($0.stableKey, $0) })
         for item in items {
             let key = WatchedPulseItem.stableKey(for: item.id)
             if let observation = existing[key] {
-                observation.update(from: item)
+                if let snapshot = observation.update(from: item, observedAt: observedAt) {
+                    modelContext.insert(PulseStateSnapshotRecord(snapshot: snapshot))
+                }
             } else {
-                modelContext.insert(PulseObservationRecord(item: item))
+                let observation = PulseObservationRecord(item: item, observedAt: observedAt)
+                modelContext.insert(observation)
+                existing[key] = observation
+                if let previousStatus = knownPreviousStatuses[key],
+                   item.status.isNotificationWorthyTransition(from: previousStatus) {
+                    let snapshot = PulseStateSnapshot(
+                        item: item,
+                        previousStatus: previousStatus,
+                        observedAt: observedAt
+                    )
+                    modelContext.insert(PulseStateSnapshotRecord(snapshot: snapshot))
+                }
             }
         }
     }
@@ -200,6 +217,12 @@ struct AppRootView: View {
         do {
             let result = try await WatchedItemRefreshCoordinator.live.refresh(snapshots)
             let transitions = Dictionary(uniqueKeysWithValues: result.transitions.map { ($0.item.id, $0) })
+            recordObservations(
+                from: result.refreshedItems,
+                knownPreviousStatuses: Dictionary(uniqueKeysWithValues: result.transitions.map {
+                    (WatchedPulseItem.stableKey(for: $0.item.id), $0.previousStatus)
+                })
+            )
             for item in result.refreshedItems {
                 guard let watched = activeWatchedItems.first(where: { $0.stableKey == WatchedPulseItem.stableKey(for: item.id) }) else {
                     continue
@@ -274,7 +297,13 @@ private struct NotificationPresentation: Identifiable {
 #Preview {
     AppRootView()
         .modelContainer(
-            for: [WatchedPulseItem.self, FollowedPlace.self, PulseObservationRecord.self, InAppNotification.self],
+            for: [
+                WatchedPulseItem.self,
+                FollowedPlace.self,
+                PulseObservationRecord.self,
+                PulseStateSnapshotRecord.self,
+                InAppNotification.self
+            ],
             inMemory: true
         )
 }

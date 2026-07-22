@@ -20,6 +20,7 @@ struct DCPulseApp: App {
             WatchedPulseItem.self,
             FollowedPlace.self,
             PulseObservationRecord.self,
+            PulseStateSnapshotRecord.self,
             InAppNotification.self
         ])
     }
