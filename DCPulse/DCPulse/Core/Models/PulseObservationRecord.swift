@@ -113,6 +113,8 @@ final class PulseStateSnapshotRecord {
     var statusRawValue: String
     var sourceUpdatedAt: Date?
     var observedAt: Date
+    /// Optional so existing stores can adopt the field through lightweight migration.
+    var schemaVersion: Int?
 
     @MainActor init(snapshot: PulseStateSnapshot) {
         stableKey = snapshot.stableKey
@@ -122,6 +124,7 @@ final class PulseStateSnapshotRecord {
         statusRawValue = snapshot.status.rawValue
         sourceUpdatedAt = snapshot.sourceUpdatedAt
         observedAt = snapshot.observedAt
+        schemaVersion = PulseHistoryMaintenance.currentSchemaVersion
     }
 
     @MainActor var snapshot: PulseStateSnapshot? {
@@ -137,5 +140,46 @@ final class PulseStateSnapshotRecord {
             sourceUpdatedAt: sourceUpdatedAt,
             observedAt: observedAt
         )
+    }
+}
+
+@MainActor
+enum PulseHistoryMaintenance {
+    static let currentSchemaVersion = 1
+    static let retentionInterval: TimeInterval = 365 * 24 * 60 * 60
+
+    struct Result: Equatable {
+        let migratedCount: Int
+        let deletedCount: Int
+
+        var hasChanges: Bool { migratedCount > 0 || deletedCount > 0 }
+    }
+
+    /// Migrates legacy rows in place and prunes history outside the documented local window.
+    /// Rows written by a newer app version are retained and left untouched.
+    static func apply(
+        to records: [PulseStateSnapshotRecord],
+        now: Date = .now,
+        delete: (PulseStateSnapshotRecord) -> Void
+    ) -> Result {
+        let cutoff = now.addingTimeInterval(-retentionInterval)
+        var migratedCount = 0
+        var deletedCount = 0
+
+        for record in records {
+            if let schemaVersion = record.schemaVersion,
+               schemaVersion > currentSchemaVersion {
+                continue
+            }
+            if record.observedAt < cutoff {
+                delete(record)
+                deletedCount += 1
+            } else if (record.schemaVersion ?? 0) <= 0 {
+                record.schemaVersion = currentSchemaVersion
+                migratedCount += 1
+            }
+        }
+
+        return Result(migratedCount: migratedCount, deletedCount: deletedCount)
     }
 }
