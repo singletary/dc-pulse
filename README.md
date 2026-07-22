@@ -4,6 +4,7 @@
   <p><strong>See what’s changing around you in Washington, DC.</strong></p>
   <p>
     <a href="https://dcpulseapp.com">Website</a> ·
+    <a href="https://testflight.apple.com/join/cDqG7g8q">TestFlight</a> ·
     <a href="https://dcpulseapp.com/#privacy">Privacy</a> ·
     <a href="https://dcpulseapp.com/#support">Support</a> ·
     <a href="docs/product-plan.md">Product plan</a> ·
