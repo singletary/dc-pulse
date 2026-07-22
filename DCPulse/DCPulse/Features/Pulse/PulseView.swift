@@ -16,6 +16,7 @@ struct PulseView: View {
     @State private var showingManualHome = false
     @State private var showingReport311 = false
     @State private var showingRestaurantHealth = false
+    @State private var showingAllRequestCategories = false
 
     var body: some View {
         List {
@@ -93,11 +94,13 @@ struct PulseView: View {
                     }
                     Text("Complete category totals are temporarily unavailable for this status.")
                         .font(.caption).foregroundStyle(.secondary)
-                } else if topCategories.isEmpty {
+                } else if requestCategoryPresentation.categories.isEmpty {
                     Text("No request categories match this status.")
                         .font(.subheadline).foregroundStyle(.secondary)
                 } else {
-                    ForEach(topCategories, id: \.name) { category in
+                    ForEach(requestCategoryPresentation.visibleCategories(
+                        showingAll: showingAllRequestCategories
+                    )) { category in
                         Button { showOnMap(category.name) } label: {
                             HStack(spacing: 12) {
                                 Text(PulseCategoryVisual.emoji(for: category.name)).font(.title2)
@@ -109,6 +112,26 @@ struct PulseView: View {
                             }
                         }
                         .accessibilityHint("Shows these updates on the map")
+                    }
+                    if requestCategoryPresentation.hasMoreCategories {
+                        Button {
+                            showingAllRequestCategories.toggle()
+                        } label: {
+                            Label(
+                                showingAllRequestCategories ? "Show Less" : "More",
+                                systemImage: showingAllRequestCategories ? "chevron.up" : "chevron.down"
+                            )
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .accessibilityLabel(
+                            showingAllRequestCategories
+                                ? "Show fewer request categories"
+                                : "Show more request categories"
+                        )
+                        .accessibilityValue(requestCategoryPresentation.accessibilityValue(
+                            showingAll: showingAllRequestCategories
+                        ))
+                        .accessibilityIdentifier("pulse.categories.more")
                     }
                 }
             }
@@ -325,17 +348,8 @@ struct PulseView: View {
         }
     }
 
-    private var topCategories: [(name: String, count: Int)] {
-        if !store.requestCategoryCounts.isEmpty {
-            return store.requestCategoryCounts
-                .map { (name: $0.key, count: $0.value) }
-                .sorted {
-                    if $0.count == $1.count { return $0.name < $1.name }
-                    return $0.count > $1.count
-                }
-                .prefix(3).map { $0 }
-        }
-        return []
+    private var requestCategoryPresentation: RequestCategorySummaryPresentation {
+        RequestCategorySummaryPresentation(counts: store.requestCategoryCounts)
     }
 
     private var homeRequests: [PulseItem] {
@@ -518,6 +532,42 @@ struct PulseView: View {
         case "DDOT Construction Permit": "\(count) DDOT construction permit\(count == 1 ? "" : "s")"
         default: "\(count) \(name.lowercased()) request\(count == 1 ? "" : "s")"
         }
+    }
+}
+
+struct RequestCategorySummaryPresentation {
+    struct Category: Identifiable, Equatable {
+        let name: String
+        let count: Int
+
+        var id: String { name }
+    }
+
+    static let collapsedCount = 3
+
+    let categories: [Category]
+
+    init(counts: [String: Int]) {
+        categories = counts
+            .map(Category.init(name:count:))
+            .sorted {
+                if $0.count == $1.count { return $0.name < $1.name }
+                return $0.count > $1.count
+            }
+    }
+
+    var hasMoreCategories: Bool {
+        categories.count > Self.collapsedCount
+    }
+
+    func visibleCategories(showingAll: Bool) -> [Category] {
+        guard !showingAll else { return categories }
+        return Array(categories.prefix(Self.collapsedCount))
+    }
+
+    func accessibilityValue(showingAll: Bool) -> String {
+        let visibleCount = visibleCategories(showingAll: showingAll).count
+        return "Showing \(visibleCount) of \(categories.count) categories"
     }
 }
 
