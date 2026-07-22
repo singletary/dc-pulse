@@ -131,6 +131,7 @@ Never change the development team, signing configuration, entitlements, provisio
 - [Architecture](docs/architecture.md) — boundaries, state, networking, watches, trends, and map rendering
 - [Data sources](docs/data-sources.md) — authoritative layers, mappings, and resilience rules
 - [Ranked roadmap](docs/roadmap.md) — release priorities and future work
+- [Map performance and Near You discovery](docs/map-performance-home-discovery.md) — measurement plan, cache investigation, home-screen concepts, and radius decision gate
 - [App Store readiness](docs/app-store-readiness.md) — privacy, metadata, and device quality gates
 - [App Store listing](docs/app-store-listing.md) — copy-ready metadata, privacy answers, review notes, and screenshot sequence
 - [TestFlight checklist](docs/testflight-release.md) — internal beta preparation and smoke test

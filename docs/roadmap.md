@@ -2,7 +2,7 @@
 
 This roadmap orders work by release value, correctness risk, and dependency. Items inside a priority are listed in recommended execution order.
 
-## Current release state — July 21, 2026
+## Current release state — July 22, 2026
 
 - TestFlight: version 1.0 (build 5) is available to external testers. Build 6 was uploaded on July 21, 2026 and awaits processing/manual assignment to the intended testing group. Build 7 is the next repository candidate and has not yet been archived or uploaded. No public App Store submission has been made.
 - Completed: Swift 6 actor-isolation warning cleanup for the current test suite.
@@ -31,6 +31,16 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - Immediate release gate: archive, validate, and upload build 7, manually assign it after processing, then run a focused external TestFlight soak and triage tester-reported correctness, performance, migration, navigation, and accessibility defects before public App Store review.
 - Remaining capability gate: `BGTaskScheduler` registration and Background Modes/background fetch approval.
 
+## Near-term discovery TODO — prioritized
+
+The measurement plan, test matrix, home-screen concepts, and decision gates for these items are maintained in [Map performance and Near You discovery](map-performance-home-discovery.md). Keep this section concise and update the discovery brief with evidence as work proceeds.
+
+- [ ] **P0 — Make Map loading and partial-failure status legible and actionable.** Reproduce the truncated progress and **Some map results…** notice at supported screen sizes and Dynamic Type settings; identify the exact coverage pass and source behind each warning; replace the indeterminate bar with honest staged or measurable progress; and provide a tappable detail/retry path that does not instruct people to use an unsupported gesture.
+- [ ] **P0 — Establish a repeatable Map performance baseline before changing retrieval limits.** Measure cold and warm time to interactive map, first markers, useful nearby coverage, and completed bounded coverage for every radius. Attribute elapsed time to ArcGIS requests, pagination, decoding/adaptation, merging, annotation updates, and clustering. Add regression budgets only after physical-iPhone and Simulator baselines agree closely enough to be useful.
+- [ ] **P1 — Prototype cached-first Map loading with per-source incremental reconciliation.** Preserve the current privacy boundary and stable source identifiers, but evaluate a bounded multi-context cache that can show stale-but-labeled markers immediately, refresh sources independently, query reliable update fields where available, and fall back to overlapping recent windows plus identifier reconciliation. Never remove cached records because a partial refresh or one source failed.
+- [ ] **P1 — Simplify Near You around one primary snapshot.** Inventory every current section for usefulness, duplication, frequency, and actionability; prepare and review Snapshot-first, Personalized-first, and Map-preview concepts; include loading, partial-error, no-Home, small-screen, large-text, and VoiceOver states; then record the selected information architecture before implementation.
+- [ ] **P1 — Decide the default radius from evidence rather than using it as a performance workaround.** Compare 0.25 and 0.5 miles for latency, request volume, meaningful-result rate, marker density, legibility, and user usefulness. Preserve the last explicit choice and do not reduce the default until radius-inclusion correctness and caching/retrieval findings are understood.
+
 ## 1. Release stability and data correctness — critical
 
 - Reproduce the radius inclusion failure and trace a missing nearby record through every boundary: raw ArcGIS pages, `exceededTransferLimit` handling, per-source page allocation, cache entries, data-store acceptance, source/category/status filters, clustering, and final annotations. Distinguish a record that was never fetched from one fetched but hidden or replaced during rendering.
@@ -57,6 +67,7 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - **Completed:** deterministic UI coverage proves an archived watch can be restored across relaunch and a followed place opens the Map with its saved search context, without relying on live ArcGIS data. Continue adding UI coverage for loading/error recovery and item-detail actions.
 - Repeat the live 311, Building Permit, and DDOT field audit before each TestFlight release and update fixtures when a schema changes.
 - Add lightweight diagnostics for refresh failures without collecting precise location or home-address telemetry.
+- Complete the P0 Map status and performance tasks in the near-term discovery TODO before increasing result limits, lengthening timeouts, or changing the default radius.
 
 ## 2. App Store release readiness — critical
 
@@ -139,6 +150,7 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 
 ## 6. Trustworthy trends and history — high
 
+- Complete the Near You simplification discovery in the near-term TODO before adding another Home section, metric family, or primary action. Prefer progressive disclosure and reuse Map, Requests, Places, and Notifications as destinations instead of duplicating their full experiences on Near You.
 - **Completed after build 6:** **Requests nearby** on Near You now treats **New**, **Active**, and **Resolved** as visibly selected scopes, refreshes the category rows from complete grouped DC 311 statistics for the current location, radius, and period, and keeps list navigation as a separate labeled action. **Show All** restores the cached all-status totals, selected state and actions are explicit to VoiceOver, Map handoff preserves the chosen status, and generation-safe loading prevents a superseded rapid tap from replacing the latest counts.
 - **Completed:** the initial Home summary stays concise with the top three categories and offers clearly labeled **More** and **Show Less** controls when additional complete category totals are available. Expansion preserves deterministic count/name ordering and the selected status, handles fewer than four results without a redundant control, and retains the existing loading, empty, partial-failure, cached, Dynamic Type, and VoiceOver behavior.
 - **Completed:** `PulseObservationRecord` remains the one-row-per-item on-device normalized current index, while `PulseStateSnapshotRecord` is a separate historical transition model.
