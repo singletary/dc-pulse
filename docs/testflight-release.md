@@ -1,6 +1,6 @@
 # TestFlight release checklist
 
-DC Pulse 1.0 (5) is available to external TestFlight testers. Build 6 was uploaded on July 21, 2026 and remains manually controlled for tester assignment. Use this checklist for processing follow-up, external distribution, and every replacement build. It does not authorize changes to signing, the development team, provisioning, entitlements, or the bundle identifier.
+DC Pulse 1.0 (5) is available to external TestFlight testers. Build 6 was uploaded on July 21, 2026 and remains manually controlled for tester assignment. Build 7 is the next repository release candidate and has not yet been archived or uploaded. Use this checklist for processing follow-up, external distribution, and every replacement build. It does not authorize changes to signing, the development team, provisioning, entitlements, or the bundle identifier.
 
 ## Known issues
 
@@ -74,6 +74,6 @@ Notifications currently use on-device refresh checks rather than a push-notifica
 3. In App Store Connect, wait for processing, complete export-compliance and beta information, then add the build to an internal testing group.
 4. Install through TestFlight on the physical iPhone and complete the pass above.
 5. After processing or Beta App Review approval, manually add the intended build to the external group, verify the public TestFlight link and tester-facing **What to Test** text, and monitor early feedback before broader promotion.
-6. Increment the build number before uploading any replacement build; the next 1.0 upload must be greater than build `6`.
+6. Confirm the repository candidate is build `7` before upload. Increment again if build 7 has already been uploaded to App Store Connect.
 
 External testing can begin after Apple approves the submitted beta review and the build is assigned to the intended external group.
