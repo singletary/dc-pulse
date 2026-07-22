@@ -34,7 +34,7 @@ struct CombinedPulseRepositoryTests {
         )
 
         #expect(page.items == [item])
-        #expect(page.warnings == ["DC 311 is temporarily unavailable."])
+        #expect(page.warnings == ["DC 311 records are temporarily unavailable."])
     }
 
     @Test func balancesPageSizeAcrossThreeSources() async throws {
@@ -69,7 +69,7 @@ struct CombinedPulseRepositoryTests {
         )
 
         #expect(page.items == [item])
-        #expect(page.warnings == ["Slow permits is temporarily unavailable."])
+        #expect(page.warnings == ["Slow permits records are temporarily unavailable."])
     }
 }
 

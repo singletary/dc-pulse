@@ -5,8 +5,8 @@
 - Display name: **DC Pulse**
 - Bundle identifier: `com.dcpulseapp.DCPulse`
 - Marketing version: `1.0`
-- Build number: `5`
-- Distribution state: initial internal physical-iPhone pass complete; submitted for external TestFlight beta review
+- Build number: `6`
+- Distribution state: build 5 available to external TestFlight testers; build 6 uploaded July 21, 2026 for processing and manual tester assignment
 - Supported device family: iPhone
 - Location permission: When In Use only
 - Camera permission: requested only when the person chooses **Take Photo** in the 311 draft flow
@@ -17,7 +17,7 @@ Signing, capabilities, entitlements, bundle identifiers, and Apple-account confi
 
 ## Current external-beta gates
 
-- Address any Beta App Review feedback, then verify build 5's map radius/filter-reset behavior, coherent Near You totals, Requests pull-to-refresh, distinct Photos/Camera actions, and progressive initial loading with external testers.
+- After build 6 processes, manually assign it to the intended TestFlight group and verify its location recovery, map coverage/loading, coherent Near You totals, alert preferences, watch archival, copy actions, distinct Photos/Camera behavior, and followed-place navigation with external testers.
 - Monitor the external beta for correctness, performance, crash, navigation, accessibility, and public-data reliability feedback before public App Store review.
 - Keep restaurant inspection language data-gated until a nearby report map is backed by a dependable, reviewed source.
 

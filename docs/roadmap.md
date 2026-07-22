@@ -2,9 +2,9 @@
 
 This roadmap orders work by release value, correctness risk, and dependency. Items inside a priority are listed in recommended execution order.
 
-## Current release state — July 18, 2026
+## Current release state — July 21, 2026
 
-- TestFlight: version 1.0 (build 5) completed its initial internal physical-iPhone pass and is submitted for external beta review. No public App Store submission has been made.
+- TestFlight: version 1.0 (build 5) is available to external testers. Build 6 was uploaded on July 21, 2026 with the completed post-build-5 work below and awaits processing/manual assignment to the intended testing group. No public App Store submission has been made.
 - Completed: Swift 6 actor-isolation warning cleanup for the current test suite.
 - Completed: live one-record schema smoke audit for all three ArcGIS layers.
 - Completed: privacy manifest with app-local UserDefaults required reason, copy-ready App Store metadata/review notes, and four privacy-reviewed 6.9-inch screenshots.
@@ -28,7 +28,7 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - Completed after build 5: trend snapshots retain their DC 311 source, search coordinate, radius, selected period, comparison windows, and refresh date. Near You presents that context without exposing raw coordinates, so cached comparisons remain explainable.
 - Completed after build 5: watched records now distinguish explicit and automatic origin, retain resolved items through default 30- and 7-day grace windows respectively, move expired watches into a visible restorable archive, and exclude archived items from routine refresh batches. Manual Archive and Restore actions preserve the saved record and notification history.
 - Completed after build 5: Places offers a persisted 7-, 30-, 90-day, or Never archive preference for explicitly watched resolved items. Auto-watched items retain their documented seven-day window independently.
-- Immediate release gate: address any Beta App Review feedback, then run a focused external TestFlight soak and triage tester-reported correctness, performance, navigation, and accessibility defects before public App Store review.
+- Immediate release gate: complete build 6 processing and manual tester assignment, then run a focused external TestFlight soak and triage tester-reported correctness, performance, navigation, and accessibility defects before public App Store review.
 - Remaining capability gate: `BGTaskScheduler` registration and Background Modes/background fetch approval.
 
 ## 1. Release stability and data correctness — critical
@@ -40,6 +40,8 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - Do not change the default radius merely to conceal incomplete wider-radius results. After correctness and performance are verified, separately evaluate 0.25 versus 0.5 miles as the initial product default based on usefulness, density, map legibility, and request latency while keeping the user's last explicit choice predictable.
 - **Completed:** distance copy uses compact **0.25 mi / 0.5 mi / 1 mi** summaries, plural standalone measurements, hyphenated radius phrases, and natural VoiceOver labels such as “half-mile radius.”
 - **Completed foundation:** complete status totals and category/trend statistics are guarded by the accepted load generation, cached only with their search context, retried once after transient failure, and never replaced by partial first-page counts when their source query remains unavailable.
+- **Completed after build 6:** traced the recurring **“DC 311 is temporarily unavailable”** message to background Map and load-more pagination warnings being merged into the Home screen's primary-source state. Auxiliary analytics already use independent availability state and no longer imply the underlying records are unavailable.
+- **Completed after build 6:** primary record warnings now remain scoped to the initial result set, recovered datasets clear their own stale warnings, additional-page failures stay with the progressive list load, and incomplete dense Map coverage produces a compact Map-local notice. Deterministic tests cover records-success/analytics-failure, partial pagination, source recovery, and Map-only failure isolation. Continue cancellation, cached-recovery, and physical-device failure testing before App Store release.
 - Continue adding deterministic coverage for delayed/out-of-order summary responses, cancellation, cache hit followed by refresh, and rapid location/radius/time changes. Preserve the last coherent summary during a replacement load if external testing shows the current explicit loading state is too disruptive.
 - **Completed foundation:** use one stable, privacy-safe Downtown DC fallback for denied, restricted, unavailable, and distant location states; show non-blocking Settings, retry, ward, and address recovery; never launch a repeated ward chooser.
 - **Completed foundation:** keep raw device coordinates distinct from the effective query center. Nearby out-of-area locations route to an inset point in the supported service envelope, while adjusted and fallback searches are never labeled current location or persisted as Home.
@@ -62,7 +64,7 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 - Complete accessibility, Dynamic Type, VoiceOver, Reduce Motion, Light/Dark Mode, and small-screen checks.
 - **Completed assets:** four colorful screenshot compositions use Apple’s Simulator-derived continuous display mask, Simulator-measured device proportions, and storefront-readable headlines; matching 6.9-inch and 6.5-inch sets are produced by a reproducible generator. Verify the production icon and any additional required device-class presentation before submission.
 - **Completed:** About DC Pulse is reachable from Places and includes installed version/build, public website/support/privacy/GitHub links, offline MIT terms, DC public-data attribution, the independent/non-government-service disclaimer, and a clear distinction between app-source licensing and publisher-owned data terms. If package dependencies are added later, generate dependency-specific notices from verified license metadata.
-- Build 5 is submitted for external TestFlight beta review; complete its external beta pass before public App Review submission.
+- Build 5 is externally available and build 6 is uploaded; complete build 6's focused external beta pass before public App Review submission.
 - Complete App Store Connect age rating, privacy questionnaire, review contact, export-compliance, build selection, and manual-release configuration without submitting until the physical-device pass is stable.
 - Do not change signing, capabilities, entitlements, bundle identifiers, or Apple-account configuration without explicit approval.
 
@@ -70,7 +72,7 @@ This roadmap orders work by release value, correctness risk, and dependency. Ite
 
 This is the highest-priority product-development track after the current TestFlight stabilization pass. Do not begin implementation until the discovery work identifies how the recently reported third-party app submits requests and whether that mechanism is supported, permissioned, and suitable for production use.
 
-- Fix the existing photo-source routing before deeper submission work: **Take a Photo** must present the camera and **Choose a Photo** must present the system photo picker. Keep their labels, icons, accessibility hints, and permission explanations consistent with the source each action actually opens.
+- **Completed:** **Take a Photo** presents the camera and **Choose a Photo** presents the privacy-preserving system photo picker, with distinct labels and source behavior.
 - Handle camera unavailability, denied or restricted camera access, limited Photos access, cancellation, picker errors, and re-selection without losing the rest of the draft. Prefer the privacy-preserving system photo picker and avoid requesting broad photo-library access when item-level selection is sufficient.
 - Add focused tests for both source actions and their cancellation/error paths, plus a physical-iPhone check that confirms the selected image reaches the same on-device analysis and editable review flow regardless of its source.
 - Locate and review the recent coverage of another app offering direct DC 311 submission, identify the app, and determine the actual integration mechanism rather than inferring it from the user experience.
@@ -137,6 +139,8 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 
 ## 6. Trustworthy trends and history — high
 
+- Add a status-scoped **Requests nearby** summary on Near You. Tapping **New**, **Active**, or **Resolved** should visibly select that status and refresh the category counts beneath it from complete grouped statistics for the same location, radius, and period—not from the currently loaded page. Preserve a clear path to the corresponding request list, provide an **All**/reset state, announce the selected scope to VoiceOver, and never leave counts from a superseded request visible after rapid taps.
+- Keep the initial Home summary concise with the top three categories, then add a clearly labeled **More** control that progressively reveals additional categories for the selected status without turning Near You into the long scrolling Requests feed. Offer **Show Less**, preserve stable ordering and selection while expanded, handle fewer than four results gracefully, and test Dynamic Type, loading, empty, partial-failure, and cached states.
 - Keep `PulseObservationRecord` as the on-device normalized request index, but separate “records observed” from historical state snapshots.
 - Add observation snapshots only where status-history analysis needs them; avoid unbounded duplicate storage.
 - **Completed foundation:** nearby 311 trends and the Map category catalog now use complete grouped ArcGIS statistics for two equal comparison periods; trend rows open the selected category on Map, where a targeted query retrieves its records.
@@ -145,6 +149,7 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 
 ## 7. Item-detail depth and civic actions — medium
 
+- Simplify the Item Details presentation by removing the repeated copy icons beside every field while preserving tap-to-copy on each displayed value. Keep **Copy All Details** and **Copy Report Details** as clearly labeled bulk actions, provide lightweight copied confirmation, and ensure VoiceOver still announces that individual values can be copied without relying on the removed visual glyph.
 - **Completed foundation:** the 311 **Request ID** is individually copyable and **Check This Request in DC 311** copies the identifier, explains the paste/search step, and opens the verified official HTTPS service only after confirmation. It does not claim a stable per-record portal URL.
 - Validate the copy/paste/status-search handoff on a physical iPhone, including cancellation and an unavailable official site. Consider a separate **Check by Text** action only if its exact 32311 message flow is verified against current official guidance.
 - Investigate whether the public Salesforce experience exposes a reasonably stable mapping from `SERVICEREQUESTID` to its request-detail navigation state through a public page response, supported API, documented mobile deep link, or another permissioned interface. Document the distinction between the public confirmation number and any internal Salesforce record identifier, authentication requirements, terms, rate limits, and whether anonymous deep links remain valid across sessions.
@@ -166,6 +171,12 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 
 ## 9. Later product expansion — deferred
 
+- After iOS 27 launches and its public SDK behavior is stable, add a Siri-facing civic-query experience so people can ask questions such as “How many rodent abatement requests were created near me in the last week?” Treat this as a platform-gated feature rather than targeting beta or rumored APIs.
+  - Expose a small, intentional vocabulary through the supported system-intelligence/App Intents surface: request count, category, status, time window, and a location scope such as current location, Home, or a followed place.
+  - Reuse the normalized `PulseItem`, complete grouped-statistics queries, saved-place semantics, and trustworthy trend provenance rather than allowing Siri to inspect ArcGIS transport records directly.
+  - Require location permission for “near me,” explain when Downtown DC fallback data is being used, and never speak or log a precise Home address unnecessarily.
+  - Return concise answers with freshness and scope context, offer a handoff into the corresponding filtered Map or Requests view, and handle unavailable, stale, partial-source, and ambiguous-category results honestly.
+  - Reassess the public iOS 27 APIs, privacy requirements, on-device behavior, testing tools, and minimum deployment target after the final SDK ships. Do not raise the app’s deployment target solely for this feature without an adoption and compatibility review.
 - Add a Settings-controlled Flock camera overlay that is off by default only after a licensed, attributable, freshness-aware location source is verified. MPD's published 2026 response confirms Flock camera counts but does not provide a Flock-specific coordinate feed; never relabel generic MPD or DDOT camera layers.
 - Widgets for Home and followed places.
 - Remote push notifications backed by a privacy-conscious polling service and APNs.

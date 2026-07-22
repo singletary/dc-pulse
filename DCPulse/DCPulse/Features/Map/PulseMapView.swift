@@ -51,6 +51,16 @@ struct PulseMapView: View {
                     .frame(maxWidth: 240)
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                     .offset(y: 54)
+                } else if let warning = store.mapCoverageWarning {
+                    Label(warning, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 14).padding(.vertical, 8)
+                        .frame(maxWidth: 260)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        .offset(y: 54)
+                        .accessibilityIdentifier("map.coverageWarning")
                 }
             }
         }

@@ -13,7 +13,7 @@
 
 DC Pulse is a native, map-forward iPhone app for exploring recent public activity around a location in Washington, DC. It turns DC’s ArcGIS and Open Data services into one approachable view of 311 service requests, building permits, and DDOT construction permits—without exposing people to raw GIS complexity.
 
-> **Project status:** Pre-release. Version 1.0 (build 5) has completed its initial internal physical-iPhone pass and has been submitted for external TestFlight beta review. It has not been submitted for public App Store review.
+> **Project status:** Pre-release. Version 1.0 (build 5) is available to external TestFlight testers. Build 6 was uploaded on July 21, 2026 with the completed post-build-5 reliability, privacy, watch-lifecycle, and trust improvements. It has not been submitted for public App Store review.
 
 <p align="center">
   <img src="marketing/app-store/screenshots/en-US/iPhone-6.9/01-near-you.png" width="23%" alt="DC Pulse Near You screen">
@@ -40,7 +40,7 @@ Location is requested only to perform a nearby search. If access is unavailable,
 
 ## Current TestFlight focus
 
-Build 5 is intentionally focused on reliability rather than another broad feature. External beta review is pending. The current post-build improvements include:
+Build 6 packages the reliability and trust work completed after build 5:
 
 1. Independent close-in and selected-radius Map coverage, progressive loading feedback, stale-response rejection, and an atomic **Reset Filters** action.
 2. Complete grouped 311 status and category summaries with explicit unavailable states instead of misleading first-page totals.
@@ -48,10 +48,11 @@ Build 5 is intentionally focused on reliability rather than another broad featur
 4. Useful denied/unavailable/out-of-area location routing without mislabeling an adjusted search center as the person's current location.
 5. Category-aware notification rows, address-free lock-screen alert copy, copyable Item Details, an honest 311 ID lookup handoff, and an in-app About surface.
 6. Independent system-alert choices for watched status changes and new auto-watched items near Home, with existing preferences migrated forward.
+7. Explainable trend provenance, reversible watched-item archival, configurable resolved-watch retention, and deterministic archive/restore and followed-place navigation coverage.
 
 The next release gate is a focused physical-iPhone and external TestFlight soak covering location, filters, dense map coverage, watched-item navigation, local alerts, photo input, accessibility, and official external handoffs. Durable restaurant-inspection ingestion and supported direct 311 submission remain contract-gated follow-on work.
 
-Automatic watch archival, richer trends, widgets, and optional civic overlays remain planned, but they follow the submission-path and release-quality work above. See the [ranked roadmap](docs/roadmap.md) for acceptance criteria and dependency gates.
+Richer long-term trends, widgets, and optional civic overlays remain planned, but they follow the submission-path and release-quality work above. See the [ranked roadmap](docs/roadmap.md) for acceptance criteria and dependency gates.
 
 ## Data sources
 

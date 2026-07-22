@@ -1,6 +1,6 @@
 # TestFlight release checklist
 
-DC Pulse 1.0 (5) has completed its initial internal physical-iPhone pass and is submitted for external TestFlight beta review. Use this checklist for review follow-up, external distribution, and every replacement build. It does not authorize changes to signing, the development team, provisioning, entitlements, or the bundle identifier.
+DC Pulse 1.0 (5) is available to external TestFlight testers. Build 6 was uploaded on July 21, 2026 and remains manually controlled for tester assignment. Use this checklist for processing follow-up, external distribution, and every replacement build. It does not authorize changes to signing, the development team, provisioning, entitlements, or the bundle identifier.
 
 ## Known issues
 
@@ -9,7 +9,7 @@ DC Pulse 1.0 (5) has completed its initial internal physical-iPhone pass and is 
 - Watch alerts are evaluated when DC Pulse refreshes matching data. Immediate remote push and guaranteed background delivery are not part of this build.
 - Map coverage is deliberately bounded for performance. The app guarantees that its close-in quarter-mile pass is merged into wider-radius results, but very dense long-range searches may not display every older record.
 - Public DC datasets can be delayed, incomplete, temporarily unavailable, or use inconsistent status wording. Healthy sources remain visible when another source fails.
-- Notification rows now use category-aware symbols and direct detail navigation. Automatic archival of completed watches remains planned.
+- Notification rows use category-aware symbols and direct detail navigation. Completed watches now move into a visible, restorable archive after the configured grace period.
 - **Check This Request in DC 311** copies the public request ID and opens the official service for manual paste/search; it does not claim an unverified record-specific deep link.
 
 ## Before upload
@@ -17,7 +17,7 @@ DC Pulse 1.0 (5) has completed its initial internal physical-iPhone pass and is 
 - Build and test the app on an available iPhone Simulator.
 - Run a Release build and Xcode static analysis.
 - Create and validate an iOS archive using the existing automatic-signing configuration.
-- Inspect the archive for the DC Pulse icon, `PrivacyInfo.xcprivacy`, version `1.0` (`5`), iPhone device family, location usage description, and the non-exempt-encryption declaration.
+- Inspect the archive for the DC Pulse icon, `PrivacyInfo.xcprivacy`, the intended version/build, iPhone device family, location usage description, and the non-exempt-encryption declaration.
 - Smoke test on a physical iPhone before inviting external testers.
 - Confirm the privacy, support, and marketing URLs in App Store Connect.
 - Reconcile App Store privacy answers with `docs/app-store-readiness.md` and the published privacy policy.
@@ -73,7 +73,7 @@ Notifications currently use on-device refresh checks rather than a push-notifica
 2. Keep the existing bundle identifier and signing configuration. Stop if Xcode requests a different team, certificate, profile, entitlement, or identifier.
 3. In App Store Connect, wait for processing, complete export-compliance and beta information, then add the build to an internal testing group.
 4. Install through TestFlight on the physical iPhone and complete the pass above.
-5. After Beta App Review approval, add build 5 to the intended external group, verify the public TestFlight link and tester-facing **What to Test** text, and monitor early feedback before broader promotion.
-6. Increment the build number before uploading any replacement build; the next 1.0 upload must be greater than build `5`.
+5. After processing or Beta App Review approval, manually add the intended build to the external group, verify the public TestFlight link and tester-facing **What to Test** text, and monitor early feedback before broader promotion.
+6. Increment the build number before uploading any replacement build; the next 1.0 upload must be greater than build `6`.
 
 External testing can begin after Apple approves the submitted beta review and the build is assigned to the intended external group.
