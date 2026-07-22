@@ -23,8 +23,13 @@ final class PulseDataStore {
         let requestTrendSnapshot: RequestTrendSnapshot?
     }
 
+    private struct MapCoverageResult {
+        let warnings: [String]
+        let recoveredSources: Set<PulseItem.Source>
+    }
+
     private enum MapCoverageAttempt {
-        case success([String])
+        case success(MapCoverageResult)
         case failed(String)
         case cancelled
     }
@@ -86,6 +91,7 @@ final class PulseDataStore {
     private(set) var hasMore = false
     private(set) var isLoadingMore = false
     private(set) var isMapCoverageLoading = false
+    private(set) var mapCoverageWarning: String?
     private(set) var loadMoreError: String?
     private(set) var sourceWarnings: [String] = []
     private(set) var requestStatusCounts: RequestStatusCounts?
@@ -143,6 +149,7 @@ final class PulseDataStore {
         hasMore = false
         isLoadingMore = false
         loadMoreError = nil
+        mapCoverageWarning = nil
         sourceWarnings = []
         requestStatusCounts = nil
         isRequestSummaryLoading = requestStatusSummaryRepository != nil
@@ -224,7 +231,10 @@ final class PulseDataStore {
             items.append(contentsOf: page.items.filter { !existingIDs.contains($0.id) })
             nextOffset = page.nextOffset
             hasMore = page.hasMore
-            sourceWarnings = Array(Set(sourceWarnings + page.warnings)).sorted()
+            clearRecoveredSourceWarnings(using: page.items)
+            if !page.warnings.isEmpty {
+                loadMoreError = "Some additional results could not be refreshed. Try again."
+            }
             if persistResult { saveCache() }
         } catch is CancellationError {
             return
@@ -260,6 +270,7 @@ final class PulseDataStore {
         let coordinate = searchCoordinate
         let selectedRadius = radius
         let selectedPeriod = period
+        mapCoverageWarning = nil
         isMapCoverageLoading = true
         defer {
             if coverageSequence == mapCoverageSequence { isMapCoverageLoading = false }
@@ -375,11 +386,12 @@ final class PulseDataStore {
         requestSequence: Int,
         coverageSequence: Int,
         selectedRadius: Radius
-    ) async throws -> [String] {
+    ) async throws -> MapCoverageResult {
         var loadedCount = 0
         var offset = 0
         var hasMore = true
         var warnings: [String] = []
+        var recoveredSources: Set<PulseItem.Source> = []
         while hasMore, loadedCount < limit {
             try Task.checkCancellation()
             let page = try await repository.nearbyItems(
@@ -396,12 +408,13 @@ final class PulseDataStore {
                   period == self.period else { throw CancellationError() }
             merge(page.items)
             warnings += page.warnings
+            recoveredSources.formUnion(page.items.map(\.id.source))
             loadedCount += page.items.count
             guard page.nextOffset > offset || !page.hasMore else { break }
             offset = page.nextOffset
             hasMore = page.hasMore
         }
-        return warnings
+        return MapCoverageResult(warnings: warnings, recoveredSources: recoveredSources)
     }
 
     private func mapCoverageAttempt(
@@ -436,15 +449,47 @@ final class PulseDataStore {
     ) -> Bool {
         guard coverageSequence == mapCoverageSequence,
               !attempts.contains(where: { if case .cancelled = $0 { true } else { false } }) else { return false }
-        let warnings = attempts.flatMap { attempt -> [String] in
-            switch attempt {
-            case .success(let warnings): warnings
-            case .failed(let warning): [warning]
-            case .cancelled: []
+        let recoveredSources = attempts.reduce(into: Set<PulseItem.Source>()) { sources, attempt in
+            if case .success(let result) = attempt {
+                sources.formUnion(result.recoveredSources)
             }
         }
-        sourceWarnings = Array(Set(sourceWarnings + warnings)).sorted()
+        clearRecoveredSourceWarnings(recoveredSources)
+
+        let directFailures = attempts.compactMap { attempt -> String? in
+            switch attempt {
+            case .failed(let warning): warning
+            case .success, .cancelled: nil
+            }
+        }
+        let hasPartialSourceFailure = attempts.contains { attempt in
+            if case .success(let result) = attempt { !result.warnings.isEmpty } else { false }
+        }
+        mapCoverageWarning = directFailures.first ?? (hasPartialSourceFailure
+            ? "Some map results could not be refreshed. Try again."
+            : nil)
         return true
+    }
+
+    private func clearRecoveredSourceWarnings(using items: [PulseItem]) {
+        clearRecoveredSourceWarnings(Set(items.map(\.id.source)))
+    }
+
+    private func clearRecoveredSourceWarnings(_ recoveredSources: Set<PulseItem.Source>) {
+        guard !recoveredSources.isEmpty else { return }
+        sourceWarnings.removeAll { warning in
+            recoveredSources.contains { source in
+                warning.hasPrefix("\(availabilityName(for: source)) ")
+            }
+        }
+    }
+
+    private func availabilityName(for source: PulseItem.Source) -> String {
+        switch source {
+        case .serviceRequests311: "DC 311"
+        case .buildingPermits2026: "Building Permits"
+        case .ddotConstructionPermits2026: "DDOT Construction Permits"
+        }
     }
 
     private func merge(_ additionalItems: [PulseItem]) {

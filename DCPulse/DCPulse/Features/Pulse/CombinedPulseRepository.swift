@@ -43,7 +43,7 @@ struct CombinedPulseRepository: PulseRepositoryProtocol, Sendable {
                     } catch is CancellationError {
                         return SourceResult(page: nil, warning: nil, wasCancelled: true)
                     } catch {
-                        return SourceResult(page: nil, warning: "\(source.name) is temporarily unavailable.")
+                        return SourceResult(page: nil, warning: "\(source.name) records are temporarily unavailable.")
                     }
                 }
             }

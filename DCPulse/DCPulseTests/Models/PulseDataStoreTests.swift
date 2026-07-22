@@ -81,6 +81,7 @@ struct PulseDataStoreTests {
         #expect(store.requestCategoryCounts.isEmpty)
         #expect(!store.isRequestSummaryLoading)
         #expect(!store.isRequestInsightsLoading)
+        #expect(store.sourceWarnings.isEmpty)
     }
 
     @Test func retriesATransientStatusSummaryFailureOnce() async throws {
@@ -170,6 +171,49 @@ struct PulseDataStoreTests {
         #expect(repository.limitRequests == [30, 30])
     }
 
+    @Test func keepsLoadMorePartialFailuresOutOfPrimarySourceWarnings() async throws {
+        let first = try #require(SampleData.items.first)
+        let second = try #require(SampleData.items.dropFirst().first)
+        let repository = StubPulseRepository(results: [
+            .success(.init(items: [first], nextOffset: 1, hasMore: true)),
+            .success(.init(
+                items: [second],
+                nextOffset: 2,
+                hasMore: true,
+                warnings: ["DC 311 records are temporarily unavailable."]
+            ))
+        ])
+        let store = PulseDataStore(repository: repository)
+
+        await store.load()
+        await store.loadMore()
+
+        #expect(Set(store.items.map(\.id)) == Set([first.id, second.id]))
+        #expect(store.sourceWarnings.isEmpty)
+        #expect(store.loadMoreError == "Some additional results could not be refreshed. Try again.")
+    }
+
+    @Test func clearsAStalePrimaryWarningWhenThatSourceRecovers() async throws {
+        let request = try #require(SampleData.items.first { $0.id.source == .serviceRequests311 })
+        let permit = try #require(SampleData.items.first { $0.id.source == .buildingPermits2026 })
+        let repository = StubPulseRepository(results: [
+            .success(.init(
+                items: [permit],
+                nextOffset: 1,
+                hasMore: true,
+                warnings: ["DC 311 records are temporarily unavailable."]
+            )),
+            .success(.init(items: [request], nextOffset: 2, hasMore: false))
+        ])
+        let store = PulseDataStore(repository: repository)
+
+        await store.load()
+        #expect(store.sourceWarnings == ["DC 311 records are temporarily unavailable."])
+
+        await store.loadMore()
+        #expect(store.sourceWarnings.isEmpty)
+    }
+
     @Test func prefetchesSummaryPagesUntilTheSourceIsComplete() async throws {
         let first = try #require(SampleData.items.first)
         let second = try #require(SampleData.items.dropFirst().first)
@@ -224,8 +268,32 @@ struct PulseDataStoreTests {
 
         #expect(Set(store.items.map(\.id)) == Set([broadItem.id, laterBroadItem.id]))
         #expect(repository.radiusRequests == [0.5, 0.25, 0.5])
-        #expect(store.sourceWarnings.contains { $0.contains("close-in") })
+        #expect(store.sourceWarnings.isEmpty)
+        #expect(store.mapCoverageWarning?.contains("close-in") == true)
         #expect(!store.isMapCoverageLoading)
+    }
+
+    @Test func keepsMapPaginationWarningsScopedToTheMap() async throws {
+        let initial = try #require(SampleData.items.first)
+        let closeIn = try #require(SampleData.items.dropFirst().first)
+        let selectedRadius = try #require(SampleData.items.dropFirst(2).first)
+        let repository = StubPulseRepository(results: [
+            .success(.init(items: [initial], nextOffset: 1, hasMore: false)),
+            .success(.init(
+                items: [closeIn],
+                nextOffset: 1,
+                hasMore: false,
+                warnings: ["DC 311 records are temporarily unavailable."]
+            )),
+            .success(.init(items: [selectedRadius], nextOffset: 1, hasMore: false))
+        ])
+        let store = PulseDataStore(repository: repository)
+
+        await store.load()
+        await store.prepareMapResults()
+
+        #expect(store.sourceWarnings.isEmpty)
+        #expect(store.mapCoverageWarning == "Some map results could not be refreshed. Try again.")
     }
 
     @Test func resetsSearchOptionsWithOneReload() async {

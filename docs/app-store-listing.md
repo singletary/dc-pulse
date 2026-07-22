@@ -139,7 +139,7 @@ Simulator’s iPhone 17 Pro window, with large storefront-readable headlines.
 
 ## Still required before public App Review
 
-- Complete the external TestFlight pass for build 5, including its distinct photo-library/camera actions and official DC311 app handoff plus website fallback.
+- Complete the focused external TestFlight pass for build 6, including location recovery, progressive Map coverage, notification privacy/preferences, watch archival, copy actions, distinct photo-library/camera behavior, and the official DC311 app handoff plus website fallback.
 - Do not advertise nearby restaurant inspections until a useful map is backed by an approved source; remove or clearly limit the placeholder experience if it is not ready.
 - Confirm the monitored private contact form remains available at the public support URL.
 - Complete the age-rating questionnaire in App Store Connect.
