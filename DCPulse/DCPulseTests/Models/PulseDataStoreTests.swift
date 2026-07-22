@@ -62,6 +62,51 @@ struct PulseDataStoreTests {
         #expect(!store.isRequestInsightsLoading)
     }
 
+    @Test func statusSelectionUsesCompleteScopedCategoryCountsAndResetsToAll() async throws {
+        let repository = StubPulseRepository(results: [
+            .success(.init(items: [], nextOffset: 0, hasMore: false))
+        ])
+        let categories = DelayedCategorySummaryRepository()
+        let store = PulseDataStore(
+            repository: repository,
+            requestCategorySummaryRepository: categories
+        )
+
+        await store.load()
+        #expect(store.selectedRequestStatus == nil)
+        #expect(store.requestCategoryCounts == ["All requests": 20])
+
+        await store.selectRequestStatus(.active)
+        #expect(store.selectedRequestStatus == .active)
+        #expect(store.requestCategoryCounts == ["Active requests": 8])
+
+        await store.selectRequestStatus(nil)
+        #expect(store.selectedRequestStatus == nil)
+        #expect(store.requestCategoryCounts == ["All requests": 20])
+        #expect(await categories.requestedStatuses == [nil, .active])
+    }
+
+    @Test func slowerStatusSelectionCannotReplaceTheLatestCategoryCounts() async throws {
+        let repository = StubPulseRepository(results: [
+            .success(.init(items: [], nextOffset: 0, hasMore: false))
+        ])
+        let categories = DelayedCategorySummaryRepository()
+        let store = PulseDataStore(
+            repository: repository,
+            requestCategorySummaryRepository: categories
+        )
+        await store.load()
+
+        let earlierSelection = Task { await store.selectRequestStatus(.new) }
+        try await Task.sleep(for: .milliseconds(20))
+        await store.selectRequestStatus(.resolved)
+        await earlierSelection.value
+
+        #expect(store.selectedRequestStatus == .resolved)
+        #expect(store.requestCategoryCounts == ["Resolved requests": 11])
+        #expect(!store.isRequestCategorySummaryLoading)
+    }
+
     @Test func doesNotPresentPartialPageCountsAsCompleteWhenSummariesFail() async throws {
         let loadedItem = try #require(SampleData.items.first)
         let repository = StubPulseRepository(results: [
@@ -398,5 +443,32 @@ private actor TransientStatusSummaryRepository: RequestStatusSummaryRepositoryPr
         attempts += 1
         if attempts == 1 { throw TestError.expected }
         return counts
+    }
+}
+
+private actor DelayedCategorySummaryRepository: RequestCategorySummaryRepositoryProtocol {
+    private(set) var requestedStatuses: [PulseItem.Status?] = []
+
+    func categoryCounts(
+        status: PulseItem.Status?,
+        coordinate: PulseItem.Coordinate,
+        radiusMiles: Double,
+        days: Int
+    ) async throws -> [String: Int] {
+        requestedStatuses.append(status)
+        switch status {
+        case .new:
+            try await Task.sleep(for: .milliseconds(150))
+            return ["New requests": 3]
+        case .active:
+            return ["Active requests": 8]
+        case .resolved:
+            try await Task.sleep(for: .milliseconds(5))
+            return ["Resolved requests": 11]
+        case .unknown:
+            return [:]
+        case nil:
+            return ["All requests": 20]
+        }
     }
 }

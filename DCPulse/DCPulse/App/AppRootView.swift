@@ -8,6 +8,7 @@ enum AppTab: Hashable { case pulse, map, requests, places }
 final class AppNavigation {
     var selectedTab: AppTab = .pulse
     var requestedMapCategory: String?
+    var requestedMapStatus: PulseItem.Status?
     var watchRefreshRequestID = 0
 
     func requestWatchRefresh() { watchRefreshRequestID += 1 }

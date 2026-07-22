@@ -211,8 +211,10 @@ struct PulseMapView: View {
 
     private func applyRequestedCategory() {
         guard let category = navigation.requestedMapCategory else { return }
+        statusFilter = navigation.requestedMapStatus
         selectCategory(category)
         navigation.requestedMapCategory = nil
+        navigation.requestedMapStatus = nil
     }
 
     private func selectCategory(_ category: String?) {

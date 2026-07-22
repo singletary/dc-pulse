@@ -14,7 +14,6 @@ struct PulseView: View {
     @State private var showingAddressSearch = false
     @State private var showingSaveHome = false
     @State private var showingManualHome = false
-    @State private var selectedStatus: StatusItemsDestination?
     @State private var showingReport311 = false
     @State private var showingRestaurantHealth = false
 
@@ -55,26 +54,62 @@ struct PulseView: View {
                     metricButton(.active, .orange)
                     metricButton(.resolved, .green)
                 }
-                if store.requestStatusCountsUnavailable || store.requestInsightsUnavailable {
+                HStack {
+                    Label(selectedStatusDescription, systemImage: store.selectedRequestStatus == nil ? "line.3.horizontal.decrease.circle" : "checkmark.circle.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(store.selectedRequestStatus == nil ? Color.secondary : Color.indigo)
+                    Spacer()
+                    if store.selectedRequestStatus != nil {
+                        Button("Show All") { Task { await store.selectRequestStatus(nil) } }
+                            .font(.subheadline.weight(.semibold))
+                            .accessibilityIdentifier("pulse.status.all")
+                    }
+                }
+                if let status = store.selectedRequestStatus {
+                    NavigationLink(value: StatusItemsDestination(status: status)) {
+                        Label("View \(status.displayName.lowercased()) requests", systemImage: "list.bullet")
+                    }
+                    .accessibilityIdentifier("pulse.status.viewList")
+                }
+                if store.requestStatusCountsUnavailable {
                     Button { Task { await store.retry() } } label: {
                         Label("Refresh complete request counts", systemImage: "arrow.clockwise.circle")
                     }
-                    Text("Some summary totals are temporarily unavailable. DC Pulse won’t substitute partial page counts.")
+                    Text("Complete status totals are temporarily unavailable. DC Pulse won’t substitute partial page counts.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                ForEach(topCategories, id: \.name) { category in
-                    Button { showOnMap(category.name) } label: {
-                        HStack(spacing: 12) {
-                            Text(PulseCategoryVisual.emoji(for: category.name)).font(.title2)
-                                .frame(width: 34, height: 34).background(.thinMaterial, in: Circle())
-                            Text(categorySummary(name: category.name, count: category.count))
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            Image(systemName: "map.fill").foregroundStyle(.indigo)
-                        }
+                if store.isRequestCategorySummaryLoading {
+                    HStack(spacing: 10) {
+                        ProgressView().controlSize(.small)
+                        Text("Refreshing category totals…")
+                            .font(.subheadline).foregroundStyle(.secondary)
                     }
-                    .accessibilityHint("Shows these updates on the map")
+                } else if store.requestCategorySummaryUnavailable {
+                    Button {
+                        Task { await store.selectRequestStatus(store.selectedRequestStatus, force: true) }
+                    } label: {
+                        Label("Retry category totals", systemImage: "arrow.clockwise.circle")
+                    }
+                    Text("Complete category totals are temporarily unavailable for this status.")
+                        .font(.caption).foregroundStyle(.secondary)
+                } else if topCategories.isEmpty {
+                    Text("No request categories match this status.")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                } else {
+                    ForEach(topCategories, id: \.name) { category in
+                        Button { showOnMap(category.name) } label: {
+                            HStack(spacing: 12) {
+                                Text(PulseCategoryVisual.emoji(for: category.name)).font(.title2)
+                                    .frame(width: 34, height: 34).background(.thinMaterial, in: Circle())
+                                Text(categorySummary(name: category.name, count: category.count))
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                Image(systemName: "map.fill").foregroundStyle(.indigo)
+                            }
+                        }
+                        .accessibilityHint("Shows these updates on the map")
+                    }
                 }
             }
 
@@ -164,7 +199,7 @@ struct PulseView: View {
             }
         }
         .navigationTitle("Happening near you")
-        .navigationDestination(item: $selectedStatus) { StatusItemsView(status: $0.status) }
+        .navigationDestination(for: StatusItemsDestination.self) { StatusItemsView(status: $0.status) }
         .navigationDestination(isPresented: $showingReport311) { Report311View() }
         .navigationDestination(isPresented: $showingRestaurantHealth) { RestaurantHealthView() }
         .navigationDestination(for: PulseItem.self) { ItemDetailsView(item: $0) }
@@ -291,7 +326,6 @@ struct PulseView: View {
     }
 
     private var topCategories: [(name: String, count: Int)] {
-        if store.requestInsightsUnavailable { return [] }
         if !store.requestCategoryCounts.isEmpty {
             return store.requestCategoryCounts
                 .map { (name: $0.key, count: $0.value) }
@@ -301,14 +335,7 @@ struct PulseView: View {
                 }
                 .prefix(3).map { $0 }
         }
-        let requests = store.items.filter { $0.id.source == .serviceRequests311 }
-        let groups: [String: [PulseItem]] = Dictionary(grouping: requests) { $0.category }
-        let counts: [(name: String, count: Int)] = groups.map { (name: $0.key, count: $0.value.count) }
-        let sorted = counts.sorted {
-            if $0.count == $1.count { return $0.name < $1.name }
-            return $0.count > $1.count
-        }
-        return Array(sorted.prefix(3))
+        return []
     }
 
     private var homeRequests: [PulseItem] {
@@ -425,7 +452,8 @@ struct PulseView: View {
     }
 
     private func metricButton(_ status: PulseItem.Status, _ color: Color) -> some View {
-        Button { selectedStatus = StatusItemsDestination(status: status) } label: {
+        let isSelected = store.selectedRequestStatus == status
+        return Button { Task { await store.selectRequestStatus(status) } } label: {
             VStack(spacing: 3) {
                 Group {
                     if store.isRequestSummaryLoading {
@@ -443,19 +471,32 @@ struct PulseView: View {
             .foregroundStyle(color)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
-            .background(color.opacity(0.09), in: RoundedRectangle(cornerRadius: 12))
+            .background(color.opacity(isSelected ? 0.18 : 0.09), in: RoundedRectangle(cornerRadius: 12))
+            .overlay {
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(isSelected ? color : .clear, lineWidth: 2)
+            }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("pulse.status.\(status.rawValue)")
         .accessibilityValue(store.requestStatusCountsUnavailable
                             ? "Complete count temporarily unavailable"
-                            : "\(store.requestCount(for: status))")
+                            : "\(store.requestCount(for: status)), \(isSelected ? "selected" : "not selected")")
+        .accessibilityHint(isSelected
+                           ? "Selected. Use View requests to open the matching list."
+                           : "Selects this status and refreshes the category totals below.")
     }
 
     private func showOnMap(_ category: String) {
         navigation.requestedMapCategory = category
+        navigation.requestedMapStatus = store.selectedRequestStatus
         navigation.selectedTab = .map
+    }
+
+    private var selectedStatusDescription: String {
+        guard let status = store.selectedRequestStatus else { return "All statuses" }
+        return "\(status.displayName) selected"
     }
 
     private func beginSavingHome() {
