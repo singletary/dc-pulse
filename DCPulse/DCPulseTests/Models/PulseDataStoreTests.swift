@@ -62,6 +62,31 @@ struct PulseDataStoreTests {
         #expect(!store.isRequestInsightsLoading)
     }
 
+    @Test func refreshesTrendContextAcrossRadiusPeriodAndFollowedPlaceChanges() async throws {
+        let emptyPage = PulsePage(items: [], nextOffset: 0, hasMore: false)
+        let repository = StubPulseRepository(results: Array(repeating: .success(emptyPage), count: 4))
+        let trends = RecordingTrendSummaryRepository()
+        let store = PulseDataStore(repository: repository, requestTrendSummaryRepository: trends)
+        let followedCoordinate = try #require(PulseItem.Coordinate(latitude: 38.93, longitude: -77.07))
+
+        await store.load()
+        await store.selectRadius(.oneMile)
+        await store.selectPeriod(.ninetyDays)
+        await store.load(coordinate: followedCoordinate, placeName: "Tenleytown")
+
+        let requests = await trends.requests
+        #expect(requests == [
+            .init(coordinate: SampleData.center, radiusMiles: 0.5, days: 30),
+            .init(coordinate: SampleData.center, radiusMiles: 1, days: 30),
+            .init(coordinate: SampleData.center, radiusMiles: 1, days: 90),
+            .init(coordinate: followedCoordinate, radiusMiles: 1, days: 90)
+        ])
+        #expect(store.placeName == "Tenleytown")
+        #expect(store.requestTrendSnapshot?.provenance?.coordinate == followedCoordinate)
+        #expect(store.requestTrendSnapshot?.provenance?.radiusMiles == 1)
+        #expect(store.requestTrendSnapshot?.provenance?.selectedDays == 90)
+    }
+
     @Test func statusSelectionUsesCompleteScopedCategoryCountsAndResetsToAll() async throws {
         let repository = StubPulseRepository(results: [
             .success(.init(items: [], nextOffset: 0, hasMore: false))
@@ -418,6 +443,41 @@ private struct StubTrendSummaryRepository: RequestTrendSummaryRepositoryProtocol
 
     func trendSnapshot(coordinate: PulseItem.Coordinate, radiusMiles: Double, days: Int) async throws -> RequestTrendSnapshot {
         snapshot
+    }
+}
+
+private actor RecordingTrendSummaryRepository: RequestTrendSummaryRepositoryProtocol {
+    struct Request: Equatable, Sendable {
+        let coordinate: PulseItem.Coordinate
+        let radiusMiles: Double
+        let days: Int
+    }
+
+    private(set) var requests: [Request] = []
+
+    func trendSnapshot(
+        coordinate: PulseItem.Coordinate,
+        radiusMiles: Double,
+        days: Int
+    ) async throws -> RequestTrendSnapshot {
+        requests.append(.init(coordinate: coordinate, radiusMiles: radiusMiles, days: days))
+        let refreshedAt = Date(timeIntervalSince1970: 2_000_000_000)
+        let midpoint = refreshedAt.addingTimeInterval(TimeInterval(-days * 24 * 60 * 60 / 2))
+        let start = refreshedAt.addingTimeInterval(TimeInterval(-days * 24 * 60 * 60))
+        return .init(
+            trends: [],
+            categories: [],
+            categoryCounts: [:],
+            provenance: .init(
+                source: .serviceRequests311,
+                coordinate: coordinate,
+                radiusMiles: radiusMiles,
+                selectedDays: days,
+                currentPeriod: .init(start: midpoint, end: refreshedAt),
+                previousPeriod: .init(start: start, end: midpoint),
+                refreshedAt: refreshedAt
+            )
+        )
     }
 }
 

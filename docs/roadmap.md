@@ -145,7 +145,7 @@ Background App Refresh is the selected first-release delivery model. It is usefu
 - **Completed foundation:** historical state snapshots are written only for meaningful normalized lifecycle transitions. Repeated observations and age-derived New-to-Active presentation changes update the current index without creating unbounded duplicate history; visible-load and identifier-refresh paths share this boundary.
 - **Completed foundation:** nearby 311 trends and the Map category catalog now use complete grouped ArcGIS statistics for two equal comparison periods; trend rows open the selected category on Map, where a targeted query retrieves its records.
 - **Completed:** store trend query provenance for data source, geography, radius, selected period, comparison windows, and refresh date; Near You explains the current context and cached freshness without showing raw coordinates.
-- Add retention and migration rules and verify trend calculations across radius, followed-place, and time-range changes.
+- **Completed:** lifecycle snapshots use a documented one-year on-device retention window with launch-time pruning and additive lightweight migration for legacy unversioned rows; unknown future-version rows are preserved. Deterministic coverage verifies trend context refreshes across radius, followed-place, and time-range changes.
 
 ## 7. Item-detail depth and civic actions — medium
 

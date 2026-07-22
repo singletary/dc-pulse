@@ -52,6 +52,7 @@ struct AppRootView: View {
 #if DEBUG
             UITestScenario.prepareIfRequested(in: modelContext)
 #endif
+            maintainPulseHistory()
             await notificationService.refreshAuthorizationState()
             locationService.requestCurrentLocation()
             await loadInitialLocation()
@@ -97,6 +98,12 @@ struct AppRootView: View {
                 }
             }
         }
+    }
+
+    private func maintainPulseHistory() {
+        guard let records = try? modelContext.fetch(FetchDescriptor<PulseStateSnapshotRecord>()) else { return }
+        let result = PulseHistoryMaintenance.apply(to: records) { modelContext.delete($0) }
+        if result.hasChanges { try? modelContext.save() }
     }
 
     private func loadInitialLocation() async {
