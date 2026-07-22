@@ -1,6 +1,6 @@
 # TestFlight release checklist
 
-DC Pulse 1.0 (6) is available to external TestFlight testers. Build 7 has been uploaded and is available to internal TestFlight testers, but has not yet been assigned to external testers. Use this checklist for internal verification, external distribution, and every replacement build. It does not authorize changes to signing, the development team, provisioning, entitlements, or the bundle identifier.
+Use this checklist for internal verification, external distribution, and replacement builds. Current build availability and the immediate gate live in [release status](release-status.md). This checklist does not authorize changes to signing, the development team, provisioning, entitlements, or the bundle identifier.
 
 ## Known issues
 
@@ -12,15 +12,22 @@ DC Pulse 1.0 (6) is available to external TestFlight testers. Build 7 has been u
 - Notification rows use category-aware symbols and direct detail navigation. Completed watches now move into a visible, restorable archive after the configured grace period.
 - **Check This Request in DC 311** copies the public request ID and opens the official service for manual paste/search; it does not claim an unverified record-specific deep link.
 
-## Before upload
+## Before external distribution
+
+- Install the processed build from TestFlight on a physical iPhone and complete the pass below.
+- Confirm the privacy, support, and marketing URLs in App Store Connect.
+- Reconcile App Store privacy answers with [App Store readiness](app-store-readiness.md) and the published privacy policy.
+- Complete any required Beta App Review information and assign the verified build to the intended external group.
+- Verify the public TestFlight link and tester-facing **What to Test** text, then monitor early feedback before broader promotion.
+
+## Before any replacement upload
 
 - Build and test the app on an available iPhone Simulator.
 - Run a Release build and Xcode static analysis.
 - Create and validate an iOS archive using the existing automatic-signing configuration.
 - Inspect the archive for the DC Pulse icon, `PrivacyInfo.xcprivacy`, the intended version/build, iPhone device family, location usage description, and the non-exempt-encryption declaration.
-- Smoke test on a physical iPhone before inviting external testers.
-- Confirm the privacy, support, and marketing URLs in App Store Connect.
-- Reconcile App Store privacy answers with `docs/app-store-readiness.md` and the published privacy policy.
+- Smoke test on a physical iPhone.
+- Increment the build number beyond every build already uploaded to App Store Connect.
 
 ## Suggested TestFlight information
 
@@ -67,13 +74,12 @@ Test once on Wi-Fi and once on cellular. Include a cold launch, background/foreg
 
 Notifications currently use on-device refresh checks rather than a push-notification server, so status alerts are evaluated when the app refreshes data. Test that behavior as implemented; do not describe it as immediate remote push.
 
-## Apple-account steps
+## Replacement upload steps
 
 1. In Xcode Organizer, select the validated archive and choose **Distribute App > App Store Connect > Upload**.
 2. Keep the existing bundle identifier and signing configuration. Stop if Xcode requests a different team, certificate, profile, entitlement, or identifier.
 3. In App Store Connect, wait for processing, complete export-compliance and beta information, then add the build to an internal testing group.
-4. Install through TestFlight on the physical iPhone and complete the pass above.
-5. After processing or Beta App Review approval, manually add the intended build to the external group, verify the public TestFlight link and tester-facing **What to Test** text, and monitor early feedback before broader promotion.
-6. Build `7` has already been uploaded to App Store Connect. Any replacement archive must increment the build number before upload.
+4. Install through TestFlight on a physical iPhone and complete the **What to Test** and physical-device passes.
+5. Return to **Before external distribution** above after internal verification.
 
-External testing can begin after Apple approves the submitted beta review and the build is assigned to the intended external group.
+External testing can begin after any required Beta App Review approval and assignment to the intended external group.

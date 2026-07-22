@@ -17,7 +17,7 @@ DC Pulse answers “What’s changing around me today?” with a professional na
 
 ## Delivery sequence
 
-The current ranked execution plan is maintained in [roadmap.md](roadmap.md). Version 1.0 (build 6) is available to external TestFlight testers. Build 7, with status-scoped summaries, expandable complete categories, isolated auxiliary warnings, and bounded lifecycle-history migration, has been uploaded and is available to internal TestFlight testers but not yet to external testers. Opportunistic Background App Refresh remains the first planned notification delivery model; server-backed APNs are deferred until product use justifies them.
+The current ranked execution plan is maintained in [roadmap.md](roadmap.md), current distribution in [release status](release-status.md), and completed delivery milestones in [release history](release-history.md). Opportunistic Background App Refresh remains the first planned notification delivery model; server-backed APNs are deferred until product use justifies them.
 - **Phase 0 — foundation:** documentation, feature MVVM layout, domain model, reusable ArcGIS query/client, fixture tests, and polished sample-data shell.
 - **Current live product slice:** query 311, Building Permit, and DDOT Construction Permit sources independently; render normalized results in Near You, Requests, Map, and Item Details; preserve healthy sources during partial failures; and load additional records progressively.
 - **Status semantics:** unresolved records opened within 48 hours are New; older unresolved records are Active; source statuses containing closed, completed, or resolved are Resolved.

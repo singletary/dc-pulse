@@ -1,12 +1,12 @@
 # App Store readiness
 
-## Current build metadata
+## Scope
+
+This is the operational readiness checklist for TestFlight and App Review. Current build availability lives in [release status](release-status.md); copy-ready product metadata, privacy answers, review notes, and screenshots live in [App Store listing](app-store-listing.md).
 
 - Display name: **DC Pulse**
 - Bundle identifier: `com.dcpulseapp.DCPulse`
 - Marketing version: `1.0`
-- Build number: `7`, current internal TestFlight build
-- Distribution state: build 6 available to external TestFlight testers; build 7 uploaded and available to internal TestFlight testers but not yet assigned externally
 - Supported device family: iPhone
 - Location permission: When In Use only
 - Camera permission: requested only when the person chooses **Take Photo** in the 311 draft flow
@@ -15,13 +15,13 @@
 
 Signing, capabilities, entitlements, bundle identifiers, and Apple-account configuration require explicit approval before changes.
 
-## Current external-beta gates
+## External-beta gates
 
-- After build 7 completes internal verification, manually assign it to the intended external TestFlight group and verify its location recovery, map coverage/loading, coherent status-scoped Near You totals, expanded category summary, alert preferences, watch archival, copy actions, distinct Photos/Camera behavior, followed-place navigation, and lifecycle-history migration with external testers.
+- Complete the internal-verification and external-distribution sequence in [release status](release-status.md), then verify location recovery, map coverage/loading, coherent status-scoped Near You totals, expanded category summary, alert preferences, watch archival, copy actions, distinct Photos/Camera behavior, followed-place navigation, and lifecycle-history migration with external testers.
 - Monitor the external beta for correctness, performance, crash, navigation, accessibility, and public-data reliability feedback before public App Store review.
 - Keep restaurant inspection language data-gated until a nearby report map is backed by a dependable, reviewed source.
 
-The copy-ready listing, review notes, privacy recommendation, and final colorful light-mode screenshot sequences for the 6.9-inch and 6.5-inch App Store slots are maintained in `docs/app-store-listing.md` and `marketing/app-store`.
+The copy-ready listing, review notes, privacy recommendation, and screenshot sequence are maintained in [App Store listing](app-store-listing.md); reproducible 6.9- and 6.5-inch assets live in `marketing/app-store`.
 
 ## Privacy behavior and draft disclosure
 
@@ -52,7 +52,7 @@ App Store Connect answers must be re-audited immediately before submission again
 - no data collected by the app developer,
 - `NSPrivacyAccessedAPICategoryUserDefaults` with approved reason `CA92.1` for app-only preferences and cache metadata.
 
-Generate the archive privacy report in Xcode before TestFlight submission and reconcile it with App Store Connect.
+Generate and review the archive privacy report for every replacement upload and for the final App Review build; reconcile it with App Store Connect before distribution.
 
 ## Public URLs
 

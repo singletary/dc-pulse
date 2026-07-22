@@ -13,7 +13,7 @@
 
 DC Pulse is a native, map-forward iPhone app for exploring recent public activity around a location in Washington, DC. It turns DC’s ArcGIS and Open Data services into one approachable view of 311 service requests, building permits, and DDOT construction permits—without exposing people to raw GIS complexity.
 
-> **Project status:** Pre-release. Version 1.0 (build 6) is available to external TestFlight testers. Build 7 has been uploaded and is available to internal TestFlight testers, but has not yet been assigned to external testers. DC Pulse has not been submitted for public App Store review.
+> **Project status:** Pre-release and in TestFlight testing. See the canonical [release status](docs/release-status.md) for current internal/external build availability and the next gate.
 
 <p align="center">
   <img src="marketing/app-store/screenshots/en-US/iPhone-6.9/01-near-you.png" width="23%" alt="DC Pulse Near You screen">
@@ -40,21 +40,10 @@ Location is requested only to perform a nearby search. If access is unavailable,
 
 ## Current TestFlight focus
 
-Build 6 packages the reliability and trust work completed after build 5:
-
-1. Independent close-in and selected-radius Map coverage, progressive loading feedback, stale-response rejection, and an atomic **Reset Filters** action.
-2. Complete grouped 311 status and category summaries with explicit unavailable states instead of misleading first-page totals.
-3. Native Requests pull-to-refresh, distinct Photos and Camera inputs, and silent age-derived New-to-Active watch transitions.
-4. Useful denied/unavailable/out-of-area location routing without mislabeling an adjusted search center as the person's current location.
-5. Category-aware notification rows, address-free lock-screen alert copy, copyable Item Details, an honest 311 ID lookup handoff, and an in-app About surface.
-6. Independent system-alert choices for watched status changes and new auto-watched items near Home, with existing preferences migrated forward.
-7. Explainable trend provenance, reversible watched-item archival, configurable resolved-watch retention, and deterministic archive/restore and followed-place navigation coverage.
-
-Build 7 additionally isolates auxiliary pagination warnings from primary source availability, makes the nearby category summary status-scoped and expandable, separates lifecycle transition history from the current observation index, and applies a documented one-year on-device retention and migration policy.
-
-The next release gate is to complete build 7's internal TestFlight verification, assign it to the intended external group, and run a focused physical-iPhone and external TestFlight soak covering location, filters, dense map coverage, watched-item navigation, local alerts, photo input, accessibility, migration from an installed prior build, and official external handoffs. Durable restaurant-inspection ingestion and supported direct 311 submission remain contract-gated follow-on work.
-
-Richer long-term trends, widgets, and optional civic overlays remain planned, but they follow the submission-path and release-quality work above. See the [ranked roadmap](docs/roadmap.md) for acceptance criteria and dependency gates.
+- The external build provides the full nearby requests, permits, Map, Places, watching, notification inbox, trend, and civic-handoff experience described above.
+- The current internal build improves warning isolation, status-scoped category summaries, expandable overview content, and bounded lifecycle history.
+- The next gate is internal verification followed by focused external testing; current build numbers and availability live in [release status](docs/release-status.md).
+- Restaurant inspection ingestion and direct 311 submission remain explicitly data- or contract-gated. See the [ranked roadmap](docs/roadmap.md) for active work and [release history](docs/release-history.md) for completed milestones.
 
 ## Data sources
 
@@ -131,6 +120,8 @@ Never change the development team, signing configuration, entitlements, provisio
 - [Architecture](docs/architecture.md) — boundaries, state, networking, watches, trends, and map rendering
 - [Data sources](docs/data-sources.md) — authoritative layers, mappings, and resilience rules
 - [Ranked roadmap](docs/roadmap.md) — release priorities and future work
+- [Release status](docs/release-status.md) — current TestFlight availability and immediate gates
+- [Release history](docs/release-history.md) — completed product and engineering milestones
 - [Map performance and Near You discovery](docs/map-performance-home-discovery.md) — measurement plan, cache investigation, home-screen concepts, and radius decision gate
 - [App Store readiness](docs/app-store-readiness.md) — privacy, metadata, and device quality gates
 - [App Store listing](docs/app-store-listing.md) — copy-ready metadata, privacy answers, review notes, and screenshot sequence

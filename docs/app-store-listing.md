@@ -1,6 +1,6 @@
 # App Store listing — version 1.0
 
-This document is the canonical draft for the first public DC Pulse App Store listing. Character limits were checked against Apple's July 2026 App Store Connect reference. Copy should be pasted as plain text.
+This document is the canonical copy-ready metadata package for the first public DC Pulse App Store listing: product-page text, classification, privacy answers, review notes, and screenshot order. Operational release gates live in [App Store readiness](app-store-readiness.md), and build availability lives in [release status](release-status.md). Character limits were checked against Apple's July 2026 App Store Connect reference. Copy should be pasted as plain text.
 
 ## Product page
 
@@ -58,7 +58,7 @@ This document is the canonical draft for the first public DC Pulse App Store lis
 
 > https://dcpulseapp.com/#support
 
-The support section must provide a monitored private contact form before App Review.
+Keep the monitored private contact form available through beta testing and App Review.
 
 **Marketing URL**
 
@@ -117,7 +117,7 @@ This product-page disclosure is separate from `PrivacyInfo.xcprivacy`, which cor
 >
 > Report an Issue to 311 creates an editable draft and performs photo classification on-device. DC Pulse does not read photo GPS metadata, upload the photo, or claim submission. Continue in DC 311 copies the reviewed text and opens the official portal, where the user completes any official transaction.
 >
-> Restaurant Health is data-gated. The current generic DC Health destinations are not represented as nearby inspection integration. Before advertising this feature, DC Pulse must either provide a useful location-centered map backed by an approved source or remove the placeholder destinations from the release candidate.
+> Restaurant Health is data-gated. The current generic DC Health destinations are not represented as nearby inspection integration. Before advertising this feature, DC Pulse must either provide a useful location-centered map backed by an approved source or remove the placeholder destinations from the public release.
 >
 > DC Pulse is not affiliated with or endorsed by the Government of the District of Columbia. Source attribution and limitations are visible in the app and at https://dcpulseapp.com/#data.
 
@@ -137,14 +137,9 @@ iPhone 17 Pro continuous display geometry, generated from an iOS Simulator alpha
 mask. Their restrained device presentation uses proportions measured from the
 Simulator’s iPhone 17 Pro window, with large storefront-readable headlines.
 
-## Still required before public App Review
+## Submission handoff
 
-- Complete build 7's internal TestFlight verification, assign it to the intended external group, and run its focused external TestFlight pass, including location recovery, progressive Map coverage, status-scoped summaries, notification privacy/preferences, watch archival and migration, copy actions, distinct photo-library/camera behavior, and the official DC311 app handoff plus website fallback.
-- Do not advertise nearby restaurant inspections until a useful map is backed by an approved source; remove or clearly limit the placeholder experience if it is not ready.
-- Confirm the monitored private contact form remains available at the public support URL.
-- Complete the age-rating questionnaire in App Store Connect.
-- Complete the App Privacy questionnaire using the audited answers above.
-- Enter the private App Review contact phone number and email.
-- Select version 1.0 and the internally verified release build, complete export compliance, and choose manual release.
-- Finish the physical-device quality gates in `docs/app-store-readiness.md`.
-- Do not submit for public App Review until the external TestFlight pass is stable.
+- Complete [App Store readiness](app-store-readiness.md) and the current gates in [release status](release-status.md) before submission.
+- Keep restaurant inspection language data-gated until useful nearby results are backed by an approved source.
+- Confirm the monitored support form, complete the age-rating and App Privacy questionnaires, enter private review contact details, finish export compliance, select the internally verified release build, and choose manual release.
+- Do not submit for public App Review until the external TestFlight pass and physical-device gates are stable.
