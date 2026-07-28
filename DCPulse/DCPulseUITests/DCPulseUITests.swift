@@ -30,7 +30,7 @@ final class DCPulseUITests: XCTestCase {
     func testExample() throws {
         let app = XCUIApplication()
         app.launch()
-        XCTAssertTrue(app.navigationBars["Happening near you"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["Near You"].waitForExistence(timeout: 10))
     }
 
     @MainActor
@@ -95,8 +95,8 @@ final class DCPulseUITests: XCTestCase {
 
         app.navigationBars["Item Details"].buttons["New"].tap()
         XCTAssertTrue(app.navigationBars["New"].waitForExistence(timeout: 10))
-        app.navigationBars["New"].buttons["Happening near you"].tap()
-        XCTAssertTrue(app.navigationBars["Happening near you"].waitForExistence(timeout: 10))
+        app.navigationBars["New"].buttons["Near You"].tap()
+        XCTAssertTrue(app.navigationBars["Near You"].waitForExistence(timeout: 10))
 
         let showAll = app.buttons["pulse.status.all"]
         XCTAssertTrue(showAll.waitForExistence(timeout: 5))
@@ -127,6 +127,19 @@ final class DCPulseUITests: XCTestCase {
         notifications.tap()
         XCTAssertTrue(app.navigationBars["Notifications"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["No notifications yet"].exists)
+    }
+
+    @MainActor
+    func testNeighborhoodSummaryOpensFromNearYou() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let summary = app.buttons["pulse.neighborhoodSummary"]
+        scrollToElement(summary, in: app)
+        summary.tap()
+
+        XCTAssertTrue(app.navigationBars["Neighborhood Summary"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["neighborhoodSummary.statusScope"].exists)
     }
 
     @MainActor
@@ -194,35 +207,14 @@ final class DCPulseUITests: XCTestCase {
     }
 
     @MainActor
-    func testCivicActionDestinationsOpenFromNearYou() throws {
+    func testCityServicesRemainHiddenFromNearYou() throws {
         let app = XCUIApplication()
         app.launch()
 
-        let reportButton = app.buttons["pulse.report311"]
-        scrollToElement(reportButton, in: app)
-        reportButton.tap()
-        XCTAssertTrue(app.navigationBars["Report to 311"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["Start with a photo"].exists)
-        XCTAssertTrue(app.buttons["report311.choosePhoto"].exists)
-        XCTAssertTrue(app.buttons["report311.takePhoto"].exists)
-
-        let details = app.textFields["report311.details"]
-        XCTAssertTrue(details.waitForExistence(timeout: 5))
-        details.tap()
-        details.typeText("Test request details")
-        let continueButton = app.buttons["report311.continue"]
-        XCTAssertTrue(continueButton.waitForExistence(timeout: 5))
-        XCTAssertTrue(continueButton.isHittable)
-        continueButton.tap()
-        XCTAssertTrue(app.alerts["Draft copied"].waitForExistence(timeout: 5))
-        app.alerts["Draft copied"].buttons["Cancel"].tap()
-
-        app.navigationBars["Report to 311"].buttons["Happening near you"].tap()
-        let healthButton = app.buttons["pulse.restaurantHealth"]
-        scrollToElement(healthButton, in: app)
-        healthButton.tap()
-        XCTAssertTrue(app.navigationBars["Restaurant Health"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["Check before you dine"].exists)
+        XCTAssertTrue(app.navigationBars["Near You"].waitForExistence(timeout: 10))
+        for _ in 0..<8 { app.swipeUp() }
+        XCTAssertFalse(app.buttons["pulse.report311"].exists)
+        XCTAssertFalse(app.buttons["pulse.restaurantHealth"].exists)
     }
 
     @MainActor

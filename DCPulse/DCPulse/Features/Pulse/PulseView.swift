@@ -1,4 +1,3 @@
-import CoreLocation
 import SwiftData
 import SwiftUI
 import UIKit
@@ -9,48 +8,52 @@ struct PulseView: View {
     @Environment(AppNavigation.self) private var navigation
     @Environment(HomeLocationStore.self) private var homeLocation
     @Environment(\.openURL) private var openURL
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Query private var inAppNotifications: [InAppNotification]
     @State private var showingWardPicker = false
     @State private var showingAddressSearch = false
     @State private var showingSaveHome = false
     @State private var showingManualHome = false
-    @State private var showingReport311 = false
-    @State private var showingRestaurantHealth = false
-    @State private var showingAllRequestCategories = false
 
     var body: some View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 10) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Label("Within \(store.radius.distanceLabel)", systemImage: "location.circle.fill")
-                        Text("· Within the last \(store.period.queryDays) days")
+                    Label {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(locationDescription ?? store.placeName)
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                            Text("Within \(store.radius.distanceLabel) · \(store.period.label)")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "location.circle.fill")
+                            .foregroundStyle(.indigo)
                     }
-                    .font(.subheadline).foregroundStyle(.secondary)
+                    .accessibilityElement(children: .combine)
 
-                    HStack {
-                        if let location = locationDescription {
-                            Label(location, systemImage: "signpost.right")
-                                .font(.subheadline).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        if isCurrentLocationSaved {
-                            Label("Saved", systemImage: "checkmark.circle.fill")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.green)
-                        } else if canSaveCurrentLocation {
-                            Button("I live here") { showingSaveHome = true }
-                                .font(.subheadline.weight(.semibold))
-                        }
-                    }
                     locationControl
                     locationGuidance
+                    let areaActionLayout = dynamicTypeSize.isAccessibilitySize
+                        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 10))
+                        : AnyLayout(HStackLayout(spacing: 18))
+                    areaActionLayout {
+                        Button("Choose Ward") { showingWardPicker = true }
+                        Button("Search Address") { showingAddressSearch = true }
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .buttonStyle(.borderless)
                 }
                 .padding(.vertical, 6)
             }
 
-            Section("Requests nearby") {
-                HStack {
+            Section("Nearby snapshot") {
+                let metricLayout = dynamicTypeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(spacing: 8))
+                    : AnyLayout(HStackLayout(spacing: 8))
+                metricLayout {
                     metricButton(.new, .blue)
                     metricButton(.active, .orange)
                     metricButton(.resolved, .green)
@@ -80,107 +83,85 @@ struct PulseView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                if store.isRequestCategorySummaryLoading {
-                    HStack(spacing: 10) {
-                        ProgressView().controlSize(.small)
-                        Text("Refreshing category totals…")
-                            .font(.subheadline).foregroundStyle(.secondary)
-                    }
-                } else if store.requestCategorySummaryUnavailable {
-                    Button {
-                        Task { await store.selectRequestStatus(store.selectedRequestStatus, force: true) }
-                    } label: {
-                        Label("Retry category totals", systemImage: "arrow.clockwise.circle")
-                    }
-                    Text("Complete category totals are temporarily unavailable for this status.")
-                        .font(.caption).foregroundStyle(.secondary)
-                } else if requestCategoryPresentation.categories.isEmpty {
-                    Text("No request categories match this status.")
-                        .font(.subheadline).foregroundStyle(.secondary)
-                } else {
-                    ForEach(requestCategoryPresentation.visibleCategories(
-                        showingAll: showingAllRequestCategories
-                    )) { category in
-                        Button { showOnMap(category.name) } label: {
-                            HStack(spacing: 12) {
-                                Text(PulseCategoryVisual.emoji(for: category.name)).font(.title2)
-                                    .frame(width: 34, height: 34).background(.thinMaterial, in: Circle())
-                                Text(categorySummary(name: category.name, count: category.count))
-                                    .foregroundStyle(.primary)
-                                Spacer()
-                                Image(systemName: "map.fill").foregroundStyle(.indigo)
-                            }
-                        }
-                        .accessibilityHint("Shows these updates on the map")
-                    }
-                    if requestCategoryPresentation.hasMoreCategories {
-                        Button {
-                            showingAllRequestCategories.toggle()
-                        } label: {
-                            Label(
-                                showingAllRequestCategories ? "Show Less" : "More",
-                                systemImage: showingAllRequestCategories ? "chevron.up" : "chevron.down"
-                            )
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .accessibilityLabel(
-                            showingAllRequestCategories
-                                ? "Show fewer request categories"
-                                : "Show more request categories"
-                        )
-                        .accessibilityValue(requestCategoryPresentation.accessibilityValue(
-                            showingAll: showingAllRequestCategories
-                        ))
-                        .accessibilityIdentifier("pulse.categories.more")
-                    }
-                }
             }
 
-            if store.isRequestInsightsLoading {
-                Section("What’s trending nearby") {
+            if store.isRequestInsightsLoading || store.isRequestCategorySummaryLoading {
+                Section("Neighborhood insight") {
                     HStack(spacing: 10) {
                         ProgressView().controlSize(.small)
                         Text("Reading neighborhood patterns…")
-                            .font(.subheadline).foregroundStyle(.secondary)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
                 }
-            } else if !requestTrends.isEmpty {
-                Section {
-                    ForEach(requestTrends.prefix(3)) { trend in
-                        Button { showOnMap(trend.category) } label: {
-                            HStack(spacing: 12) {
-                                Text(PulseCategoryVisual.emoji(for: trend.category))
-                                    .font(.title2).frame(width: 32)
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(trend.category).font(.subheadline.weight(.semibold))
-                                    Text(trendDescription(trend)).font(.caption).foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Image(systemName: trendIcon(trend))
-                                    .font(.title3.weight(.semibold))
-                                    .foregroundStyle(trendColor(trend))
+            } else if let neighborhoodInsight {
+                Section("Neighborhood insight") {
+                    Button {
+                        showOnMap(neighborhoodInsight.category)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: insightIcon(neighborhoodInsight))
+                                .font(.title3.weight(.semibold))
+                                .foregroundStyle(insightColor(neighborhoodInsight))
+                                .frame(width: 32)
+                                .accessibilityHidden(true)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(neighborhoodInsight.title)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                                Text(neighborhoodInsight.detail)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
                             }
+                            Spacer()
+                            Image(systemName: "map.fill")
+                                .foregroundStyle(.indigo)
+                                .accessibilityHidden(true)
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityHint("Shows this request type on the map")
                     }
-                } header: {
-                    Text("What’s trending nearby")
-                } footer: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(trendContextDescription)
-                        Text("Tap a trend to explore it on the map.")
-                    }
-                }
-            } else if store.requestInsightsUnavailable {
-                Section("What’s trending nearby") {
-                    Label("Trend summary temporarily unavailable", systemImage: "chart.line.downtrend.xyaxis")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Shows this request type on the map")
                 }
             }
 
-            Section("My requests") {
+            Section("Noteworthy") {
+                ForEach(store.sourceWarnings, id: \.self) { warning in
+                    Label(warning, systemImage: "exclamationmark.triangle")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                requestContent
+                if store.state == .loaded, !store.items.isEmpty {
+                    Button {
+                        navigation.selectedTab = .requests
+                    } label: {
+                        Label("See All Nearby Activity", systemImage: "list.bullet")
+                    }
+                    .accessibilityIdentifier("pulse.activity.all")
+                }
+            }
+
+            Section {
+                NavigationLink {
+                    NeighborhoodSummaryView()
+                } label: {
+                    Label {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Neighborhood Summary")
+                                .font(.headline)
+                            Text("Complete categories, trends, and data context")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "chart.bar.xaxis")
+                            .foregroundStyle(.indigo)
+                    }
+                }
+                .accessibilityIdentifier("pulse.neighborhoodSummary")
+            }
+
+            Section("At Home") {
                 if let address = homeLocation.address {
                     Label(address, systemImage: "house.fill").font(.subheadline)
                     if homeRequests.isEmpty {
@@ -200,31 +181,9 @@ struct PulseView: View {
                 }
             }
 
-            Section("Noteworthy changes") {
-                ForEach(store.sourceWarnings, id: \.self) { warning in
-                    Label(warning, systemImage: "exclamationmark.triangle")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                requestContent
-            }
-
-            Section("Explore another area") {
-                Button { showingWardPicker = true } label: { Label("Browse by Ward", systemImage: "building.columns") }
-                Button { showingAddressSearch = true } label: { Label("Search Around a DC Address", systemImage: "magnifyingglass") }
-                Button { showingReport311 = true } label: {
-                    Label("Report an Issue to 311", systemImage: "camera.viewfinder")
-                }
-                .accessibilityIdentifier("pulse.report311")
-                Button { showingRestaurantHealth = true } label: {
-                    Label("Restaurant Health Inspections", systemImage: "fork.knife")
-                }
-                .accessibilityIdentifier("pulse.restaurantHealth")
-            }
         }
-        .navigationTitle("Happening near you")
+        .navigationTitle("Near You")
         .navigationDestination(for: StatusItemsDestination.self) { StatusItemsView(status: $0.status) }
-        .navigationDestination(isPresented: $showingReport311) { Report311View() }
-        .navigationDestination(isPresented: $showingRestaurantHealth) { RestaurantHealthView() }
         .navigationDestination(for: PulseItem.self) { ItemDetailsView(item: $0) }
         .refreshable { await store.retry() }
         .toolbar {
@@ -243,10 +202,6 @@ struct PulseView: View {
                 }
                 .accessibilityLabel(notificationAccessibilityLabel)
                 .accessibilityIdentifier("pulse.notifications")
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button { Task { await store.retry() } } label: { Image(systemName: "arrow.clockwise") }
-                    .accessibilityLabel("Refresh nearby activity")
             }
         }
         .sheet(isPresented: $showingWardPicker) { WardPickerView() }
@@ -287,69 +242,32 @@ struct PulseView: View {
 
     private var noteworthyItems: [PulseItem] {
         NoteworthyItemRanker.rank(store.items, homeCoordinate: homeLocation.coordinate)
-            .prefix(10).map { $0 }
+            .prefix(3).map { $0 }
     }
 
-    private var requestTrends: [RequestTrendAnalyzer.Trend] {
-        store.requestTrends
+    private var neighborhoodInsight: NeighborhoodInsightPresentation? {
+        NeighborhoodInsightPresentation(
+            trends: store.requestTrends,
+            categoryCounts: store.requestCategoryCounts,
+            windowDays: max(1, store.period.queryDays / 2)
+        )
     }
 
-    private var trendWindowDays: Int { max(1, store.period.queryDays / 2) }
-
-    private var trendContextDescription: String {
-        guard let provenance = store.requestTrendSnapshot?.provenance else {
-            return "Complete DC 311 totals from the latest \(trendWindowDays) days compared with the preceding \(trendWindowDays) days."
-        }
-        let current = Self.trendPeriodFormatter.string(from: provenance.currentPeriod.start)
-            + "–" + Self.trendPeriodFormatter.string(from: provenance.currentPeriod.end)
-        let previous = Self.trendPeriodFormatter.string(from: provenance.previousPeriod.start)
-            + "–" + Self.trendPeriodFormatter.string(from: provenance.previousPeriod.end)
-        let refreshed = Self.trendRefreshFormatter.string(from: provenance.refreshedAt)
-        let radius = provenance.radiusMiles == 1 ? "1 mile" : "\(provenance.radiusMiles.formatted()) miles"
-        return "DC 311 totals within \(radius) of \(store.placeName). \(current) compared with \(previous). Updated \(refreshed)."
-    }
-
-    private static let trendPeriodFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = .current
-        formatter.setLocalizedDateFormatFromTemplate("MMM d")
-        return formatter
-    }()
-
-    private static let trendRefreshFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = .current
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter
-    }()
-
-    private func trendDescription(_ trend: RequestTrendAnalyzer.Trend) -> String {
-        switch trend.direction {
-        case .increased: "\(trend.currentCount) in the latest \(trendWindowDays) days · up \(trend.percentChange ?? 0)%"
-        case .decreased: "\(trend.currentCount) in the latest \(trendWindowDays) days · down \(trend.percentChange ?? 0)%"
-        case .newlyObserved: "\(trend.currentCount) in the latest \(trendWindowDays) days · none in the prior period"
-        }
-    }
-
-    private func trendIcon(_ trend: RequestTrendAnalyzer.Trend) -> String {
-        switch trend.direction {
+    private func insightIcon(_ insight: NeighborhoodInsightPresentation) -> String {
+        switch insight.style {
         case .increased: "arrow.up.right"
         case .decreased: "arrow.down.right"
         case .newlyObserved: "sparkles"
+        case .leadingCategory: "chart.bar.fill"
         }
     }
 
-    private func trendColor(_ trend: RequestTrendAnalyzer.Trend) -> Color {
-        switch trend.direction {
+    private func insightColor(_ insight: NeighborhoodInsightPresentation) -> Color {
+        switch insight.style {
         case .increased: .orange
         case .decreased: .green
-        case .newlyObserved: .indigo
+        case .newlyObserved, .leadingCategory: .indigo
         }
-    }
-
-    private var requestCategoryPresentation: RequestCategorySummaryPresentation {
-        RequestCategorySummaryPresentation(counts: store.requestCategoryCounts)
     }
 
     private var homeRequests: [PulseItem] {
@@ -373,15 +291,6 @@ struct PulseView: View {
         store.placeName == "Current Location" && locationService.coordinate != nil && currentAddress != nil
     }
 
-    private var isCurrentLocationSaved: Bool {
-        guard canSaveCurrentLocation,
-              let saved = homeLocation.coordinate,
-              let current = locationService.coordinate else { return false }
-        let savedLocation = CLLocation(latitude: saved.latitude, longitude: saved.longitude)
-        let currentLocation = CLLocation(latitude: current.latitude, longitude: current.longitude)
-        return savedLocation.distance(from: currentLocation) <= 50
-    }
-
     @ViewBuilder private var locationControl: some View {
         switch locationService.state {
         case .requestingPermission, .locating:
@@ -394,8 +303,7 @@ struct PulseView: View {
         case .outsideDC:
             EmptyView()
         case .failed:
-            HStack { Button("Try Location Again") { locationService.requestCurrentLocation() }; Button("Choose Ward") { showingWardPicker = true } }
-                .buttonStyle(.borderless)
+            EmptyView()
         default:
             Button("Use My Location") { locationService.requestCurrentLocation() }
         }
@@ -414,7 +322,8 @@ struct PulseView: View {
             guidanceCard(
                 title: "Location is unavailable",
                 message: "You’re browsing Downtown DC. You can still choose a ward or search around an address.",
-                systemImage: "location.slash.fill"
+                systemImage: "location.slash.fill",
+                showsRetry: false
             )
         case .failed:
             guidanceCard(
@@ -428,7 +337,8 @@ struct PulseView: View {
                 message: resolution.placeName == "Near the DC Border"
                     ? "Showing requests near the closest supported area inside DC."
                     : "You’re too far away for a nearby DC search, so we’re showing Downtown DC.",
-                systemImage: "map.fill"
+                systemImage: "map.fill",
+                showsRetry: false
             )
         default:
             EmptyView()
@@ -439,7 +349,8 @@ struct PulseView: View {
         title: String,
         message: String,
         systemImage: String,
-        showsSettings: Bool = false
+        showsSettings: Bool = false,
+        showsRetry: Bool = true
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Label(title, systemImage: systemImage)
@@ -447,18 +358,18 @@ struct PulseView: View {
             Text(message)
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            HStack(spacing: 14) {
-                if showsSettings,
-                   let settingsURL = URL(string: UIApplication.openSettingsURLString) {
-                    Button("Open Settings") { openURL(settingsURL) }
-                } else {
-                    Button("Try Again") { locationService.requestCurrentLocation() }
+            if showsSettings || showsRetry {
+                HStack(spacing: 14) {
+                    if showsSettings,
+                       let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                        Button("Open Settings") { openURL(settingsURL) }
+                    } else if showsRetry {
+                        Button("Try Again") { locationService.requestCurrentLocation() }
+                    }
                 }
-                Button("Choose Ward") { showingWardPicker = true }
-                Button("Search Address") { showingAddressSearch = true }
+                .font(.caption.weight(.semibold))
+                .buttonStyle(.borderless)
             }
-            .font(.caption.weight(.semibold))
-            .buttonStyle(.borderless)
         }
         .padding(12)
         .background(.indigo.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
@@ -499,7 +410,7 @@ struct PulseView: View {
                             : "\(store.requestCount(for: status)), \(isSelected ? "selected" : "not selected")")
         .accessibilityHint(isSelected
                            ? "Selected. Use View requests to open the matching list."
-                           : "Selects this status and refreshes the category totals below.")
+                           : "Selects this status and refreshes category totals in Neighborhood Summary.")
     }
 
     private func showOnMap(_ category: String) {
@@ -526,13 +437,6 @@ struct PulseView: View {
         String(value.lowercased().filter { $0.isLetter || $0.isNumber })
     }
 
-    private func categorySummary(name: String, count: Int) -> String {
-        switch name {
-        case "Building Permit": "\(count) building permit\(count == 1 ? "" : "s")"
-        case "DDOT Construction Permit": "\(count) DDOT construction permit\(count == 1 ? "" : "s")"
-        default: "\(count) \(name.lowercased()) request\(count == 1 ? "" : "s")"
-        }
-    }
 }
 
 struct RequestCategorySummaryPresentation {
