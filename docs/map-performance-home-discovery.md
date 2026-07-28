@@ -196,7 +196,13 @@ The scored audit, consistent low-fidelity state mockups, comparison, selected hi
 
 **Option A — Snapshot first** is selected for validation and production planning. It establishes one stable hierarchy for first-run and returning users, puts place context and complete lifecycle totals first, limits the first screen to one reliable insight and three noteworthy records, and moves full categories and trends into a Neighborhood Summary destination. Home becomes contextual supporting content rather than an initial setup gate. The selection avoids adding a duplicate Map preview while Map performance remains an open P0 workstream.
 
-Production implementation remains gated on task validation and destination coverage; this decision does not change the current app screen.
+The decision record did not itself change the app screen; production implementation was subsequently approved and is recorded below.
+
+### July 28, 2026 Snapshot-first implementation
+
+The approved hierarchy is now implemented in production SwiftUI. Near You shows compact search context, complete lifecycle totals, one reliable insight, three noteworthy records, a focused Neighborhood Summary destination, and contextual Home content. Ward/address selection remains available in the search context. The duplicate toolbar refresh action is removed while pull-to-refresh and explicit recovery actions remain.
+
+City Services is intentionally hidden until its direct 311/reporting and nearby Restaurant Health destinations satisfy their separate live-data gates. Simulator visual inspection and deterministic presentation tests are complete; physical-device, largest-Dynamic-Type, VoiceOver, and task-based validation remain open.
 
 ### Content audit
 

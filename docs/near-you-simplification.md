@@ -1,6 +1,6 @@
 # Near You simplification decision
 
-Status: direction selected; task validation and production implementation pending
+Status: production hierarchy implemented; task and physical-device validation pending
 
 Owner: product and iOS
 
@@ -12,7 +12,7 @@ Roadmap priority: P1
 
 Make the first screen answer **What changed near this place?** before it asks people to configure, filter, or explore. Preserve the current data-integrity rules, accessibility states, and routes into Map, Requests, Places, Notifications, 311 reporting, and Restaurant Health.
 
-This is a low-fidelity information-architecture decision. It does not authorize production UI changes by itself.
+This record began as a low-fidelity information-architecture decision. The selected Snapshot-first direction was approved for production implementation on July 28, 2026.
 
 ## Audit method
 
@@ -60,7 +60,6 @@ Every wireframe uses the same nominal phone width and content order. Bracketed r
 │ [ See all nearby activity › ]│
 │                              │
 │ At Home / Save Home prompt   │
-│ Civic actions               ›│
 └──────────────────────────────┘
 ```
 
@@ -86,7 +85,6 @@ Primary task path: understand the place and status totals, scan one insight and 
 │ • Noteworthy record          │
 │ [ Neighborhood summary   › ] │
 │                              │
-│ Civic actions               ›│
 └──────────────────────────────┘
 ```
 
@@ -160,10 +158,11 @@ It is the only concept that keeps one stable first-run and returning-user hierar
 4. Up to three noteworthy records, with source warnings immediately before affected content.
 5. **Neighborhood summary** destination for complete categories, trends, provenance, and status-scoped exploration.
 6. Contextual Home card: changes when configured, a compact prompt when not.
-7. Civic actions destination for 311 reporting and Restaurant Health.
-8. Notifications remain in the toolbar. Pull-to-refresh remains; the duplicate toolbar refresh button is removed only after retry/recovery affordances are verified.
+7. Notifications remain in the toolbar. Pull-to-refresh remains; the duplicate toolbar refresh button is removed only after retry/recovery affordances are verified.
 
 Ward and address exploration move into the place context control and Places rather than remaining a competing bottom section.
+
+The proposed **City Services** section remains hidden until its destinations provide genuinely live, useful functionality. Restore it only when supported direct 311 submission or another approved reporting path is production-ready and nearby Restaurant Health results are backed by a dependable reviewed source. Existing discovery code and official handoffs may remain available for testing without promoting the section on Near You.
 
 ## State acceptance criteria
 
@@ -174,7 +173,20 @@ Ward and address exploration move into the place context control and Places rath
 - At accessibility sizes, the three status metrics stack rather than compress or truncate.
 - VoiceOver order matches the selected hierarchy and does not enter decorative emoji or a duplicate map preview.
 - The first noteworthy record is reachable without traversing expanded category or trend lists.
-- Every moved action retains a named, testable destination before the production hierarchy ships.
+- Every moved action retains a named, testable destination before it is promoted on Near You.
+
+## July 28, 2026 production implementation
+
+- Near You now leads with compact place/radius/period context and keeps ward/address selection in that region.
+- Complete lifecycle totals remain directly selectable and stack vertically at accessibility Dynamic Type sizes.
+- The strongest reliable trend appears as the single insight; the leading complete category is the fallback. No insight claim appears when both sources are unavailable.
+- Noteworthy content is capped at three records, preserves source warnings, and links to the complete Requests timeline.
+- Complete categories, all meaningful trends, provenance, status scope, retry, empty, and unavailable states now live in **Neighborhood Summary**.
+- Home content follows the nearby snapshot instead of leading first-run setup.
+- The duplicate toolbar refresh action is removed; pull-to-refresh and explicit recovery actions remain.
+- City Services remains hidden under the live-feature gate above.
+
+Focused presentation tests and Simulator visual inspection cover the implemented hierarchy. Smallest-screen, accessibility-size, VoiceOver, and physical-iPhone task validation remain required before closing the roadmap item.
 
 ## Validation plan
 
@@ -185,8 +197,7 @@ Before implementation is treated as complete, run five moderated or dogfood task
 3. Identify one meaningful nearby change.
 4. Open the complete neighborhood summary.
 5. Find Home changes or begin Home setup.
-6. Start a 311 report and find Restaurant Health.
-7. Change the search area.
+6. Change the search area.
 
 Record task completion, hesitation, wrong destinations, VoiceOver reading-order issues, first-record scroll depth, and any action lost in consolidation. Do not use preference alone as the adoption signal.
 
@@ -194,6 +205,6 @@ Record task completion, hesitation, wrong destinations, VoiceOver reading-order 
 
 1. Extract a Neighborhood Summary destination using the existing complete category and trend data.
 2. Recompose `PulseView` around the selected hierarchy without changing retrieval semantics.
-3. Consolidate area exploration and civic actions only after destination coverage exists.
+3. Restore and validate City Services only after its live-feature gates are satisfied.
 4. Add deterministic presentation tests for insight fallback, partial warnings, no-Home behavior, and status ordering.
 5. Run smallest-screen, largest-Dynamic-Type, VoiceOver, and physical-device checks before closing the roadmap item.
