@@ -144,6 +144,14 @@ The storage-independent `MapCacheReconciler` prototype therefore accepts an expl
 
 This prototype does not yet change production loading or persistence. It establishes deterministic deletion and partial-failure semantics before selecting a bounded file-backed or SwiftData store. Cached coordinates and records remain on device and are excluded from diagnostics.
 
+### July 28, 2026 bounded-store decision and implementation
+
+The prototype selects a file-backed Codable archive rather than adding Map cache entities to SwiftData. Followed places, watches, notifications, and observation history are durable user data whose model migrations must be preserved. Map results are replaceable public-data snapshots; keeping their versioned archive separate makes corruption recovery, schema invalidation, and complete eviction explicit without risking the durable SwiftData container.
+
+`FileBackedMapCacheStore` is injected behind `MapCacheStoreProtocol`. It uses a rounded three-decimal center bucket plus radius, period, and schema generation as the context key; exact coordinates may exist only inside the on-device opaque payload. The production policy retains at most six contexts, 3,600 total items, 16 MiB of encoded payloads, and 24 hours of candidate stale data. Reads discard expired, future-schema, or corrupt archives as empty. Saves use atomic writes with iOS complete-file-protection-unless-open, deduplicate contexts, and evict oldest records to satisfy every cap.
+
+This store is not wired into `PulseDataStore` yet. The next prototype slice must define the versioned payload/migration from the current ten-minute `UserDefaults` entry, expose an honest cached timestamp in Map UI, and run fresh per-source reconciliation without turning stale cache into authoritative data.
+
 ### Target behavior
 
 - A matching cached map appears immediately with a visible **Updated …** timestamp.
