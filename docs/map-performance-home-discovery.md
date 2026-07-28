@@ -156,7 +156,15 @@ The prototype selects a file-backed Codable archive rather than adding Map cache
 
 The existing ten-minute freshness rule remains in force. The 24-hour store window is only candidate storage for the later stale-while-revalidate prototype and is never presented as fresh by this slice. A valid legacy `UserDefaults` cache is migrated only after the protected file-store write succeeds, then the legacy cache key is removed. Corrupt, future-dated, incomplete-summary, mismatched-context, or unknown-version payloads fall through to a live request.
 
-`lastUpdated` is now explicit observable store state for the later Map disclosure UI. Production still does not display stale cache or perform per-source background reconciliation; those behaviors require the next slice.
+`lastUpdated` is explicit observable store state for Map disclosure UI.
+
+### July 28, 2026 cached-first production prototype
+
+Map now keeps a matching protected-cache candidate for up to 24 hours, labels cached markers with their actual update time, and distinguishes results older than the ten-minute freshness window. Fresh cache hits still avoid an unnecessary initial request; stale hits remain visible while a live request proceeds. A failed or cancelled live request leaves the cached markers usable instead of replacing the screen with an error.
+
+Bounded Map coverage now feeds the storage-independent `MapCacheReconciler`. A source slice is replaced only when that source returned fresh records and the selected-radius pagination completed without a source warning. Partial and failed sources retain their cached records, and an aggregate response with no record for a source is treated conservatively rather than interpreted as proof of deletion. Partial reconciliations are persisted with the original cache timestamp so a relaunch keeps useful fresh overlays without relabeling retained records as newly updated.
+
+The cache remains on device and the status UI discloses only relative age; it does not add coordinates, addresses, record identifiers, or saved-place names to diagnostics. Performance measurements and the decision gate below remain open before this prototype is considered adopted.
 
 ### Target behavior
 

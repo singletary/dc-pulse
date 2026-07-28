@@ -452,6 +452,108 @@ struct PulseDataStoreTests {
         #expect(secondStore.items == [item])
         #expect(secondRepository.offsetRequests.isEmpty)
         #expect(secondStore.lastUpdated != nil)
+        #expect(secondStore.isShowingCachedResults)
+        #expect(!secondStore.cachedResultsAreStale)
+    }
+
+    @Test func showsStaleCachedResultsWhenLiveRefreshFails() async throws {
+        let item = try #require(SampleData.items.first)
+        let savedAt = Date(timeIntervalSince1970: 2_000_000_000)
+        let mapCacheStore = TransientMapCacheStore()
+        let writer = PulseDataStore(
+            repository: StubPulseRepository(results: [
+                .success(.init(items: [item], nextOffset: 1, hasMore: false))
+            ]),
+            mapCacheStore: mapCacheStore,
+            now: { savedAt }
+        )
+        await writer.load()
+
+        let reader = PulseDataStore(
+            repository: StubPulseRepository(results: [.failure(TestError.expected)]),
+            mapCacheStore: mapCacheStore,
+            now: { savedAt.addingTimeInterval(60 * 60) }
+        )
+        await reader.load()
+
+        #expect(reader.items == [item])
+        #expect(reader.state == .loaded)
+        #expect(reader.lastUpdated == savedAt)
+        #expect(reader.isShowingCachedResults)
+        #expect(reader.cachedResultsAreStale)
+        #expect(reader.sourceWarnings.contains("Live refresh failed. Cached results remain available."))
+    }
+
+    @Test func rejectsCachedResultsOutsideTheTwentyFourHourWindow() async throws {
+        let cached = try #require(SampleData.items.first)
+        let live = try #require(SampleData.items.dropFirst().first)
+        let savedAt = Date(timeIntervalSince1970: 2_000_000_000)
+        let mapCacheStore = TransientMapCacheStore()
+        let writer = PulseDataStore(
+            repository: StubPulseRepository(results: [
+                .success(.init(items: [cached], nextOffset: 1, hasMore: false))
+            ]),
+            mapCacheStore: mapCacheStore,
+            now: { savedAt }
+        )
+        await writer.load()
+
+        let reader = PulseDataStore(
+            repository: StubPulseRepository(results: [
+                .success(.init(items: [live], nextOffset: 1, hasMore: false))
+            ]),
+            mapCacheStore: mapCacheStore,
+            now: { savedAt.addingTimeInterval(25 * 60 * 60) }
+        )
+        await reader.load()
+
+        #expect(reader.items == [live])
+        #expect(!reader.isShowingCachedResults)
+        #expect(!reader.cachedResultsAreStale)
+    }
+
+    @Test func reconcilesACompletedHealthySourceWithoutDiscardingAnotherCachedSource() async throws {
+        let cached311 = cacheItem(source: .serviceRequests311, id: "311-cached", day: 1)
+        let cachedPermit = cacheItem(source: .buildingPermits2026, id: "permit-cached", day: 2)
+        let fresh311 = cacheItem(source: .serviceRequests311, id: "311-fresh", day: 3)
+        let savedAt = Date(timeIntervalSince1970: 2_000_000_000)
+        let mapCacheStore = TransientMapCacheStore()
+        let writer = PulseDataStore(
+            repository: StubPulseRepository(results: [
+                .success(.init(items: [], nextOffset: 0, hasMore: false)),
+                .success(.init(items: [cached311, cachedPermit], nextOffset: 2, hasMore: false))
+            ]),
+            mapCacheStore: mapCacheStore,
+            now: { savedAt }
+        )
+        await writer.load()
+        await writer.selectRadius(.quarterMile)
+
+        let reader = PulseDataStore(
+            repository: StubPulseRepository(results: [
+                .success(.init(items: [fresh311], nextOffset: 1, hasMore: false)),
+                .success(.init(items: [fresh311], nextOffset: 1, hasMore: false))
+            ]),
+            mapCacheStore: mapCacheStore,
+            now: { savedAt.addingTimeInterval(60 * 60) }
+        )
+        await reader.selectRadius(.quarterMile)
+        await reader.prepareMapResults()
+
+        #expect(Set(reader.items.map(\.id)) == [fresh311.id, cachedPermit.id])
+        #expect(reader.isShowingCachedResults)
+        #expect(reader.cachedResultsAreStale)
+
+        let relaunch = PulseDataStore(
+            repository: StubPulseRepository(results: [.failure(TestError.expected)]),
+            mapCacheStore: mapCacheStore,
+            now: { savedAt.addingTimeInterval(2 * 60 * 60) }
+        )
+        await relaunch.selectRadius(.quarterMile)
+
+        #expect(Set(relaunch.items.map(\.id)) == [fresh311.id, cachedPermit.id])
+        #expect(relaunch.lastUpdated == savedAt)
+        #expect(relaunch.cachedResultsAreStale)
     }
 
     @Test func retainsFreshCachesForMultipleRoundedSearchContexts() async throws {
@@ -599,6 +701,30 @@ struct PulseDataStoreTests {
         #expect(store.items == [item])
         #expect(defaults.data(forKey: "dcPulse.requestCache.v4") == legacyData)
     }
+}
+
+private func cacheItem(
+    source: PulseItem.Source,
+    id: String,
+    day: TimeInterval
+) -> PulseItem {
+    PulseItem(
+        id: .init(source: source, sourceIdentifier: id),
+        category: "Test",
+        subtype: nil,
+        title: id,
+        summary: nil,
+        status: .active,
+        openedAt: Date(timeIntervalSince1970: day * 86_400),
+        updatedAt: nil,
+        closedAt: nil,
+        coordinate: SampleData.center,
+        address: nil,
+        wardOrNeighborhood: nil,
+        responsibleAgency: nil,
+        sourceAttributes: [],
+        sourceURL: nil
+    )
 }
 
 private struct LegacyCacheFixture: Encodable {
