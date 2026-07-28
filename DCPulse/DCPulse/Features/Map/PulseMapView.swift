@@ -51,6 +51,9 @@ struct PulseMapView: View {
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
+                        if store.isShowingCachedResults, let lastUpdated = store.lastUpdated {
+                            cachedResultsLabel(lastUpdated)
+                        }
                     }
                     .padding(.horizontal, 14).padding(.vertical, 8)
                     .frame(maxWidth: 340)
@@ -75,6 +78,13 @@ struct PulseMapView: View {
                     .offset(y: 54)
                     .accessibilityIdentifier("map.coverageWarning")
                     .accessibilityHint("Shows affected coverage passes and retry options")
+                } else if store.isShowingCachedResults, let lastUpdated = store.lastUpdated {
+                    cachedResultsLabel(lastUpdated)
+                        .padding(.horizontal, 14).padding(.vertical, 10)
+                        .frame(maxWidth: 340, alignment: .leading)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        .offset(y: 54)
+                        .accessibilityIdentifier("map.cachedResults")
                 }
             }
         }
@@ -267,6 +277,23 @@ struct PulseMapView: View {
 
     private var isMapUpdating: Bool {
         store.isLoading || store.isMapCoverageLoading || isCategoryLoading
+    }
+
+    private func cachedResultsLabel(_ lastUpdated: Date) -> some View {
+        Label {
+            Text(
+                store.cachedResultsAreStale
+                    ? "Showing older cached markers · Updated \(lastUpdated, style: .relative)"
+                    : "Showing cached markers · Updated \(lastUpdated, style: .relative)"
+            )
+            .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
+        } icon: {
+            Image(systemName: store.cachedResultsAreStale ? "clock.badge.exclamationmark" : "clock")
+        }
+        .font(.caption.weight(.medium))
+        .foregroundStyle(.secondary)
+        .accessibilityElement(children: .combine)
     }
 
     private var mapLoadingLabel: String {

@@ -8,6 +8,7 @@ final class PulseDataStore {
     static let mapPageSize = 150
     static let mapResultLimit = 600
     static let cacheLifetime: TimeInterval = 10 * 60
+    static let staleCacheLifetime: TimeInterval = 24 * 60 * 60
 
     private struct CacheEntry: Codable {
         let savedAt: Date
@@ -35,6 +36,8 @@ final class PulseDataStore {
         let pass: MapCoveragePass
         let warnings: [String]
         let recoveredSources: Set<PulseItem.Source>
+        let items: [PulseItem]
+        let completedBoundedCoverage: Bool
         let loadedCount: Int
     }
 
@@ -137,6 +140,9 @@ final class PulseDataStore {
     private(set) var isRequestCategorySummaryLoading = false
     private(set) var requestCategorySummaryUnavailable = false
     private(set) var lastUpdated: Date?
+    private(set) var isShowingCachedResults = false
+    private(set) var cachedResultsAreStale = false
+    private var cachedSources: Set<PulseItem.Source> = []
     private var allRequestCategoryCounts: [String: Int]?
     private var requestCategoryCountsByStatus: [PulseItem.Status: [String: Int]] = [:]
     private(set) var searchCoordinate = SampleData.center
@@ -185,7 +191,8 @@ final class PulseDataStore {
     func load(
         coordinate requestedCoordinate: PulseItem.Coordinate? = nil,
         placeName: String = "Downtown DC",
-        force: Bool = false
+        force: Bool = false,
+        useCacheWhenForced: Bool = false
     ) async {
         if requestedCoordinate == nil, !force, await restoreMostRecentCache() { return }
         let coordinate = requestedCoordinate ?? SampleData.center
@@ -213,7 +220,11 @@ final class PulseDataStore {
         requestCategorySummaryUnavailable = false
         isRequestCategorySummaryLoading = requestCategorySummaryRepository != nil
         nextOffset = 0
-        if !force, await restoreFreshCache(for: coordinate, placeName: placeName) { return }
+        let restoredCache = !force || contextChanged || useCacheWhenForced
+            ? await restoreCacheCandidate(for: coordinate, placeName: placeName)
+            : false
+        if restoredCache, !cachedResultsAreStale, !force { return }
+        if restoredCache { state = .loading }
         do {
             async let pageRequest = repository.nearbyItems(
                 coordinate: coordinate,
@@ -243,17 +254,21 @@ final class PulseDataStore {
             )
             let page = try await pageRequest
             guard requestSequence == loadSequence else { return }
-            items = page.items
+            if restoredCache {
+                merge(page.items)
+            } else {
+                items = page.items
+            }
             nextOffset = page.nextOffset
             hasMore = page.hasMore
             sourceWarnings = page.warnings
-            state = page.items.isEmpty ? .empty : .loaded
-            await saveCache()
+            state = items.isEmpty ? .empty : .loaded
+            if !restoredCache { await saveCache() }
             let counts = await countsRequest
             guard requestSequence == loadSequence else { return }
             requestStatusCounts = counts
             isRequestSummaryLoading = false
-            await saveCache()
+            if !restoredCache { await saveCache() }
             let trendSnapshot = await trendsRequest
             guard requestSequence == loadSequence else { return }
             requestTrendSnapshot = trendSnapshot
@@ -265,19 +280,26 @@ final class PulseDataStore {
             }
             requestCategorySummaryUnavailable = requestCategorySummaryRepository != nil && categoryCounts == nil
             isRequestCategorySummaryLoading = false
-            await saveCache()
+            if !restoredCache { await saveCache() }
         } catch is CancellationError {
             guard requestSequence == loadSequence else { return }
             isRequestSummaryLoading = false
             isRequestInsightsLoading = false
             isRequestCategorySummaryLoading = false
-            state = .idle
+            state = restoredCache ? (items.isEmpty ? .empty : .loaded) : .idle
         } catch {
             guard requestSequence == loadSequence else { return }
             isRequestSummaryLoading = false
             isRequestInsightsLoading = false
             isRequestCategorySummaryLoading = false
-            state = .failed(error.localizedDescription)
+            if restoredCache {
+                state = items.isEmpty ? .empty : .loaded
+                sourceWarnings = Array(Set(
+                    sourceWarnings + ["Live refresh failed. Cached results remain available."]
+                )).sorted()
+            } else {
+                state = .failed(error.localizedDescription)
+            }
         }
     }
 
@@ -388,7 +410,10 @@ final class PulseDataStore {
                 selectedRadius: selectedRadius
             )
             let attempts = await [closeInAttempt, selectedAttempt]
-            guard finishMapCoverage(attempts, coverageSequence: coverageSequence) else { return }
+            guard finishMapCoverage(
+                attempts,
+                coverageSequence: coverageSequence
+            ) else { return }
         } else {
             let attempt = await mapCoverageAttempt(
                 pass: .selectedRadius,
@@ -399,7 +424,10 @@ final class PulseDataStore {
                 coverageSequence: coverageSequence,
                 selectedRadius: selectedRadius
             )
-            guard finishMapCoverage([attempt], coverageSequence: coverageSequence) else { return }
+            guard finishMapCoverage(
+                [attempt],
+                coverageSequence: coverageSequence
+            ) else { return }
         }
         sessionOutcome = mapCoverageIssues.isEmpty ? .succeeded : .partial
         mapPerformanceDiagnostics.milestone(
@@ -407,7 +435,7 @@ final class PulseDataStore {
             context: sessionContext,
             itemCount: items.count
         )
-        await saveCache()
+        await saveCache(preservingCachedTimestamp: isShowingCachedResults)
     }
 
     func retry() async {
@@ -422,20 +450,35 @@ final class PulseDataStore {
     func selectRadius(_ radius: Radius) async {
         guard radius != self.radius else { return }
         self.radius = radius
-        await load(coordinate: searchCoordinate, placeName: placeName, force: true)
+        await load(
+            coordinate: searchCoordinate,
+            placeName: placeName,
+            force: true,
+            useCacheWhenForced: true
+        )
     }
 
     func selectPeriod(_ period: Period) async {
         guard period != self.period else { return }
         self.period = period
-        await load(coordinate: searchCoordinate, placeName: placeName, force: true)
+        await load(
+            coordinate: searchCoordinate,
+            placeName: placeName,
+            force: true,
+            useCacheWhenForced: true
+        )
     }
 
     func resetSearchOptions() async {
         guard radius != .halfMile || period != .thirtyDays else { return }
         radius = .halfMile
         period = .thirtyDays
-        await load(coordinate: searchCoordinate, placeName: placeName, force: true)
+        await load(
+            coordinate: searchCoordinate,
+            placeName: placeName,
+            force: true,
+            useCacheWhenForced: true
+        )
     }
 
     var isLoading: Bool { state == .loading }
@@ -530,6 +573,7 @@ final class PulseDataStore {
         var hasMore = true
         var warnings: [String] = []
         var recoveredSources: Set<PulseItem.Source> = []
+        var refreshedItems: [PulseItem] = []
         while hasMore, loadedCount < limit {
             try Task.checkCancellation()
             let page = try await repository.nearbyItems(
@@ -554,6 +598,7 @@ final class PulseDataStore {
                 )
             )
             merge(page.items)
+            refreshedItems.append(contentsOf: page.items)
             mapPerformanceDiagnostics.end(
                 mergeInterval,
                 outcome: .succeeded,
@@ -580,6 +625,8 @@ final class PulseDataStore {
             pass: pass,
             warnings: Array(Set(warnings)).sorted(),
             recoveredSources: recoveredSources,
+            items: refreshedItems,
+            completedBoundedCoverage: !hasMore,
             loadedCount: loadedCount
         )
     }
@@ -672,7 +719,59 @@ final class PulseDataStore {
         mapCoverageWarning = mapCoverageIssues.isEmpty
             ? nil
             : "Map coverage is incomplete. Existing markers remain available."
+        reconcileCachedMapResults(attempts)
         return true
+    }
+
+    private func reconcileCachedMapResults(_ attempts: [MapCoverageAttempt]) {
+        guard isShowingCachedResults else { return }
+        let successfulResults = attempts.compactMap { attempt -> MapCoverageResult? in
+            guard case .success(let result) = attempt else { return nil }
+            return result
+        }
+        guard let selectedResult = successfulResults.first(where: { $0.pass == .selectedRadius }) else {
+            return
+        }
+
+        let freshItems = successfulResults.flatMap(\.items)
+        let freshSources = Set(freshItems.map(\.id.source))
+        let selectedFailedSources = sourcesMentioned(in: selectedResult.warnings)
+        let refreshes = PulseItem.Source.allCases.map { source -> MapSourceRefresh in
+            let sourceItems = freshItems.filter { $0.id.source == source }
+            if selectedFailedSources.contains(source) {
+                return .init(
+                    source: source,
+                    coverage: sourceItems.isEmpty ? .failed : .partial,
+                    items: sourceItems
+                )
+            }
+            guard freshSources.contains(source) else {
+                // A source with no returned record cannot be proven empty through
+                // the aggregate repository boundary, so retain its cached slice.
+                return .init(source: source, coverage: .failed)
+            }
+            return .init(
+                source: source,
+                coverage: selectedResult.completedBoundedCoverage
+                    ? .completeAuthoritative
+                    : .partial,
+                items: sourceItems
+            )
+        }
+        let reconciliation = MapCacheReconciler().reconcile(
+            cachedItems: items,
+            refreshes: refreshes
+        )
+        items = reconciliation.items
+        cachedSources.formIntersection(reconciliation.retainedCachedSources)
+        isShowingCachedResults = !cachedSources.isEmpty
+        cachedResultsAreStale = isShowingCachedResults && cachedResultsAreStale
+    }
+
+    private func sourcesMentioned(in warnings: [String]) -> Set<PulseItem.Source> {
+        Set(PulseItem.Source.allCases.filter { source in
+            warnings.contains { $0.hasPrefix("\(availabilityName(for: source)) ") }
+        })
     }
 
     private func clearRecoveredSourceWarnings(using items: [PulseItem]) {
@@ -709,14 +808,14 @@ final class PulseDataStore {
 
     private var cacheKey: String { "dcPulse.requestCache.v4" }
 
-    private func restoreFreshCache(
+    private func restoreCacheCandidate(
         for coordinate: PulseItem.Coordinate,
         placeName: String
     ) async -> Bool {
         let context = cacheContext(for: coordinate, radius: radius, period: period)
         if let record = await mapCacheStore.record(for: context),
            let entry = decodeCacheEntry(from: record),
-           isFreshAndComplete(entry),
+           isCacheCandidate(entry),
            abs(entry.coordinate.latitude - coordinate.latitude) < 0.0005,
            abs(entry.coordinate.longitude - coordinate.longitude) < 0.0005 {
             applyCacheEntry(entry, placeName: placeName, restoreCoordinate: false)
@@ -724,7 +823,7 @@ final class PulseDataStore {
         }
 
         guard let entry = legacyCacheEntry(),
-              isFreshAndComplete(entry),
+              isCacheCandidate(entry),
               entry.radius == radius,
               entry.period == period,
               abs(entry.coordinate.latitude - coordinate.latitude) < 0.0005,
@@ -739,7 +838,8 @@ final class PulseDataStore {
     private func restoreMostRecentCache() async -> Bool {
         if let record = await mapCacheStore.mostRecentRecord(),
            let entry = decodeCacheEntry(from: record),
-           isFreshAndComplete(entry) {
+           isCacheCandidate(entry),
+           isFresh(entry) {
             radius = entry.radius
             period = entry.period
             applyCacheEntry(entry, placeName: entry.placeName, restoreCoordinate: true)
@@ -747,7 +847,8 @@ final class PulseDataStore {
         }
 
         guard let entry = legacyCacheEntry(),
-              isFreshAndComplete(entry) else {
+              isCacheCandidate(entry),
+              isFresh(entry) else {
             return false
         }
         radius = entry.radius
@@ -780,6 +881,9 @@ final class PulseDataStore {
         requestCategorySummaryUnavailable = false
         self.placeName = placeName == "Downtown DC" ? entry.placeName : placeName
         lastUpdated = entry.savedAt
+        isShowingCachedResults = true
+        cachedResultsAreStale = !isFresh(entry)
+        cachedSources = Set(entry.items.map(\.id.source))
         state = items.isEmpty ? .empty : .loaded
     }
 
@@ -791,10 +895,15 @@ final class PulseDataStore {
         return entry
     }
 
-    private func isFreshAndComplete(_ entry: CacheEntry) -> Bool {
+    private func isFresh(_ entry: CacheEntry) -> Bool {
+        let age = now().timeIntervalSince(entry.savedAt)
+        return age >= 0 && age < Self.cacheLifetime
+    }
+
+    private func isCacheCandidate(_ entry: CacheEntry) -> Bool {
         let age = now().timeIntervalSince(entry.savedAt)
         return age >= 0 &&
-        age < Self.cacheLifetime &&
+        age < Self.staleCacheLifetime &&
         (requestStatusSummaryRepository == nil || entry.requestStatusCounts != nil) &&
         (requestTrendSummaryRepository == nil || entry.requestTrendSnapshot != nil) &&
         (requestCategorySummaryRepository == nil || entry.requestCategoryCounts != nil)
@@ -832,16 +941,22 @@ final class PulseDataStore {
         defaults.removeObject(forKey: cacheKey)
     }
 
-    private func saveCache() async {
+    private func saveCache(preservingCachedTimestamp: Bool = false) async {
         let context = MapPerformanceContext(radiusMiles: radius.rawValue, limit: items.count)
         let interval = mapPerformanceDiagnostics.begin(.cacheEncoding, context: context)
-        let entry = CacheEntry(savedAt: now(), coordinate: searchCoordinate, radius: radius, period: period,
+        let savedAt = preservingCachedTimestamp ? (lastUpdated ?? now()) : now()
+        let entry = CacheEntry(savedAt: savedAt, coordinate: searchCoordinate, radius: radius, period: period,
                                placeName: placeName, items: items, nextOffset: nextOffset, hasMore: hasMore,
                                warnings: sourceWarnings, requestStatusCounts: requestStatusCounts,
                                requestTrendSnapshot: requestTrendSnapshot,
                                requestCategoryCounts: allRequestCategoryCounts)
         if let payloadSize = await persist(entry) {
             lastUpdated = entry.savedAt
+            if !preservingCachedTimestamp {
+                isShowingCachedResults = false
+                cachedResultsAreStale = false
+                cachedSources = []
+            }
             defaults.removeObject(forKey: cacheKey)
             mapPerformanceDiagnostics.end(interval, outcome: .succeeded, itemCount: payloadSize)
         } else {
