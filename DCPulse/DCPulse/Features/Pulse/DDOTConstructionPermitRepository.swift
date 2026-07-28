@@ -4,11 +4,17 @@ struct DDOTConstructionPermitRepository: PulseRepositoryProtocol, WatchedItemRef
     private let client: any ArcGISClientProtocol
     private let now: @Sendable () -> Date
     private let adapter: DDOTConstructionPermitAdapter
+    private let diagnostics: any MapPerformanceDiagnosticsProtocol
 
-    init(client: any ArcGISClientProtocol = URLSessionArcGISClient(), now: @escaping @Sendable () -> Date = { .now }) {
+    init(
+        client: any ArcGISClientProtocol = URLSessionArcGISClient(),
+        now: @escaping @Sendable () -> Date = { .now },
+        diagnostics: any MapPerformanceDiagnosticsProtocol = MapPerformanceDiagnostics.shared
+    ) {
         self.client = client
         self.now = now
         adapter = DDOTConstructionPermitAdapter(now: now)
+        self.diagnostics = diagnostics
     }
 
     var source: PulseItem.Source { .ddotConstructionPermits2026 }
@@ -45,8 +51,17 @@ struct DDOTConstructionPermitRepository: PulseRepositoryProtocol, WatchedItemRef
             orderByFields: ["APPLICATIONDATE DESC"]
         )
         let page = try await client.fetchPage(from: DDOTConstructionPermitAdapter.sourceURL, query: query)
+        let context = MapPerformanceContext(
+            source: .ddotPermits,
+            radiusMiles: radiusMiles,
+            offset: offset,
+            limit: limit
+        )
+        let interval = diagnostics.begin(.mapping, context: context)
+        let items = page.features.compactMap { try? adapter.map($0) }
+        diagnostics.end(interval, outcome: .succeeded, itemCount: items.count)
         return PulsePage(
-            items: page.features.compactMap { try? adapter.map($0) },
+            items: items,
             nextOffset: offset + page.features.count,
             hasMore: page.exceededTransferLimit == true
         )

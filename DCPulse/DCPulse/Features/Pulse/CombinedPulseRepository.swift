@@ -8,10 +8,16 @@ struct NamedPulseRepository: Sendable {
 struct CombinedPulseRepository: PulseRepositoryProtocol, Sendable {
     let sources: [NamedPulseRepository]
     let sourceTimeout: Duration
+    let diagnostics: any MapPerformanceDiagnosticsProtocol
 
-    init(sources: [NamedPulseRepository], sourceTimeout: Duration = .seconds(4)) {
+    init(
+        sources: [NamedPulseRepository],
+        sourceTimeout: Duration = .seconds(4),
+        diagnostics: any MapPerformanceDiagnosticsProtocol = MapPerformanceDiagnostics.shared
+    ) {
         self.sources = sources
         self.sourceTimeout = sourceTimeout
+        self.diagnostics = diagnostics
     }
 
     func nearbyItems(
@@ -29,6 +35,13 @@ struct CombinedPulseRepository: PulseRepositoryProtocol, Sendable {
         await withTaskGroup(of: SourceResult.self) { group in
             for source in sources {
                 group.addTask {
+                    let context = MapPerformanceContext(
+                        source: performanceSource(for: source.name),
+                        radiusMiles: radiusMiles,
+                        offset: offset,
+                        limit: sourceLimit
+                    )
+                    let interval = diagnostics.begin(.sourceRequest, context: context)
                     do {
                         let page = try await fetchPage(
                             from: source.repository,
@@ -39,10 +52,13 @@ struct CombinedPulseRepository: PulseRepositoryProtocol, Sendable {
                             limit: sourceLimit,
                             timeout: sourceTimeout
                         )
+                        diagnostics.end(interval, outcome: .succeeded, itemCount: page.items.count)
                         return SourceResult(page: page, warning: nil)
                     } catch is CancellationError {
+                        diagnostics.end(interval, outcome: .cancelled, itemCount: 0)
                         return SourceResult(page: nil, warning: nil, wasCancelled: true)
                     } catch {
+                        diagnostics.end(interval, outcome: .failed, itemCount: 0)
                         return SourceResult(page: nil, warning: "\(source.name) records are temporarily unavailable.")
                     }
                 }
@@ -62,6 +78,15 @@ struct CombinedPulseRepository: PulseRepositoryProtocol, Sendable {
             hasMore: pages.contains(where: \.hasMore),
             warnings: warnings.sorted()
         )
+    }
+
+    private nonisolated func performanceSource(for name: String) -> MapPerformanceSource {
+        switch name {
+        case "DC 311": .dc311
+        case "Building Permits": .buildingPermits
+        case "DDOT Construction Permits": .ddotPermits
+        default: .otherArcGIS
+        }
     }
 }
 

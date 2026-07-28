@@ -75,6 +75,27 @@ For every failure or warning, record the accepted load generation, coverage pass
 
 ## P0 workstream B — Performance baseline
 
+### July 28, 2026 instrumentation
+
+The app now emits local Apple signposts in the `MapPerformance` category for coverage sessions and passes, per-source requests, ArcGIS transport and decoding, adapter mapping, item merging, cache encoding, annotation diff/application, and clustering stabilization. Milestone events cover Map construction, first markers, each coverage page, close-in completion, selected-radius completion, and final bounded coverage.
+
+Signpost metadata is intentionally limited to a public dataset label, coverage-pass label, radius bucket, pagination offset/limit, outcome, byte count, and item count. It never includes coordinates, addresses, saved-place names, request identifiers, complete URLs, query clauses, device/account identifiers, or photo data. Signposts are inspected locally in an attached Instruments session; DC Pulse does not upload them, persist them in app storage, or operate a diagnostics backend. This preserves the current **Developer analytics: No** and **Diagnostics collected by the developer: No** disclosures.
+
+### Repeatable capture procedure
+
+1. Use Instruments’ **Points of Interest** instrument and select the `MapPerformance` category.
+2. Record the device model, OS, app commit/build, radius, period, network condition, and whether the app cache is cold or warm. Do not record a coordinate or address.
+3. Start capture before launching or opening Map. Stop after **Bounded Map Coverage Complete** or the explicit partial result.
+4. Run each scenario at least five times without changing retrieval limits. For a cold run, reinstall or clear only the app container; for a warm run, first complete the same radius/period context within the ten-minute cache lifetime.
+5. Record elapsed time from the initiating action to **Map Interactive**, **First Map Markers**, **Close-in Coverage Complete**, and **Bounded Map Coverage Complete**, plus their item counts.
+6. Report median, p90, and worst elapsed time. Keep Simulator and physical-iPhone results in separate tables and retain `.trace` files only in approved private test storage.
+
+Use this row shape for every scenario:
+
+| Environment | Cache | Radius | Period | Network | Runs | Interactive median/p90/worst | First markers median/p90/worst | Close-in median/p90/worst | Bounded median/p90/worst | Final items | Partial sources |
+| --- | --- | --- | --- | --- | ---: | --- | --- | --- | --- | ---: | --- |
+| Pending | Cold/Warm | 0.25/0.5/1 mi | 30 days/densest | Wi-Fi/constrained/offline recovery | 5+ | Pending | Pending | Pending | Pending | Pending | Pending |
+
 ### Milestones
 
 Measure wall-clock time from the initiating action to:

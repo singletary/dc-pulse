@@ -95,6 +95,8 @@ App Store Connect adds the copyright symbol automatically.
 - Photos or videos collected by DC Pulse: **No**; 311 draft analysis is on-device and the app does not upload the selected photo.
 - Contact information collected by the iOS app: **No**; support-form collection occurs on the separate website and is described in the web privacy policy.
 
+Developer-run Map performance checks use Apple signposts visible only during local Instruments profiling. DC Pulse does not upload or persist those signposts, and their metadata excludes coordinates, addresses, saved-place names, record identifiers, query URLs, and device/account identifiers. They therefore do not change the analytics or diagnostics answers above.
+
 Use the conservative disclosure below unless the DC ArcGIS publisher confirms that the coordinate is discarded immediately after servicing each request:
 
 - **Precise Location** — collected, not linked to identity, not used for tracking, used only for **App Functionality**. The selected search coordinate is transmitted directly to DC government ArcGIS services to return nearby records. DC Pulse does not operate an intermediary server or attach an account/device identifier.

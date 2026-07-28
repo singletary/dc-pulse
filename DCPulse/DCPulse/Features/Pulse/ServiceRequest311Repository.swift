@@ -31,11 +31,17 @@ struct ServiceRequest311Repository: PulseRepositoryProtocol, WatchedItemRefreshR
     private let client: any ArcGISClientProtocol
     private let now: @Sendable () -> Date
     private let adapter: ServiceRequest311Adapter
+    private let diagnostics: any MapPerformanceDiagnosticsProtocol
 
-    init(client: any ArcGISClientProtocol = URLSessionArcGISClient(), now: @escaping @Sendable () -> Date = { .now }) {
+    init(
+        client: any ArcGISClientProtocol = URLSessionArcGISClient(),
+        now: @escaping @Sendable () -> Date = { .now },
+        diagnostics: any MapPerformanceDiagnosticsProtocol = MapPerformanceDiagnostics.shared
+    ) {
         self.client = client
         self.now = now
         adapter = ServiceRequest311Adapter(now: now)
+        self.diagnostics = diagnostics
     }
 
     var source: PulseItem.Source { .serviceRequests311 }
@@ -67,8 +73,17 @@ struct ServiceRequest311Repository: PulseRepositoryProtocol, WatchedItemRefreshR
             limit: limit
         )
         let page = try await client.fetchPage(from: ServiceRequest311Adapter.sourceURL, query: query)
+        let context = MapPerformanceContext(
+            source: .dc311,
+            radiusMiles: radiusMiles,
+            offset: offset,
+            limit: limit
+        )
+        let interval = diagnostics.begin(.mapping, context: context)
+        let items = page.features.compactMap { try? adapter.map($0) }
+        diagnostics.end(interval, outcome: .succeeded, itemCount: items.count)
         return PulsePage(
-            items: page.features.compactMap { try? adapter.map($0) },
+            items: items,
             nextOffset: offset + page.features.count,
             hasMore: page.exceededTransferLimit == true
         )
