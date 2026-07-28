@@ -18,6 +18,7 @@ The measurement plan, test matrix, home-screen concepts, and decision gates are 
 - [ ] **P1 — Prototype cached-first Map loading with per-source reconciliation.** Evaluate a bounded multi-context cache that can show labeled cached markers immediately, refresh sources independently, use reliable update fields where supported, and preserve cached records through partial failures.
   - Production prototype implemented July 28: labeled fresh/stale cache candidates, conservative source-scoped reconciliation, partial-failure retention, and timestamp-preserving persistence are covered by deterministic tests. Performance measurements and the adoption decision remain open.
 - [ ] **P1 — Simplify Near You around one primary snapshot.** Audit usefulness and duplication, review Snapshot-first, Personalized-first, and Map-preview concepts, and record the selected hierarchy before implementation.
+  - Content audit and three-concept state comparison completed July 28. Snapshot-first is selected for task validation and production planning; implementation and accessibility/device validation remain open.
 - [ ] **P1 — Decide the default radius from evidence.** Compare 0.25 and 0.5 miles for correctness, latency, request volume, meaningful-result rate, density, legibility, and usefulness. Do not reduce the radius to conceal incomplete or slow loading.
 
 ## 1. Release stability and data correctness — critical
