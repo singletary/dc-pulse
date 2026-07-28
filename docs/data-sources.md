@@ -10,6 +10,12 @@ A read-only, one-record query against each production layer confirmed that every
 
 The audit demonstrates current schema compatibility, not an availability guarantee. Fixture-backed adapter tests remain the deterministic boundary verification, and live failures must continue to degrade independently by source.
 
+## Incremental-refresh capability audit — July 28, 2026
+
+A read-only metadata audit of the same production layers confirmed that 311 `EDITED`, Building Permits `LASTMODIFIEDDATE`, and DDOT `EDITED` remain available as date fields. Every layer supports pagination, ordering, and standardized `where` queries, but reports no sync change feed, historic-moment query support, or archiving. These update fields support overlapping-window refresh and stable-identity replacement; they do not make absence authoritative.
+
+DC Pulse must not delete a cached source record after timeout, cancellation, failed source loading, or incomplete pagination. Deletion is allowed only after a successful bounded refresh completes for that source and context. The cached-first prototype encodes this distinction explicitly instead of treating a mixed-source page as one all-or-nothing result.
+
 On July 13, 2026, a read-only grouped-statistics query was also verified against 311 layer 21 using `outStatistics`, `groupByFieldsForStatistics=SERVICECODEDESCRIPTION`, and the app's spatial parameters. The response included `Graffiti Removal` (four records within the tested half-mile/30-day context), confirming that its earlier UI absence came from newest-page sampling rather than a missing source category. DC Pulse now uses grouped counts for its complete category catalog and nearby trend comparisons, then uses a source-specific targeted query when a 311 category is selected on Map.
 
 ## Planned ArcGIS Feature Services

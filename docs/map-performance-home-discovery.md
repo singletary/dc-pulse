@@ -130,6 +130,20 @@ Do not increase timeouts, raise result limits, or serialize the two passes until
 
 ## P1 workstream — Cached-first and incremental refresh
 
+### July 28, 2026 source capability audit and reconciliation prototype
+
+A read-only production metadata audit confirmed that all three ArcGIS layers support pagination, ordering, standard `where` filters, and date fields that the adapters already normalize into `PulseItem.updatedAt`. None of the layers advertises sync change tracking, historic-moment queries, archiving, or a server change feed (`syncCanReturnChanges` is false). An update timestamp can identify records to refetch, but it cannot prove that an absent record was deleted or moved outside the bounded query.
+
+| Source | Stable identity | Update field | Filtering/ordering | Change feed | Prototype classification |
+| --- | --- | --- | --- | --- | --- |
+| DC 311 | `SERVICEREQUESTID` | `EDITED` | Supported | None | Overlapping-window reconciliation |
+| Building Permits | `PERMIT_ID` | `LASTMODIFIEDDATE` | Supported | None | Overlapping-window reconciliation |
+| DDOT Construction Permits | `PERMITNUMBER`, falling back to `TRACKINGNUMBER` | `EDITED` | Supported | None | Overlapping-window reconciliation |
+
+The storage-independent `MapCacheReconciler` prototype therefore accepts an explicit coverage result per source. A complete authoritative bounded refresh replaces only that source's cached slice. A partial refresh overlays new and changed stable identities without deleting unseen cached records. A failed source leaves its cached slice intact while healthy sources reconcile independently. Source-mismatched records are rejected at the boundary.
+
+This prototype does not yet change production loading or persistence. It establishes deterministic deletion and partial-failure semantics before selecting a bounded file-backed or SwiftData store. Cached coordinates and records remain on device and are excluded from diagnostics.
+
 ### Target behavior
 
 - A matching cached map appears immediately with a visible **Updated …** timestamp.
