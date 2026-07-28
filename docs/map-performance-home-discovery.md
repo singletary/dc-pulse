@@ -190,6 +190,14 @@ Adopt the approach only if warm-launch time to useful markers improves materiall
 
 ## P1 workstream — Near You simplification
 
+### July 28, 2026 content audit and concept decision
+
+The scored audit, consistent low-fidelity state mockups, comparison, selected hierarchy, and task-validation plan are recorded in [Near You simplification decision](near-you-simplification.md).
+
+**Option A — Snapshot first** is selected for validation and production planning. It establishes one stable hierarchy for first-run and returning users, puts place context and complete lifecycle totals first, limits the first screen to one reliable insight and three noteworthy records, and moves full categories and trends into a Neighborhood Summary destination. Home becomes contextual supporting content rather than an initial setup gate. The selection avoids adding a duplicate Map preview while Map performance remains an open P0 workstream.
+
+Production implementation remains gated on task validation and destination coverage; this decision does not change the current app screen.
+
 ### Content audit
 
 Score each current element on user value, use frequency, urgency, duplication with another tab, personalization, data reliability, vertical cost, and accessibility cost. The current audit must cover:
