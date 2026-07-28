@@ -7,6 +7,7 @@ struct ClusteredPulseMap: UIViewRepresentable {
     let radiusMeters: CLLocationDistance
     let targetRegion: MKCoordinateRegion
     let centerRequestID: Int
+    let diagnostics: any MapPerformanceDiagnosticsProtocol
     let onRegionChange: (CLLocationCoordinate2D) -> Void
     let onSelection: (RequestMapGroup) -> Void
 
@@ -24,6 +25,11 @@ struct ClusteredPulseMap: UIViewRepresentable {
         DispatchQueue.main.async {
             context.coordinator.enableItemRendering(on: mapView)
         }
+        diagnostics.milestone(
+            .mapInteractive,
+            context: performanceContext,
+            itemCount: items.count
+        )
         return mapView
     }
 
@@ -45,6 +51,8 @@ struct ClusteredPulseMap: UIViewRepresentable {
         private var isApplyingRegion = false
         private var canRenderItems = false
         private var annotationUpdateTask: Task<Void, Never>?
+        private var reportedFirstMarkers = false
+        private var reportedStableRenderItemCount = -1
 
         init(parent: ClusteredPulseMap) { self.parent = parent }
 
@@ -85,6 +93,10 @@ struct ClusteredPulseMap: UIViewRepresentable {
 
         private func updateItemAnnotations(with items: [PulseItem], on mapView: MKMapView) {
             annotationUpdateTask?.cancel()
+            let diffInterval = parent.diagnostics.begin(
+                .annotationDiff,
+                context: parent.performanceContext
+            )
             var desiredItems: [PulseItem.ID: PulseItem] = [:]
             for item in items where item.coordinate != nil { desiredItems[item.id] = item }
 
@@ -101,12 +113,31 @@ struct ClusteredPulseMap: UIViewRepresentable {
                 guard renderedItemAnnotations[item.id] == nil else { return nil }
                 return PulseItemAnnotation(item)
             }
+            parent.diagnostics.end(
+                diffInterval,
+                outcome: .succeeded,
+                itemCount: desiredItems.count
+            )
             guard !annotationsToAdd.isEmpty else { return }
 
             // Adding a large clustered result set in one MapKit transaction can block the
             // tab transition. Yield between small batches so the map becomes interactive
             // immediately while all records continue appearing over the next few frames.
+            let applyInterval = parent.diagnostics.begin(
+                .annotationApply,
+                context: parent.performanceContext
+            )
+            let diagnostics = parent.diagnostics
             annotationUpdateTask = Task { @MainActor [weak self, weak mapView] in
+                var outcome = MapPerformanceOutcome.cancelled
+                var appliedCount = 0
+                defer {
+                    diagnostics.end(
+                        applyInterval,
+                        outcome: outcome,
+                        itemCount: appliedCount
+                    )
+                }
                 guard let self, let mapView else { return }
                 for startIndex in stride(from: 0, to: annotationsToAdd.count, by: 30) {
                     guard !Task.isCancelled else { return }
@@ -117,11 +148,33 @@ struct ClusteredPulseMap: UIViewRepresentable {
                     }
                     guard !batch.isEmpty else { continue }
                     mapView.addAnnotations(batch)
+                    appliedCount += batch.count
                     for annotation in batch {
                         self.renderedItemAnnotations[annotation.item.id] = annotation
                     }
+                    if !self.reportedFirstMarkers {
+                        self.reportedFirstMarkers = true
+                        self.parent.diagnostics.milestone(
+                            .firstMarkers,
+                            context: self.parent.performanceContext,
+                            itemCount: batch.count
+                        )
+                    }
                 }
+                outcome = .succeeded
             }
+        }
+
+        func mapViewDidFinishRenderingMap(_ mapView: MKMapView, fullyRendered: Bool) {
+            guard fullyRendered,
+                  !renderedItemAnnotations.isEmpty,
+                  reportedStableRenderItemCount != renderedItemAnnotations.count else { return }
+            reportedStableRenderItemCount = renderedItemAnnotations.count
+            parent.diagnostics.milestone(
+                .clusteringStable,
+                context: parent.performanceContext,
+                itemCount: renderedItemAnnotations.count
+            )
         }
 
         func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
@@ -240,6 +293,10 @@ struct ClusteredPulseMap: UIViewRepresentable {
             case .unknown: .systemGray
             }
         }
+    }
+
+    private var performanceContext: MapPerformanceContext {
+        MapPerformanceContext(radiusMiles: radiusMeters / 1_609.344, limit: items.count)
     }
 }
 

@@ -24,6 +24,7 @@ struct PulseMapView: View {
             radiusMeters: store.radius.rawValue * 1_609.344,
             targetRegion: viewModel.region,
             centerRequestID: viewModel.centerRequestID,
+            diagnostics: store.mapPerformanceDiagnostics,
             onRegionChange: updateCandidateSearchCoordinate,
             onSelection: { selectedGroup = $0 }
         )

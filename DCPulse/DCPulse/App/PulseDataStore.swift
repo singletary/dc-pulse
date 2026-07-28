@@ -28,6 +28,7 @@ final class PulseDataStore {
         let pass: MapCoveragePass
         let warnings: [String]
         let recoveredSources: Set<PulseItem.Source>
+        let loadedCount: Int
     }
 
     private enum MapCoverageAttempt {
@@ -105,6 +106,7 @@ final class PulseDataStore {
     private let requestCategoryRepository: (any ServiceRequestCategoryRepositoryProtocol)?
     private let defaults: UserDefaults
     private let now: () -> Date
+    let mapPerformanceDiagnostics: any MapPerformanceDiagnosticsProtocol
     private var loadSequence = 0
     private var requestCategorySequence = 0
     private var mapCoverageSequence = 0
@@ -145,6 +147,7 @@ final class PulseDataStore {
         requestCategoryRepository = ServiceRequest311Repository()
         defaults = .standard
         now = { .now }
+        mapPerformanceDiagnostics = MapPerformanceDiagnostics.shared
     }
 
     init(
@@ -154,7 +157,8 @@ final class PulseDataStore {
         requestCategorySummaryRepository: (any RequestCategorySummaryRepositoryProtocol)? = nil,
         requestCategoryRepository: (any ServiceRequestCategoryRepositoryProtocol)? = nil,
         defaults: UserDefaults? = nil,
-        now: @escaping () -> Date = { .now }
+        now: @escaping () -> Date = { .now },
+        mapPerformanceDiagnostics: any MapPerformanceDiagnosticsProtocol = MapPerformanceDiagnostics.shared
     ) {
         self.repository = repository
         self.requestStatusSummaryRepository = requestStatusSummaryRepository
@@ -163,6 +167,7 @@ final class PulseDataStore {
         self.requestCategoryRepository = requestCategoryRepository
         self.defaults = defaults ?? UserDefaults(suiteName: "DCPulseTests.\(UUID().uuidString)")!
         self.now = now
+        self.mapPerformanceDiagnostics = mapPerformanceDiagnostics
     }
 
     func load(
@@ -331,8 +336,20 @@ final class PulseDataStore {
         mapCoverageLoadingDescription = selectedRadius == .quarterMile
             ? "Loading 0.25-mile map coverage…"
             : "Loading close-in and \(selectedRadius.distanceLabel) map coverage…"
+        let sessionContext = MapPerformanceContext(
+            pass: selectedRadius == .quarterMile ? .selectedRadius : .closeInAndSelected,
+            radiusMiles: selectedRadius.rawValue,
+            limit: Self.mapResultLimit
+        )
+        let sessionInterval = mapPerformanceDiagnostics.begin(.coverageSession, context: sessionContext)
+        var sessionOutcome = MapPerformanceOutcome.cancelled
         isMapCoverageLoading = true
         defer {
+            mapPerformanceDiagnostics.end(
+                sessionInterval,
+                outcome: sessionOutcome,
+                itemCount: items.count
+            )
             if coverageSequence == mapCoverageSequence {
                 isMapCoverageLoading = false
                 mapCoverageLoadingDescription = nil
@@ -372,6 +389,12 @@ final class PulseDataStore {
             )
             guard finishMapCoverage([attempt], coverageSequence: coverageSequence) else { return }
         }
+        sessionOutcome = mapCoverageIssues.isEmpty ? .succeeded : .partial
+        mapPerformanceDiagnostics.milestone(
+            .boundedCoverage,
+            context: sessionContext,
+            itemCount: items.count
+        )
         saveCache()
     }
 
@@ -514,10 +537,34 @@ final class PulseDataStore {
                   coordinate == searchCoordinate,
                   selectedRadius == self.radius,
                   period == self.period else { throw CancellationError() }
+            let mergeInterval = mapPerformanceDiagnostics.begin(
+                .merge,
+                context: MapPerformanceContext(
+                    pass: performancePass(for: pass),
+                    radiusMiles: radius.rawValue,
+                    offset: offset,
+                    limit: Self.mapPageSize
+                )
+            )
             merge(page.items)
+            mapPerformanceDiagnostics.end(
+                mergeInterval,
+                outcome: .succeeded,
+                itemCount: page.items.count
+            )
             warnings += page.warnings
             recoveredSources.formUnion(page.items.map(\.id.source))
             loadedCount += page.items.count
+            mapPerformanceDiagnostics.milestone(
+                .coveragePage,
+                context: MapPerformanceContext(
+                    pass: performancePass(for: pass),
+                    radiusMiles: radius.rawValue,
+                    offset: offset,
+                    limit: Self.mapPageSize
+                ),
+                itemCount: page.items.count
+            )
             guard page.nextOffset > offset || !page.hasMore else { break }
             offset = page.nextOffset
             hasMore = page.hasMore
@@ -525,7 +572,8 @@ final class PulseDataStore {
         return MapCoverageResult(
             pass: pass,
             warnings: Array(Set(warnings)).sorted(),
-            recoveredSources: recoveredSources
+            recoveredSources: recoveredSources,
+            loadedCount: loadedCount
         )
     }
 
@@ -538,8 +586,14 @@ final class PulseDataStore {
         coverageSequence: Int,
         selectedRadius: Radius
     ) async -> MapCoverageAttempt {
+        let context = MapPerformanceContext(
+            pass: performancePass(for: pass),
+            radiusMiles: radius.rawValue,
+            limit: Self.mapResultLimit
+        )
+        let interval = mapPerformanceDiagnostics.begin(.coveragePass, context: context)
         do {
-            return .success(try await mergeCoverageItems(
+            let result = try await mergeCoverageItems(
                 pass: pass,
                 coordinate: coordinate,
                 radius: radius,
@@ -548,10 +602,23 @@ final class PulseDataStore {
                 requestSequence: requestSequence,
                 coverageSequence: coverageSequence,
                 selectedRadius: selectedRadius
-            ))
+            )
+            mapPerformanceDiagnostics.end(
+                interval,
+                outcome: result.warnings.isEmpty ? .succeeded : .partial,
+                itemCount: result.loadedCount
+            )
+            mapPerformanceDiagnostics.milestone(
+                pass == .closeIn ? .closeInCoverage : .selectedRadiusCoverage,
+                context: context,
+                itemCount: result.loadedCount
+            )
+            return .success(result)
         } catch is CancellationError {
+            mapPerformanceDiagnostics.end(interval, outcome: .cancelled, itemCount: 0)
             return .cancelled
         } catch {
+            mapPerformanceDiagnostics.end(interval, outcome: .failed, itemCount: 0)
             return .failed(MapCoverageIssue(
                 pass: pass,
                 message: "This coverage pass could not finish. Existing markers remain available."
@@ -603,6 +670,10 @@ final class PulseDataStore {
 
     private func clearRecoveredSourceWarnings(using items: [PulseItem]) {
         clearRecoveredSourceWarnings(Set(items.map(\.id.source)))
+    }
+
+    private func performancePass(for pass: MapCoveragePass) -> MapPerformancePass {
+        pass == .closeIn ? .closeIn : .selectedRadius
     }
 
     private func clearRecoveredSourceWarnings(_ recoveredSources: Set<PulseItem.Source>) {
@@ -688,12 +759,19 @@ final class PulseDataStore {
     }
 
     private func saveCache() {
+        let context = MapPerformanceContext(radiusMiles: radius.rawValue, limit: items.count)
+        let interval = mapPerformanceDiagnostics.begin(.cacheEncoding, context: context)
         let entry = CacheEntry(savedAt: now(), coordinate: searchCoordinate, radius: radius, period: period,
                                placeName: placeName, items: items, nextOffset: nextOffset, hasMore: hasMore,
                                warnings: sourceWarnings, requestStatusCounts: requestStatusCounts,
                                requestTrendSnapshot: requestTrendSnapshot,
                                requestCategoryCounts: allRequestCategoryCounts)
-        if let data = try? JSONEncoder().encode(entry) { defaults.set(data, forKey: cacheKey) }
+        if let data = try? JSONEncoder().encode(entry) {
+            defaults.set(data, forKey: cacheKey)
+            mapPerformanceDiagnostics.end(interval, outcome: .succeeded, itemCount: data.count)
+        } else {
+            mapPerformanceDiagnostics.end(interval, outcome: .failed, itemCount: 0)
+        }
     }
 
     private nonisolated static func loadStatusCounts(
