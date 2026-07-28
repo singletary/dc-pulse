@@ -11,6 +11,7 @@ struct PulseMapView: View {
     @State private var categoryItems: [PulseItem]?
     @State private var isCategoryLoading = false
     @State private var showingFilters = false
+    @State private var showingCoverageDetails = false
     @State private var expandedFilterSections: Set<MapFilterSection> = []
     @Environment(PulseDataStore.self) private var store
     @Environment(LocationService.self) private var locationService
@@ -45,22 +46,34 @@ struct PulseMapView: View {
                     VStack(spacing: 4) {
                         ProgressView().progressViewStyle(.linear)
                         Text(mapLoadingLabel)
-                            .font(.caption2.weight(.medium)).foregroundStyle(.secondary)
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(.horizontal, 14).padding(.vertical, 8)
-                    .frame(maxWidth: 240)
+                    .frame(maxWidth: 340)
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                     .offset(y: 54)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel(mapLoadingLabel)
                 } else if let warning = store.mapCoverageWarning {
-                    Label(warning, systemImage: "exclamationmark.triangle.fill")
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 14).padding(.vertical, 8)
-                        .frame(maxWidth: 260)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                        .offset(y: 54)
-                        .accessibilityIdentifier("map.coverageWarning")
+                    Button {
+                        showingCoverageDetails = true
+                    } label: {
+                        Label(warning, systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 14).padding(.vertical, 10)
+                            .frame(maxWidth: 340, alignment: .leading)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    }
+                    .buttonStyle(.plain)
+                    .offset(y: 54)
+                    .accessibilityIdentifier("map.coverageWarning")
+                    .accessibilityHint("Shows affected coverage passes and retry options")
                 }
             }
         }
@@ -83,6 +96,7 @@ struct PulseMapView: View {
         .navigationTitle("Map")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingFilters) { filterSheet }
+        .sheet(isPresented: $showingCoverageDetails) { coverageDetails }
         .sheet(item: $selectedGroup) { group in
             NavigationStack {
                 Group {
@@ -257,8 +271,46 @@ struct PulseMapView: View {
     private var mapLoadingLabel: String {
         if isCategoryLoading { return "Loading \(requestTypeFilter ?? "category") requests…" }
         if store.isLoading { return "Updating map…" }
-        if store.isMapCoverageLoading { return "Loading more map results…" }
+        if store.isMapCoverageLoading {
+            return store.mapCoverageLoadingDescription ?? "Loading map coverage…"
+        }
         return "Updating map…"
+    }
+
+    private var coverageDetails: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Text("Markers already on the map remain usable. The sections below identify coverage that may be incomplete.")
+                }
+
+                ForEach(store.mapCoverageIssues) { issue in
+                    Section(issue.pass.label(selectedRadius: store.radius)) {
+                        Label(issue.message, systemImage: "exclamationmark.triangle")
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                Section {
+                    Button {
+                        showingCoverageDetails = false
+                        Task { await store.retryMapCoverage() }
+                    } label: {
+                        Label("Retry Map Coverage", systemImage: "arrow.clockwise")
+                    }
+                    .disabled(store.isMapCoverageLoading)
+                    .accessibilityIdentifier("map.coverageRetry")
+                }
+            }
+            .navigationTitle("Map Coverage")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { showingCoverageDetails = false }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
     }
 
     private var categoryLoadContext: MapCategoryLoadContext? {
