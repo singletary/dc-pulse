@@ -150,7 +150,13 @@ The prototype selects a file-backed Codable archive rather than adding Map cache
 
 `FileBackedMapCacheStore` is injected behind `MapCacheStoreProtocol`. It uses a rounded three-decimal center bucket plus radius, period, and schema generation as the context key; exact coordinates may exist only inside the on-device opaque payload. The production policy retains at most six contexts, 3,600 total items, 16 MiB of encoded payloads, and 24 hours of candidate stale data. Reads discard expired, future-schema, or corrupt archives as empty. Saves use atomic writes with iOS complete-file-protection-unless-open, deduplicate contexts, and evict oldest records to satisfy every cap.
 
-This store is not wired into `PulseDataStore` yet. The next prototype slice must define the versioned payload/migration from the current ten-minute `UserDefaults` entry, expose an honest cached timestamp in Map UI, and run fresh per-source reconciliation without turning stale cache into authoritative data.
+### July 28, 2026 versioned payload and legacy migration
+
+`PulseDataStore` now persists a versioned Codable payload through `MapCacheStoreProtocol` and restores matching rounded search contexts independently. It verifies payload version, saved timestamp, item count, and derived context before accepting a record. Matching restores preserve the caller's requested exact center rather than replacing it with the cached coordinate; only an explicit most-recent restore adopts the saved search context.
+
+The existing ten-minute freshness rule remains in force. The 24-hour store window is only candidate storage for the later stale-while-revalidate prototype and is never presented as fresh by this slice. A valid legacy `UserDefaults` cache is migrated only after the protected file-store write succeeds, then the legacy cache key is removed. Corrupt, future-dated, incomplete-summary, mismatched-context, or unknown-version payloads fall through to a live request.
+
+`lastUpdated` is now explicit observable store state for the later Map disclosure UI. Production still does not display stale cache or perform per-source background reconciliation; those behaviors require the next slice.
 
 ### Target behavior
 

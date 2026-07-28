@@ -52,12 +52,29 @@ nonisolated enum MapCacheStoreError: Error, Equatable {
     case invalidItemCount
     case recordExceedsItemLimit
     case recordExceedsByteLimit
+    case recordOutsideRetentionWindow
 }
 
 nonisolated protocol MapCacheStoreProtocol: Sendable {
     func record(for context: MapCacheContext) async -> MapCacheRecord?
     func mostRecentRecord() async -> MapCacheRecord?
     func save(_ record: MapCacheRecord) async throws
+}
+
+actor TransientMapCacheStore: MapCacheStoreProtocol {
+    private var recordsByContext: [MapCacheContext: MapCacheRecord] = [:]
+
+    func record(for context: MapCacheContext) -> MapCacheRecord? {
+        recordsByContext[context]
+    }
+
+    func mostRecentRecord() -> MapCacheRecord? {
+        recordsByContext.values.max { $0.savedAt < $1.savedAt }
+    }
+
+    func save(_ record: MapCacheRecord) {
+        recordsByContext[record.context] = record
+    }
 }
 
 actor FileBackedMapCacheStore: MapCacheStoreProtocol {
@@ -91,6 +108,7 @@ actor FileBackedMapCacheStore: MapCacheStoreProtocol {
     }
 
     func save(_ record: MapCacheRecord) throws {
+        let referenceDate = now()
         guard policy.maximumEntries > 0,
               policy.maximumTotalItems > 0,
               policy.maximumTotalBytes > 0,
@@ -106,13 +124,17 @@ actor FileBackedMapCacheStore: MapCacheStoreProtocol {
         guard record.payload.count <= policy.maximumTotalBytes else {
             throw MapCacheStoreError.recordExceedsByteLimit
         }
+        let age = referenceDate.timeIntervalSince(record.savedAt)
+        guard age >= 0, age <= policy.maximumAge else {
+            throw MapCacheStoreError.recordOutsideRetentionWindow
+        }
 
         var candidates = validRecords().filter { $0.context != record.context }
         candidates.append(record)
         let bounded = Self.boundedRecords(
             candidates,
             policy: policy,
-            referenceDate: now()
+            referenceDate: referenceDate
         )
         try persist(bounded)
     }
@@ -158,7 +180,11 @@ actor FileBackedMapCacheStore: MapCacheStoreProtocol {
 
         let cutoff = referenceDate.addingTimeInterval(-policy.maximumAge)
         let sorted = records
-            .filter { $0.savedAt >= cutoff && $0.itemCount >= 0 }
+            .filter {
+                $0.savedAt >= cutoff &&
+                $0.savedAt <= referenceDate &&
+                $0.itemCount >= 0
+            }
             .sorted { $0.savedAt > $1.savedAt }
 
         var result: [MapCacheRecord] = []
