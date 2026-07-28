@@ -25,14 +25,34 @@ final class PulseDataStore {
     }
 
     private struct MapCoverageResult {
+        let pass: MapCoveragePass
         let warnings: [String]
         let recoveredSources: Set<PulseItem.Source>
     }
 
     private enum MapCoverageAttempt {
         case success(MapCoverageResult)
-        case failed(String)
+        case failed(MapCoverageIssue)
         case cancelled
+    }
+
+    enum MapCoveragePass: String, Sendable {
+        case closeIn
+        case selectedRadius
+
+        func label(selectedRadius: Radius) -> String {
+            switch self {
+            case .closeIn: "Close-in (0.25-mile) coverage"
+            case .selectedRadius: "Selected \(selectedRadius.rawValue.formatted())-mile coverage"
+            }
+        }
+    }
+
+    struct MapCoverageIssue: Identifiable, Equatable, Sendable {
+        let pass: MapCoveragePass
+        let message: String
+
+        var id: String { "\(pass.rawValue):\(message)" }
     }
 
     enum Period: Int, CaseIterable, Identifiable, Codable {
@@ -94,7 +114,9 @@ final class PulseDataStore {
     private(set) var hasMore = false
     private(set) var isLoadingMore = false
     private(set) var isMapCoverageLoading = false
+    private(set) var mapCoverageLoadingDescription: String?
     private(set) var mapCoverageWarning: String?
+    private(set) var mapCoverageIssues: [MapCoverageIssue] = []
     private(set) var loadMoreError: String?
     private(set) var sourceWarnings: [String] = []
     private(set) var requestStatusCounts: RequestStatusCounts?
@@ -161,6 +183,7 @@ final class PulseDataStore {
         isLoadingMore = false
         loadMoreError = nil
         mapCoverageWarning = nil
+        mapCoverageIssues = []
         sourceWarnings = []
         requestStatusCounts = nil
         isRequestSummaryLoading = requestStatusSummaryRepository != nil
@@ -304,41 +327,48 @@ final class PulseDataStore {
         let selectedRadius = radius
         let selectedPeriod = period
         mapCoverageWarning = nil
+        mapCoverageIssues = []
+        mapCoverageLoadingDescription = selectedRadius == .quarterMile
+            ? "Loading 0.25-mile map coverage…"
+            : "Loading close-in and \(selectedRadius.distanceLabel) map coverage…"
         isMapCoverageLoading = true
         defer {
-            if coverageSequence == mapCoverageSequence { isMapCoverageLoading = false }
+            if coverageSequence == mapCoverageSequence {
+                isMapCoverageLoading = false
+                mapCoverageLoadingDescription = nil
+            }
         }
 
         if selectedRadius != .quarterMile {
             async let closeInAttempt = mapCoverageAttempt(
+                pass: .closeIn,
                 coordinate: coordinate,
                 radius: .quarterMile,
                 period: selectedPeriod,
                 requestSequence: requestSequence,
                 coverageSequence: coverageSequence,
-                selectedRadius: selectedRadius,
-                failureMessage: "Some close-in map results could not be verified. Pull to refresh and try again."
+                selectedRadius: selectedRadius
             )
             async let selectedAttempt = mapCoverageAttempt(
+                pass: .selectedRadius,
                 coordinate: coordinate,
                 radius: selectedRadius,
                 period: selectedPeriod,
                 requestSequence: requestSequence,
                 coverageSequence: coverageSequence,
-                selectedRadius: selectedRadius,
-                failureMessage: "Some map results could not be loaded. Pull to refresh and try again."
+                selectedRadius: selectedRadius
             )
             let attempts = await [closeInAttempt, selectedAttempt]
             guard finishMapCoverage(attempts, coverageSequence: coverageSequence) else { return }
         } else {
             let attempt = await mapCoverageAttempt(
+                pass: .selectedRadius,
                 coordinate: coordinate,
                 radius: selectedRadius,
                 period: selectedPeriod,
                 requestSequence: requestSequence,
                 coverageSequence: coverageSequence,
-                selectedRadius: selectedRadius,
-                failureMessage: "Some map results could not be loaded. Pull to refresh and try again."
+                selectedRadius: selectedRadius
             )
             guard finishMapCoverage([attempt], coverageSequence: coverageSequence) else { return }
         }
@@ -348,6 +378,10 @@ final class PulseDataStore {
     func retry() async {
         await load(coordinate: searchCoordinate, placeName: placeName, force: true)
         await prefetchSummary()
+    }
+
+    func retryMapCoverage() async {
+        await prepareMapResults()
     }
 
     func selectRadius(_ radius: Radius) async {
@@ -452,6 +486,7 @@ final class PulseDataStore {
     private var isFailure: Bool { if case .failed = state { true } else { false } }
 
     private func mergeCoverageItems(
+        pass: MapCoveragePass,
         coordinate: PulseItem.Coordinate,
         radius: Radius,
         period: Period,
@@ -487,20 +522,25 @@ final class PulseDataStore {
             offset = page.nextOffset
             hasMore = page.hasMore
         }
-        return MapCoverageResult(warnings: warnings, recoveredSources: recoveredSources)
+        return MapCoverageResult(
+            pass: pass,
+            warnings: Array(Set(warnings)).sorted(),
+            recoveredSources: recoveredSources
+        )
     }
 
     private func mapCoverageAttempt(
+        pass: MapCoveragePass,
         coordinate: PulseItem.Coordinate,
         radius: Radius,
         period: Period,
         requestSequence: Int,
         coverageSequence: Int,
-        selectedRadius: Radius,
-        failureMessage: String
+        selectedRadius: Radius
     ) async -> MapCoverageAttempt {
         do {
             return .success(try await mergeCoverageItems(
+                pass: pass,
                 coordinate: coordinate,
                 radius: radius,
                 period: period,
@@ -512,7 +552,10 @@ final class PulseDataStore {
         } catch is CancellationError {
             return .cancelled
         } catch {
-            return .failed(failureMessage)
+            return .failed(MapCoverageIssue(
+                pass: pass,
+                message: "This coverage pass could not finish. Existing markers remain available."
+            ))
         }
     }
 
@@ -529,18 +572,32 @@ final class PulseDataStore {
         }
         clearRecoveredSourceWarnings(recoveredSources)
 
-        let directFailures = attempts.compactMap { attempt -> String? in
+        let directFailures = attempts.compactMap { attempt -> MapCoverageIssue? in
             switch attempt {
-            case .failed(let warning): warning
+            case .failed(let issue): issue
             case .success, .cancelled: nil
             }
         }
-        let hasPartialSourceFailure = attempts.contains { attempt in
-            if case .success(let result) = attempt { !result.warnings.isEmpty } else { false }
+        let partialSourceFailures = attempts.flatMap { attempt -> [MapCoverageIssue] in
+            guard case .success(let result) = attempt else { return [] }
+            return result.warnings.map { warning in
+                MapCoverageIssue(
+                    pass: result.pass,
+                    message: "\(warning) Markers already on the map remain available."
+                )
+            }
         }
-        mapCoverageWarning = directFailures.first ?? (hasPartialSourceFailure
-            ? "Some map results could not be refreshed. Try again."
-            : nil)
+        mapCoverageIssues = Array(
+            Dictionary(
+                uniqueKeysWithValues: (directFailures + partialSourceFailures).map { ($0.id, $0) }
+            ).values
+        ).sorted {
+            if $0.pass.rawValue == $1.pass.rawValue { return $0.message < $1.message }
+            return $0.pass == .closeIn
+        }
+        mapCoverageWarning = mapCoverageIssues.isEmpty
+            ? nil
+            : "Map coverage is incomplete. Existing markers remain available."
         return true
     }
 

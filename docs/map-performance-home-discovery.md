@@ -1,6 +1,6 @@
 # Map performance and Near You discovery
 
-Status: planned
+Status: in progress
 
 Owner: product and iOS
 
@@ -39,6 +39,13 @@ Code inspection establishes the following starting point:
 These facts suggest testable hypotheses; they do not establish the dominant cause of latency.
 
 ## P0 workstream A — Map status clarity
+
+### July 28, 2026 implementation
+
+- Coverage warnings now retain the affected close-in or selected-radius pass and the source warning returned for that pass.
+- The compact warning explicitly preserves the usability of existing markers and opens an accessible detail sheet with pass-specific information and a real Map coverage retry action.
+- Loading copy now names the bounded coverage being loaded instead of implying numeric progress that the app cannot defend.
+- Simulator and physical-device reproduction-matrix results remain to be recorded before this workstream is complete.
 
 ### Reproduction matrix
 

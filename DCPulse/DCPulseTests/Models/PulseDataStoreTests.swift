@@ -339,7 +339,13 @@ struct PulseDataStoreTests {
         #expect(Set(store.items.map(\.id)) == Set([broadItem.id, laterBroadItem.id]))
         #expect(repository.radiusRequests == [0.5, 0.25, 0.5])
         #expect(store.sourceWarnings.isEmpty)
-        #expect(store.mapCoverageWarning?.contains("close-in") == true)
+        #expect(store.mapCoverageWarning == "Map coverage is incomplete. Existing markers remain available.")
+        #expect(store.mapCoverageIssues == [
+            .init(
+                pass: .closeIn,
+                message: "This coverage pass could not finish. Existing markers remain available."
+            )
+        ])
         #expect(!store.isMapCoverageLoading)
     }
 
@@ -363,7 +369,47 @@ struct PulseDataStoreTests {
         await store.prepareMapResults()
 
         #expect(store.sourceWarnings.isEmpty)
-        #expect(store.mapCoverageWarning == "Some map results could not be refreshed. Try again.")
+        #expect(store.mapCoverageWarning == "Map coverage is incomplete. Existing markers remain available.")
+        #expect(store.mapCoverageIssues == [
+            .init(
+                pass: .closeIn,
+                message: "DC 311 records are temporarily unavailable. Markers already on the map remain available."
+            )
+        ])
+    }
+
+    @Test func labelsSelectedRadiusPartialFailuresAndRetryClearsThem() async throws {
+        let initial = try #require(SampleData.items.first)
+        let selectedRadius = try #require(SampleData.items.dropFirst(2).first)
+        let repository = StubPulseRepository(results: [
+            .success(.init(items: [initial], nextOffset: 1, hasMore: false)),
+            .success(.init(items: [initial], nextOffset: 1, hasMore: false)),
+            .success(.init(
+                items: [selectedRadius],
+                nextOffset: 1,
+                hasMore: false,
+                warnings: ["Building Permits records are temporarily unavailable."]
+            )),
+            .success(.init(items: [selectedRadius], nextOffset: 1, hasMore: false))
+        ])
+        let store = PulseDataStore(repository: repository)
+
+        await store.load()
+        await store.selectRadius(.quarterMile)
+        await store.prepareMapResults()
+
+        #expect(store.mapCoverageIssues == [
+            .init(
+                pass: .selectedRadius,
+                message: "Building Permits records are temporarily unavailable. Markers already on the map remain available."
+            )
+        ])
+        #expect(store.mapCoverageIssues[0].pass.label(selectedRadius: store.radius) == "Selected 0.25-mile coverage")
+
+        await store.retryMapCoverage()
+
+        #expect(store.mapCoverageIssues.isEmpty)
+        #expect(store.mapCoverageWarning == nil)
     }
 
     @Test func resetsSearchOptionsWithOneReload() async {
