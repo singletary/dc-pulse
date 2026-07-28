@@ -353,16 +353,11 @@ struct PulseDataStoreTests {
         let initial = try #require(SampleData.items.first)
         let closeIn = try #require(SampleData.items.dropFirst().first)
         let selectedRadius = try #require(SampleData.items.dropFirst(2).first)
-        let repository = StubPulseRepository(results: [
-            .success(.init(items: [initial], nextOffset: 1, hasMore: false)),
-            .success(.init(
-                items: [closeIn],
-                nextOffset: 1,
-                hasMore: false,
-                warnings: ["DC 311 records are temporarily unavailable."]
-            )),
-            .success(.init(items: [selectedRadius], nextOffset: 1, hasMore: false))
-        ])
+        let repository = RadiusScopedWarningRepository(
+            initial: initial,
+            closeIn: closeIn,
+            selectedRadius: selectedRadius
+        )
         let store = PulseDataStore(repository: repository)
 
         await store.load()
@@ -435,18 +430,230 @@ struct PulseDataStoreTests {
         let suite = "PulseDataStoreTests.cache.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defaults.removePersistentDomain(forName: suite)
+        let mapCacheStore = TransientMapCacheStore()
         let firstRepository = StubPulseRepository(results: [
             .success(.init(items: [item], nextOffset: 1, hasMore: false))
         ])
-        let firstStore = PulseDataStore(repository: firstRepository, defaults: defaults)
+        let firstStore = PulseDataStore(
+            repository: firstRepository,
+            defaults: defaults,
+            mapCacheStore: mapCacheStore
+        )
         await firstStore.load()
 
         let secondRepository = StubPulseRepository(results: [])
-        let secondStore = PulseDataStore(repository: secondRepository, defaults: defaults)
+        let secondStore = PulseDataStore(
+            repository: secondRepository,
+            defaults: defaults,
+            mapCacheStore: mapCacheStore
+        )
         await secondStore.load()
 
         #expect(secondStore.items == [item])
         #expect(secondRepository.offsetRequests.isEmpty)
+        #expect(secondStore.lastUpdated != nil)
+    }
+
+    @Test func retainsFreshCachesForMultipleRoundedSearchContexts() async throws {
+        let firstItem = try #require(SampleData.items.first)
+        let secondItem = try #require(SampleData.items.dropFirst().first)
+        let firstCoordinate = try #require(PulseItem.Coordinate(latitude: 38.90, longitude: -77.04))
+        let secondCoordinate = try #require(PulseItem.Coordinate(latitude: 38.93, longitude: -77.07))
+        let mapCacheStore = TransientMapCacheStore()
+        let writingRepository = StubPulseRepository(results: [
+            .success(.init(items: [firstItem], nextOffset: 1, hasMore: false)),
+            .success(.init(items: [secondItem], nextOffset: 1, hasMore: false))
+        ])
+        let writingStore = PulseDataStore(
+            repository: writingRepository,
+            mapCacheStore: mapCacheStore
+        )
+        await writingStore.load(coordinate: firstCoordinate, placeName: "First")
+        await writingStore.load(coordinate: secondCoordinate, placeName: "Second")
+
+        let firstReaderRepository = StubPulseRepository(results: [])
+        let firstReader = PulseDataStore(
+            repository: firstReaderRepository,
+            mapCacheStore: mapCacheStore
+        )
+        await firstReader.load(coordinate: firstCoordinate, placeName: "First")
+
+        let secondReaderRepository = StubPulseRepository(results: [])
+        let secondReader = PulseDataStore(
+            repository: secondReaderRepository,
+            mapCacheStore: mapCacheStore
+        )
+        await secondReader.load(coordinate: secondCoordinate, placeName: "Second")
+
+        #expect(firstReader.items == [firstItem])
+        #expect(secondReader.items == [secondItem])
+        #expect(firstReaderRepository.offsetRequests.isEmpty)
+        #expect(secondReaderRepository.offsetRequests.isEmpty)
+    }
+
+    @Test func roundedCacheHitPreservesTheRequestedExactCenter() async throws {
+        let item = try #require(SampleData.items.first)
+        let cachedCoordinate = try #require(PulseItem.Coordinate(
+            latitude: 38.90721,
+            longitude: -77.03691
+        ))
+        let requestedCoordinate = try #require(PulseItem.Coordinate(
+            latitude: 38.90719,
+            longitude: -77.03689
+        ))
+        let mapCacheStore = TransientMapCacheStore()
+        let writer = PulseDataStore(
+            repository: StubPulseRepository(results: [
+                .success(.init(items: [item], nextOffset: 1, hasMore: false))
+            ]),
+            mapCacheStore: mapCacheStore
+        )
+        await writer.load(coordinate: cachedCoordinate, placeName: "Cached")
+
+        let readerRepository = StubPulseRepository(results: [])
+        let reader = PulseDataStore(
+            repository: readerRepository,
+            mapCacheStore: mapCacheStore
+        )
+        await reader.load(coordinate: requestedCoordinate, placeName: "Requested")
+
+        #expect(reader.searchCoordinate == requestedCoordinate)
+        #expect(reader.placeName == "Requested")
+        #expect(reader.items == [item])
+        #expect(readerRepository.offsetRequests.isEmpty)
+    }
+
+    @Test func migratesFreshLegacyUserDefaultsCacheAfterProtectedStoreWrite() async throws {
+        let item = try #require(SampleData.items.first)
+        let suite = "PulseDataStoreTests.legacyCache.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        let savedAt = Date(timeIntervalSince1970: 2_000)
+        let fixture = LegacyCacheFixture(
+            savedAt: savedAt,
+            coordinate: SampleData.center,
+            radius: .halfMile,
+            period: .thirtyDays,
+            placeName: "Downtown DC",
+            items: [item],
+            nextOffset: 1,
+            hasMore: false,
+            warnings: [],
+            requestStatusCounts: nil,
+            requestTrendSnapshot: nil,
+            requestCategoryCounts: nil
+        )
+        defaults.set(try JSONEncoder().encode(fixture), forKey: "dcPulse.requestCache.v4")
+        let mapCacheStore = TransientMapCacheStore()
+        let repository = StubPulseRepository(results: [])
+        let store = PulseDataStore(
+            repository: repository,
+            defaults: defaults,
+            mapCacheStore: mapCacheStore,
+            now: { savedAt.addingTimeInterval(60) }
+        )
+
+        await store.load(coordinate: SampleData.center)
+
+        #expect(store.items == [item])
+        #expect(repository.offsetRequests.isEmpty)
+        #expect(defaults.data(forKey: "dcPulse.requestCache.v4") == nil)
+        let context = MapCacheContext(
+            coordinate: SampleData.center,
+            radiusMiles: 0.5,
+            periodDays: 30
+        )
+        #expect(await mapCacheStore.record(for: context) != nil)
+    }
+
+    @Test func retainsLegacyCacheWhenProtectedStoreMigrationFails() async throws {
+        let item = try #require(SampleData.items.first)
+        let suite = "PulseDataStoreTests.failedLegacyMigration.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        let savedAt = Date(timeIntervalSince1970: 2_000)
+        let legacyData = try JSONEncoder().encode(LegacyCacheFixture(
+            savedAt: savedAt,
+            coordinate: SampleData.center,
+            radius: .halfMile,
+            period: .thirtyDays,
+            placeName: "Downtown DC",
+            items: [item],
+            nextOffset: 1,
+            hasMore: false,
+            warnings: [],
+            requestStatusCounts: nil,
+            requestTrendSnapshot: nil,
+            requestCategoryCounts: nil
+        ))
+        defaults.set(legacyData, forKey: "dcPulse.requestCache.v4")
+        let store = PulseDataStore(
+            repository: StubPulseRepository(results: []),
+            defaults: defaults,
+            mapCacheStore: FailingMapCacheStore(),
+            now: { savedAt.addingTimeInterval(60) }
+        )
+
+        await store.load(coordinate: SampleData.center)
+
+        #expect(store.items == [item])
+        #expect(defaults.data(forKey: "dcPulse.requestCache.v4") == legacyData)
+    }
+}
+
+private struct LegacyCacheFixture: Encodable {
+    let savedAt: Date
+    let coordinate: PulseItem.Coordinate
+    let radius: PulseDataStore.Radius
+    let period: PulseDataStore.Period
+    let placeName: String
+    let items: [PulseItem]
+    let nextOffset: Int
+    let hasMore: Bool
+    let warnings: [String]
+    let requestStatusCounts: RequestStatusCounts?
+    let requestTrendSnapshot: RequestTrendSnapshot?
+    let requestCategoryCounts: [String: Int]?
+}
+
+private actor FailingMapCacheStore: MapCacheStoreProtocol {
+    func record(for context: MapCacheContext) -> MapCacheRecord? { nil }
+    func mostRecentRecord() -> MapCacheRecord? { nil }
+    func save(_ record: MapCacheRecord) throws { throw TestError.expected }
+}
+
+private actor RadiusScopedWarningRepository: PulseRepositoryProtocol {
+    private let initial: PulseItem
+    private let closeIn: PulseItem
+    private let selectedRadius: PulseItem
+    private var hasLoadedInitialPage = false
+
+    init(initial: PulseItem, closeIn: PulseItem, selectedRadius: PulseItem) {
+        self.initial = initial
+        self.closeIn = closeIn
+        self.selectedRadius = selectedRadius
+    }
+
+    func nearbyItems(
+        coordinate: PulseItem.Coordinate,
+        radiusMiles: Double,
+        days: Int,
+        offset: Int,
+        limit: Int
+    ) -> PulsePage {
+        guard hasLoadedInitialPage else {
+            hasLoadedInitialPage = true
+            return .init(items: [initial], nextOffset: 1, hasMore: false)
+        }
+        if radiusMiles == 0.25 {
+            return .init(
+                items: [closeIn],
+                nextOffset: 1,
+                hasMore: false,
+                warnings: ["DC 311 records are temporarily unavailable."]
+            )
+        }
+        return .init(items: [selectedRadius], nextOffset: 1, hasMore: false)
     }
 }
 

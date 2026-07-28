@@ -25,7 +25,7 @@ The copy-ready listing, review notes, privacy recommendation, and screenshot seq
 
 ## Privacy behavior and draft disclosure
 
-DC Pulse does not use tracking or advertising and does not operate a backend. Home, followed places, watched items, preferences, cached results, and normalized trend observations remain in the app's on-device storage.
+DC Pulse does not use tracking or advertising and does not operate a backend. Home, followed places, watched items, preferences, cached results, and normalized trend observations remain in the app's on-device storage. Map cache payloads may contain the searched coordinate and returned public records; they use iOS file protection, remain bounded by age/count/size, and are removed when iOS purges caches or the app is deleted.
 
 Local Apple signposts support developer-run Map performance measurements while the app is attached to Instruments. Their coarse metadata contains operational labels and counts only; it excludes coordinates, addresses, saved-place names, record identifiers, query URLs, and device/account identifiers. DC Pulse does not upload these signposts, write them to app storage, or operate a diagnostics service, so they do not change the **Developer analytics or diagnostics collection: None** assessment.
 
@@ -39,7 +39,7 @@ Based on the current implementation:
 - Data linked to the user by DC Pulse: **None**
 - Data used for advertising: **None**
 - Developer analytics or diagnostics collection: **None**
-- Precise location stored on-device: **Yes, only when the person saves Home/current location**
+- Precise location stored on-device: **Yes, for saved places and bounded cached search contexts**
 - Precise/search location transmitted to DC ArcGIS to service a nearby-data request: **Yes**
 - Selected 311 draft photo uploaded by DC Pulse: **No**
 - On-device photo classification: **Yes, only after explicit photo selection or capture**
@@ -52,7 +52,7 @@ App Store Connect answers must be re-audited immediately before submission again
 
 - no tracking,
 - no data collected by the app developer,
-- `NSPrivacyAccessedAPICategoryUserDefaults` with approved reason `CA92.1` for app-only preferences and cache metadata.
+- `NSPrivacyAccessedAPICategoryUserDefaults` with approved reason `CA92.1` for app-only preferences and legacy cache migration.
 
 Generate and review the archive privacy report for every replacement upload and for the final App Review build; reconcile it with App Store Connect before distribution.
 

@@ -105,6 +105,13 @@ struct MapCacheStoreTests {
             )
             try await store.save(oversized)
         }
+        await #expect(throws: MapCacheStoreError.recordOutsideRetentionWindow) {
+            try await store.save(record(
+                id: 4,
+                savedAt: Date(timeIntervalSince1970: 1_001),
+                itemCount: 1
+            ))
+        }
     }
 
     private func makeStore(
