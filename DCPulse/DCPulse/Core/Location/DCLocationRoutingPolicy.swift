@@ -6,7 +6,7 @@ import Foundation
 /// ArcGIS queries remain centered inside the app's supported DC envelope. A person
 /// just outside the city gets the nearest usable edge; someone farther away gets
 /// the same stable public fallback used when location is unavailable.
-struct DCLocationRoutingPolicy: Sendable {
+nonisolated struct DCLocationRoutingPolicy: Sendable {
     enum Resolution: Equatable, Sendable {
         case current(PulseItem.Coordinate)
         case nearbyBorder(PulseItem.Coordinate)

@@ -22,6 +22,7 @@ struct PulseMapView: View {
             items: filteredItems,
             searchCoordinate: store.searchCoordinate,
             radiusMeters: store.radius.rawValue * 1_609.344,
+            renderingContext: mapRenderingContext,
             targetRegion: viewModel.region,
             centerRequestID: viewModel.centerRequestID,
             diagnostics: store.mapPerformanceDiagnostics,
@@ -136,18 +137,9 @@ struct PulseMapView: View {
             candidateSearchCoordinate = nil
             viewModel.center(on: store.searchCoordinate, radius: radius)
         }
-        .task {
+        .task(id: mapCoverageContext) {
             viewModel.center(on: store.searchCoordinate, radius: store.radius)
-            // Let MapKit present the first result page before progressively adding
-            // the larger summary set. This keeps the tab responsive on first open.
-            do {
-                try await Task.sleep(for: .milliseconds(300))
-                await store.prepareMapResults()
-            } catch is CancellationError {
-                return
-            } catch {
-                return
-            }
+            await prepareMapResults(for: mapCoverageContext)
         }
         .task(id: categoryLoadContext) { await loadSelectedCategory() }
         .onAppear { applyRequestedCategory() }
@@ -217,7 +209,6 @@ struct PulseMapView: View {
         viewModel.center(on: coordinate, radius: store.radius)
         Task {
             await store.load(coordinate: coordinate, placeName: "Map Center", force: true)
-            await store.prepareMapResults()
         }
     }
 
@@ -352,6 +343,43 @@ struct PulseMapView: View {
         )
     }
 
+    private var mapCoverageContext: MapCoverageContext {
+        MapCoverageContext(
+            coordinate: store.searchCoordinate,
+            radius: store.radius,
+            period: store.period
+        )
+    }
+
+    private var mapRenderingContext: MapRenderingContext {
+        MapRenderingContext(
+            searchCoordinate: store.searchCoordinate,
+            radiusMiles: store.radius.rawValue,
+            queryDays: store.period.queryDays
+        )
+    }
+
+    private func prepareMapResults(for context: MapCoverageContext) async {
+        do {
+            while store.isLoading {
+                try Task.checkCancellation()
+                try await Task.sleep(for: .milliseconds(50))
+            }
+            guard mapCoverageContext == context, store.state == .loaded else { return }
+
+            // Let MapKit present the first result page before progressively adding
+            // the larger summary set. This keeps the tab responsive on first open.
+            try await Task.sleep(for: .milliseconds(300))
+            try Task.checkCancellation()
+            guard mapCoverageContext == context, store.state == .loaded else { return }
+            await store.prepareMapResults()
+        } catch is CancellationError {
+            return
+        } catch {
+            return
+        }
+    }
+
     private func loadSelectedCategory() async {
         guard let context = categoryLoadContext, context.isKnown311Category else {
             categoryItems = nil
@@ -418,7 +446,6 @@ struct PulseMapView: View {
                         filterChoice(period.label, isSelected: store.period == period) {
                             Task {
                                 await store.selectPeriod(period)
-                                await store.prepareMapResults()
                             }
                         }
                     }
@@ -428,7 +455,6 @@ struct PulseMapView: View {
                         filterChoice(radius.distanceLabel, isSelected: store.radius == radius) {
                             Task {
                                 await store.selectRadius(radius)
-                                await store.prepareMapResults()
                             }
                         }
                         .accessibilityIdentifier("map.radius.\(radius.rawValue)")
@@ -514,10 +540,15 @@ struct PulseMapView: View {
         selectCategory(nil)
         Task {
             await store.resetSearchOptions()
-            await store.prepareMapResults()
         }
     }
 
+}
+
+private struct MapCoverageContext: Hashable {
+    let coordinate: PulseItem.Coordinate
+    let radius: PulseDataStore.Radius
+    let period: PulseDataStore.Period
 }
 
 private struct MapCategoryLoadContext: Hashable {

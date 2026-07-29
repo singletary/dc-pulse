@@ -1,7 +1,7 @@
 import CoreLocation
 import Foundation
 
-struct PulseItem: Identifiable, Hashable, Codable, Sendable {
+nonisolated struct PulseItem: Identifiable, Hashable, Codable, Sendable {
     struct ID: Hashable, Codable, Sendable {
         let source: Source
         let sourceIdentifier: String
