@@ -37,14 +37,15 @@ DC Pulse makes it easier to see recent DC 311 requests and public permit activit
 
 **What to test**
 
-Build 8 focuses on a simpler Near You experience and more reliable Map updates. It keeps unfinished features out of view, refreshes full marker coverage when the active area or filters change, and improves diagnostics without expanding data collection.
+Build 9 includes Build 8’s simpler Near You experience and Map reliability work, then refines the snapshot with saved-Home recognition, four dynamic insights, quieter detail copying, and more relevant Home alerts. These changes do not expand data collection.
 
-- Check Near You’s snapshot, status totals, noteworthy items, and Neighborhood Summary. Confirm only live features are shown.
-- Keep Map open while changing location, address, or ward. Confirm close-in and full-radius markers refresh for the new area without stale results.
-- Try 0.25, 0.5, and 1 mile plus each time range. Change filters quickly, use Reset, and test partial-coverage details and Retry.
-- Relaunch the same area. Cached markers should appear quickly, show when they were updated, and remain usable if one public source fails.
-- Save Home, follow a place, watch and archive an item, then relaunch. Confirm saved choices and detail navigation persist.
-- Check denied or approximate location, offline recovery, largest text, VoiceOver, and Light/Dark Mode. Report clipping, confusing announcements, stale data, or crashes.
+- Check Near You’s totals, noteworthy items, and four insight rows. Select New, Active, and Resolved; confirm the rows update, and tap the selected status again to show all.
+- Save the current location as Home. Confirm the Home icon appears, unfinished features stay hidden, and insight emoji and ↑/↓ trends match their request types.
+- Change Map location, address, ward, radius, time range, and filters quickly. Confirm close-in and full-radius markers refresh without stale-area results.
+- Test Map Reset, partial-coverage details, Retry, and relaunch. Cached markers should appear quickly and remain useful if one public source fails.
+- Open Item Details. Confirm fields have no distracting copy icons but still copy by touch-and-hold, text selection, VoiceOver actions, and Copy All.
+- Test Home auto-watch at 0.1 and 0.25 mile. “New near Home” inbox and system alerts should only appear for items within 0.1 mile after a refresh.
+- Check followed places, watches, archive/restore, denied or approximate location, offline recovery, largest text, VoiceOver, and Light/Dark Mode.
 
 **Feedback contact**
 
@@ -62,9 +63,9 @@ Notifications currently use on-device refresh checks rather than a push-notifica
 
 1. Before archiving, open **Xcode > Settings > Accounts** and confirm the existing account has App Store Connect access. Re-authentication is a manual account-owner action.
 2. Archive to Xcode’s standard Organizer location; do not use a temporary `-archivePath`.
-3. In Organizer, select the validated archive and choose **Distribute App > App Store Connect**. Never choose **TestFlight Internal Only**; the full App Store Connect route supports testing and release.
+3. Prefer `xcodebuild -exportArchive` with export method `app-store-connect` and destination `upload`. Organizer fallback must use **Distribute App > App Store Connect**. Never use **TestFlight Internal Only**; the full App Store Connect route supports testing and release.
 4. Use existing signing assets only. Never pass `-allowProvisioningUpdates`; stop if Xcode requests account, team, certificate, profile, entitlement, identifier, or provisioning changes.
-5. In App Store Connect, wait for processing, complete export-compliance and beta information, then add the build to an internal testing group.
+5. In App Store Connect, wait for processing, complete export-compliance and beta information, then assign the build to the intended TestFlight groups.
 6. Install through TestFlight on a physical iPhone and complete the **What to Test** and physical-device passes.
 7. Return to **Before external distribution** above after internal verification.
 
