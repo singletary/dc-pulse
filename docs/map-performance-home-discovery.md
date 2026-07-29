@@ -6,7 +6,7 @@ Owner: product and iOS
 
 Added: July 22, 2026
 
-Roadmap priorities: P0 Map clarity and baseline; P1 caching, Near You simplification, and radius decision
+Roadmap priorities: P0 live Map progress, coverage reliability, shared retrieval/caching, and baseline; P1 Near You validation and radius decision
 
 ## Purpose
 
@@ -17,8 +17,10 @@ Update this file with dated measurements, screenshots, findings, and decisions. 
 ## Reported problems to reproduce
 
 - Map population feels slow.
-- The loading card below Filters shows an indeterminate linear progress indicator rather than live completion and its text can be truncated.
+- The loading card below Filters looks like a progress bar but does not report live completion, including compatible loading already started for Near You during app launch.
 - After loading, a triangle notice beginning **Some map results…** can be truncated and cannot be opened for details.
+- The recurring **Map coverage is incomplete. Existing markers remain available.** message exposes internal terminology, does not tell the person what failed or what to do, and may indicate a fixable retrieval defect rather than an exceptional partial-source condition.
+- Moving from Near You to Map may repeat compatible DC 311 retrieval instead of reusing cached results or joining work already in flight.
 - Near You presents enough sections and actions that the primary value is becoming difficult to scan.
 - It is unclear whether a smaller default radius would improve the experience enough to offset reduced local coverage.
 
@@ -37,6 +39,48 @@ Code inspection establishes the following starting point:
 - The app already persists one cache context in `UserDefaults` for ten minutes. It includes normalized items and summaries, but expired entries are not shown, only one search context is retained, and the cache is not a stale-while-revalidate or per-source delta store.
 
 These facts suggest testable hypotheses; they do not establish the dominant cause of latency.
+
+## P0 follow-up — live progress, failure elimination, and shared retrieval
+
+Added July 28, 2026 as the next implementation priority after the current release
+gate.
+
+### Required investigation
+
+1. Reproduce every path that presents the incomplete-coverage warning and trace it
+   to the exact pass, page, source, timeout, cancellation, stale generation, or
+   merge decision.
+2. Distinguish genuine partial public-source availability from app-created
+   failures such as duplicate work, overly aggressive timeouts, request
+   competition, cancellation races, page-budget exhaustion, or discarded
+   compatible results.
+3. Inventory every launch, Near You, summary, and Map request by normalized
+   context. Identify which DC 311 pages and summaries can be shared, coalesced,
+   cached, or batched without changing visible correctness.
+4. Define one observable loading model owned below the views so Near You and Map
+   can display the same in-flight work and accepted results.
+
+### Acceptance criteria
+
+- The Map indicator advances from actual accepted work. It may use defensible
+  source/page units or named stages, but it must not imply precision the
+  repository cannot measure.
+- Compatible loading begun during launch appears as current progress when the
+  person opens Map; progress does not restart merely because the tab changed.
+- Map renders compatible cached or already-accepted Home results immediately,
+  joins equivalent in-flight requests, and requests only missing coverage.
+- Instrumented cold-launch-to-Map and warm-Home-to-Map tests demonstrate fewer
+  DC 311 calls than the current implementation, with no missing same-context
+  records and no regression for explicit refresh or changed filters/location.
+- The known incomplete-coverage reproduction is fixed. Deterministic tests cover
+  its root cause and ensure healthy sources are not mislabeled as failed.
+- When a public source is genuinely partial or unavailable, primary copy says
+  what did not update and whether visible results are still usable; details may
+  retain technical pass/source information for diagnosis.
+- Retry requests only failed or missing work when safe, remains accessible, and
+  does not duplicate an equivalent request already in flight.
+- Progress and warning diagnostics remain local and exclude precise coordinates,
+  saved addresses, request URLs, record identifiers, and device/account data.
 
 ## P0 workstream A — Map status clarity
 
