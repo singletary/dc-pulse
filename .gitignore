@@ -1,5 +1,22 @@
 .DS_Store
 
+# Local credentials, signing assets, and release artifacts
+.env
+.env.*
+!.env.example
+*.cer
+*.crt
+*.der
+*.key
+*.mobileprovision
+*.p12
+*.p8
+*.pem
+*.pfx
+*.provisionprofile
+*.xcarchive
+AuthKey_*.p8
+
 # Xcode
 #
 # gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
