@@ -29,6 +29,36 @@ struct AutoWatchPolicyTests {
         #expect(AutoWatchPolicy.candidates(from: [item], home: home, distanceMiles: 0.1, excluding: []).isEmpty)
     }
 
+    @Test func newNearbyNotificationsRemainWithinPointOneMileWhenAutoWatchIsWider() throws {
+        let home = try #require(PulseItem.Coordinate(latitude: 38.9000, longitude: -77.0300))
+        let withinNotificationRange = try #require(PulseItem.Coordinate(latitude: 38.9010, longitude: -77.0300))
+        let outsideNotificationRange = try #require(PulseItem.Coordinate(latitude: 38.9030, longitude: -77.0300))
+        let closeItem = item(
+            source: .serviceRequests311,
+            id: "close",
+            status: .new,
+            coordinate: withinNotificationRange
+        )
+        let widerAutoWatchItem = item(
+            source: .serviceRequests311,
+            id: "wider",
+            status: .new,
+            coordinate: outsideNotificationRange
+        )
+
+        let candidates = AutoWatchPolicy.candidates(
+            from: [closeItem, widerAutoWatchItem],
+            home: home,
+            distanceMiles: 0.25,
+            excluding: []
+        )
+
+        #expect(candidates.count == 2)
+        #expect(AutoWatchPolicy.isEligibleForNewNearbyNotification(closeItem, home: home))
+        #expect(!AutoWatchPolicy.isEligibleForNewNearbyNotification(widerAutoWatchItem, home: home))
+        #expect(AutoWatchPolicy.newNearbyNotificationDistanceMiles == 0.1)
+    }
+
     private func item(
         source: PulseItem.Source,
         id: String,

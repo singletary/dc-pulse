@@ -217,7 +217,7 @@ The decision record did not itself change the app screen; production implementat
 
 ### July 28, 2026 Snapshot-first implementation
 
-The approved hierarchy is now implemented in production SwiftUI. Near You shows compact search context, complete lifecycle totals, one reliable insight, three noteworthy records, a focused Neighborhood Summary destination, and contextual Home content. Ward/address selection remains available in the search context. The duplicate toolbar refresh action is removed while pull-to-refresh and explicit recovery actions remain.
+The approved hierarchy is now implemented in production SwiftUI. Near You shows compact search context, complete lifecycle totals, up to four reliable insights, three noteworthy records, a focused Neighborhood Summary destination, and contextual Home content. Selecting New, Active, or Resolved refreshes those insight rows from complete matching category totals; tapping the selected metric again returns to all statuses without a redundant selection or list-route row. Ward/address selection remains available in the search context. The duplicate toolbar refresh action is removed while pull-to-refresh and explicit recovery actions remain.
 
 City Services is intentionally hidden until its direct 311/reporting and nearby Restaurant Health destinations satisfy their separate live-data gates. Simulator visual inspection and deterministic presentation tests are complete; physical-device, largest-Dynamic-Type, VoiceOver, and task-based validation remain open.
 

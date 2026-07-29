@@ -8,6 +8,10 @@ struct PulseCategoryVisualTests {
         ("Graffiti Removal", "🎨"),
         ("Tree Inspection", "🌳"),
         ("Streetlight Repair", "💡"),
+        ("Traffic Safety Input", "🚦"),
+        ("Traffic Lights and Pedestrian Walk Signals", "🚦"),
+        ("Parking Meter Repair", "🚗"),
+        ("Water Leak", "💧"),
         ("DDOT Construction Permit", "🚧"),
         ("Building Permit", "🏗️"),
         ("Unmapped Request Type", "📍")

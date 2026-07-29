@@ -340,10 +340,10 @@ struct PlacesView: View {
             }
         case .authorized:
             Toggle("Watched status changes", isOn: $notifications.statusChangeAlertsEnabled)
-            Toggle("New items near Home", isOn: $notifications.newNearbyAlertsEnabled)
+            Toggle("New items within 0.1 mile of Home", isOn: $notifications.newNearbyAlertsEnabled)
                 .disabled(!autoWatchSettings.isEnabled)
             if !autoWatchSettings.isEnabled {
-                Text("Turn on Auto-watch nearby items to receive new-item alerts near Home.")
+                Text("Turn on Auto-watch nearby items to receive new-item alerts within 0.1 mile of Home.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Text("System alerts are sent only after DC Pulse refreshes and finds matching activity. Delivery is not immediate.")

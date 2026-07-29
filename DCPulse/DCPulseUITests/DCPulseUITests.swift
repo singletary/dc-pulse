@@ -72,7 +72,7 @@ final class DCPulseUITests: XCTestCase {
     }
 
     @MainActor
-    func testStatusSelectionRefreshesSummaryAndOpensMatchingList() throws {
+    func testStatusSelectionRefreshesInsightsAndTogglesBackToAll() throws {
         let app = XCUIApplication()
         app.launch()
 
@@ -83,24 +83,9 @@ final class DCPulseUITests: XCTestCase {
         expectation(for: selected, evaluatedWith: newStatus)
         waitForExpectations(timeout: 10)
 
-        let viewList = app.buttons["pulse.status.viewList"]
-        XCTAssertTrue(viewList.waitForExistence(timeout: 10))
-        viewList.tap()
-        XCTAssertTrue(app.navigationBars["New"].waitForExistence(timeout: 10))
-
-        let firstItem = app.buttons.matching(identifier: "status.item").firstMatch
-        XCTAssertTrue(firstItem.waitForExistence(timeout: 15))
-        firstItem.tap()
-        XCTAssertTrue(app.navigationBars["Item Details"].waitForExistence(timeout: 10))
-
-        app.navigationBars["Item Details"].buttons["New"].tap()
-        XCTAssertTrue(app.navigationBars["New"].waitForExistence(timeout: 10))
-        app.navigationBars["New"].buttons["Near You"].tap()
-        XCTAssertTrue(app.navigationBars["Near You"].waitForExistence(timeout: 10))
-
-        let showAll = app.buttons["pulse.status.all"]
-        XCTAssertTrue(showAll.waitForExistence(timeout: 5))
-        showAll.tap()
+        XCTAssertFalse(app.buttons["pulse.status.viewList"].exists)
+        XCTAssertFalse(app.buttons["pulse.status.all"].exists)
+        newStatus.tap()
         let notSelected = NSPredicate(format: "value CONTAINS[c] %@", "not selected")
         expectation(for: notSelected, evaluatedWith: newStatus)
         waitForExpectations(timeout: 5)

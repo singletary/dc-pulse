@@ -1,3 +1,4 @@
+import CoreLocation
 import SwiftData
 import SwiftUI
 import UIKit
@@ -29,8 +30,9 @@ struct PulseView: View {
                                 .foregroundStyle(.secondary)
                         }
                     } icon: {
-                        Image(systemName: "location.circle.fill")
+                        Image(systemName: currentLocationIsSavedHome ? "house.circle.fill" : "location.circle.fill")
                             .foregroundStyle(.indigo)
+                            .accessibilityLabel(currentLocationIsSavedHome ? "Saved home" : "Current search area")
                     }
                     .accessibilityElement(children: .combine)
 
@@ -58,23 +60,6 @@ struct PulseView: View {
                     metricButton(.active, .orange)
                     metricButton(.resolved, .green)
                 }
-                HStack {
-                    Label(selectedStatusDescription, systemImage: store.selectedRequestStatus == nil ? "line.3.horizontal.decrease.circle" : "checkmark.circle.fill")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(store.selectedRequestStatus == nil ? Color.secondary : Color.indigo)
-                    Spacer()
-                    if store.selectedRequestStatus != nil {
-                        Button("Show All") { Task { await store.selectRequestStatus(nil) } }
-                            .font(.subheadline.weight(.semibold))
-                            .accessibilityIdentifier("pulse.status.all")
-                    }
-                }
-                if let status = store.selectedRequestStatus {
-                    NavigationLink(value: StatusItemsDestination(status: status)) {
-                        Label("View \(status.displayName.lowercased()) requests", systemImage: "list.bullet")
-                    }
-                    .accessibilityIdentifier("pulse.status.viewList")
-                }
                 if store.requestStatusCountsUnavailable {
                     Button { Task { await store.retry() } } label: {
                         Label("Refresh complete request counts", systemImage: "arrow.clockwise.circle")
@@ -86,7 +71,7 @@ struct PulseView: View {
             }
 
             if store.isRequestInsightsLoading || store.isRequestCategorySummaryLoading {
-                Section("Neighborhood insight") {
+                Section("Neighborhood insights") {
                     HStack(spacing: 10) {
                         ProgressView().controlSize(.small)
                         Text("Reading neighborhood patterns…")
@@ -94,33 +79,34 @@ struct PulseView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-            } else if let neighborhoodInsight {
-                Section("Neighborhood insight") {
-                    Button {
-                        showOnMap(neighborhoodInsight.category)
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: insightIcon(neighborhoodInsight))
-                                .font(.title3.weight(.semibold))
-                                .foregroundStyle(insightColor(neighborhoodInsight))
-                                .frame(width: 32)
-                                .accessibilityHidden(true)
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(neighborhoodInsight.title)
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(.primary)
-                                Text(neighborhoodInsight.detail)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+            } else if !neighborhoodInsights.isEmpty {
+                Section("Neighborhood insights") {
+                    ForEach(neighborhoodInsights, id: \.category) { insight in
+                        Button {
+                            showOnMap(insight.category)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Text(PulseCategoryVisual.emoji(for: insight.category))
+                                    .font(.title2)
+                                    .frame(width: 32)
+                                    .accessibilityHidden(true)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(insight.title)
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(.primary)
+                                    Text(insight.detail)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "map.fill")
+                                    .foregroundStyle(.indigo)
+                                    .accessibilityHidden(true)
                             }
-                            Spacer()
-                            Image(systemName: "map.fill")
-                                .foregroundStyle(.indigo)
-                                .accessibilityHidden(true)
                         }
+                        .buttonStyle(.plain)
+                        .accessibilityHint("Shows this request type on the map")
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityHint("Shows this request type on the map")
                 }
             }
 
@@ -183,7 +169,6 @@ struct PulseView: View {
 
         }
         .navigationTitle("Near You")
-        .navigationDestination(for: StatusItemsDestination.self) { StatusItemsView(status: $0.status) }
         .navigationDestination(for: PulseItem.self) { ItemDetailsView(item: $0) }
         .refreshable { await store.retry() }
         .toolbar {
@@ -245,29 +230,13 @@ struct PulseView: View {
             .prefix(3).map { $0 }
     }
 
-    private var neighborhoodInsight: NeighborhoodInsightPresentation? {
-        NeighborhoodInsightPresentation(
+    private var neighborhoodInsights: [NeighborhoodInsightPresentation] {
+        NeighborhoodInsightPresentation.insights(
             trends: store.requestTrends,
             categoryCounts: store.requestCategoryCounts,
-            windowDays: max(1, store.period.queryDays / 2)
+            windowDays: max(1, store.period.queryDays / 2),
+            status: store.selectedRequestStatus
         )
-    }
-
-    private func insightIcon(_ insight: NeighborhoodInsightPresentation) -> String {
-        switch insight.style {
-        case .increased: "arrow.up.right"
-        case .decreased: "arrow.down.right"
-        case .newlyObserved: "sparkles"
-        case .leadingCategory: "chart.bar.fill"
-        }
-    }
-
-    private func insightColor(_ insight: NeighborhoodInsightPresentation) -> Color {
-        switch insight.style {
-        case .increased: .orange
-        case .decreased: .green
-        case .newlyObserved, .leadingCategory: .indigo
-        }
     }
 
     private var homeRequests: [PulseItem] {
@@ -289,6 +258,25 @@ struct PulseView: View {
 
     private var canSaveCurrentLocation: Bool {
         store.placeName == "Current Location" && locationService.coordinate != nil && currentAddress != nil
+    }
+
+    private var currentLocationIsSavedHome: Bool {
+        guard store.placeName == "Current Location",
+              let savedAddress = homeLocation.address else { return false }
+        if let currentAddress, normalized(currentAddress) == normalized(savedAddress) {
+            return true
+        }
+        guard let currentCoordinate = locationService.coordinate,
+              let savedCoordinate = homeLocation.coordinate else { return false }
+        let current = CLLocation(
+            latitude: currentCoordinate.latitude,
+            longitude: currentCoordinate.longitude
+        )
+        let saved = CLLocation(
+            latitude: savedCoordinate.latitude,
+            longitude: savedCoordinate.longitude
+        )
+        return current.distance(from: saved) <= 30
     }
 
     @ViewBuilder private var locationControl: some View {
@@ -378,7 +366,9 @@ struct PulseView: View {
 
     private func metricButton(_ status: PulseItem.Status, _ color: Color) -> some View {
         let isSelected = store.selectedRequestStatus == status
-        return Button { Task { await store.selectRequestStatus(status) } } label: {
+        return Button {
+            Task { await store.selectRequestStatus(isSelected ? nil : status) }
+        } label: {
             VStack(spacing: 3) {
                 Group {
                     if store.isRequestSummaryLoading {
@@ -409,7 +399,7 @@ struct PulseView: View {
                             ? "Complete count temporarily unavailable"
                             : "\(store.requestCount(for: status)), \(isSelected ? "selected" : "not selected")")
         .accessibilityHint(isSelected
-                           ? "Selected. Use View requests to open the matching list."
+                           ? "Selected. Activates all statuses."
                            : "Selects this status and refreshes category totals in Neighborhood Summary.")
     }
 
@@ -417,11 +407,6 @@ struct PulseView: View {
         navigation.requestedMapCategory = category
         navigation.requestedMapStatus = store.selectedRequestStatus
         navigation.selectedTab = .map
-    }
-
-    private var selectedStatusDescription: String {
-        guard let status = store.selectedRequestStatus else { return "All statuses" }
-        return "\(status.displayName) selected"
     }
 
     private func beginSavingHome() {
