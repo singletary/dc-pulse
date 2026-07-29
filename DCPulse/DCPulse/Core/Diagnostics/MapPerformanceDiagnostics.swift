@@ -15,6 +15,9 @@ enum MapPerformanceStage: String, CaseIterable, Sendable {
 }
 
 enum MapPerformanceMilestone: String, CaseIterable, Sendable {
+    case appLaunch
+    case initialResults
+    case selectedRadiusSeedReused
     case mapPresentation
     case mapInteractive
     case firstMarkers
@@ -192,6 +195,12 @@ struct MapPerformanceDiagnostics: MapPerformanceDiagnosticsProtocol, Sendable {
     ) {
         let metadata = context.description
         switch milestone {
+        case .appLaunch:
+            signposter.emitEvent("App Launch Started", "\(metadata, privacy: .public) count=\(itemCount)")
+        case .initialResults:
+            signposter.emitEvent("Initial Nearby Results Ready", "\(metadata, privacy: .public) count=\(itemCount)")
+        case .selectedRadiusSeedReused:
+            signposter.emitEvent("Near You Results Reused", "\(metadata, privacy: .public) count=\(itemCount)")
         case .mapPresentation:
             signposter.emitEvent("Map Presentation Started", "\(metadata, privacy: .public) count=\(itemCount)")
         case .mapInteractive:

@@ -190,6 +190,20 @@ The proposed **City Services** section remains hidden until its destinations pro
 
 Focused presentation tests and Simulator visual inspection cover the implemented hierarchy. Smallest-screen, accessibility-size, VoiceOver, and physical-iPhone task validation remain required before closing the roadmap item.
 
+## July 29, 2026 automated task and accessibility progress
+
+The full iPhone 17 Pro Simulator unit/UI suite passes the implemented task routes for status selection and reset, Neighborhood Summary, Notifications, followed-place Map context, hidden City Services, watch restoration, and Requests location browsing.
+
+A dedicated largest-accessibility-text UI check now runs on iPhone 17e with iOS 26.5, the smallest compatible installed Simulator. It verifies that:
+
+- the compact search context remains discoverable;
+- New, Active, and Resolved remain separate accessible controls after scrolling;
+- the controls use the production accessibility-size vertical layout;
+- Neighborhood Summary remains reachable and opens successfully; and
+- the resulting state is retained as an Xcode screenshot attachment for visual review.
+
+An iPhone 16e on iOS 18.5 is installed but cannot run this project’s iOS 26.5 deployment target, so it is not a valid smallest-supported destination. This automated pass advances the validation matrix but does not substitute for VoiceOver task narration or physical-iPhone testing. Those two gates remain open.
+
 ## Validation plan
 
 Before implementation is treated as complete, run five moderated or dogfood task passes in loaded, loading, partial, no-Home, and accessibility-size states:

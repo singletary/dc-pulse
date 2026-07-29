@@ -157,6 +157,29 @@ Summed request time across the two concurrent radius passes further narrows the 
 
 Warm cache made hundreds of markers available immediately but did not materially reduce bounded live reconciliation time. Because all ten runs completed partial, no retrieval-limit, timeout, default-radius, or cache-adoption decision should be made from this matrix alone. The next measurement slice should identify the exact failed source/offset distribution, repeat 0.25 and 1 mile, and reproduce on a physical iPhone before changing production behavior.
 
+### July 29, 2026 all-radius Simulator baseline
+
+The capture path now accepts an explicit 0.25-, 0.5-, or 1-mile radius and records app-launch, initial-results, Map-presentation, interaction, and marker milestones separately. This avoids treating a clock that starts after initial loading as warm-launch evidence. The following five-pair matrix used the same iPhone 17 Pro Simulator, iOS 26.5, 30-day Downtown DC context, normal Wi-Fi, and implementation commit candidate.
+
+| Radius | Cache | Runs | Interactive median/p90/worst | First markers median/p90/worst | Close-in median/p90/worst | Bounded median/p90/worst | Final items | Partial sources |
+| --- | --- | ---: | --- | --- | --- | --- | ---: | --- |
+| 0.25 mi | Cold | 5 | 0.093 / 0.104 / 0.104 s | 0.171 / 0.193 / 0.193 s | N/A | 6.588 / 10.568 / 10.568 s | Median 125; range 125–151 | Every run; one failed DC 311 request |
+| 0.25 mi | Warm | 5 | 0.084 / 0.111 / 0.111 s | 0.201 / 0.244 / 0.244 s | N/A | 6.801 / 10.151 / 10.151 s | Median 151; range 125–151 | Every run; one failed DC 311 request |
+| 0.5 mi | Cold | 5 | 0.076 / 0.094 / 0.094 s | 0.144 / 0.164 / 0.164 s | 9.264 / 13.096 / 13.096 s | 21.186 / 21.695 / 21.695 s | Median 584; range 543–642 | Every run; 1–2 failed DC 311 requests |
+| 0.5 mi | Warm | 5 | 0.099 / 0.121 / 0.121 s | 0.230 / 0.250 / 0.250 s | 9.041 / 9.864 / 9.864 s | 18.738 / 19.944 / 19.944 s | Median 620; range 578–644 | Every run; 1–2 failed DC 311 requests |
+| 1 mi | Cold | 5 | 0.091 / 0.093 / 0.093 s | 0.175 / 0.180 / 0.180 s | 9.531 / 10.310 / 10.310 s | 9.563 / 10.344 / 10.344 s | Median 685; range 685–685 | Every run; one failed DC 311 request |
+| 1 mi | Warm | 5 | 0.106 / 0.109 / 0.109 s | 0.203 / 0.213 / 0.213 s | 9.467 / 9.729 / 9.729 s | 9.498 / 9.769 / 9.769 s | Median 685; range 685–685 | Every run; one failed DC 311 request |
+
+The 1-mile bounded milestone follows the close-in milestone because both independent passes reach their configured budgets at nearly the same time; its 685-item result is the deduplicated union, not proof that authoritative pagination completed. The 0.5-mile result takes longer because its selected-radius pass continues returning pages while the 1-mile pass reaches the bounded item budget sooner. This is why the UI and document call the milestone **bounded** rather than **complete** coverage.
+
+DC 311 remained the dominant accumulated request cost and the only failing source in this matrix. The result closes the missing normal-Wi-Fi Simulator radius slice but not constrained, offline-recovery, multi-neighborhood, or physical-iPhone validation.
+
+### July 29, 2026 launch-to-marker cache evidence
+
+A second five-pair default-radius capture started its clock at app initialization. Cold launch reached initial nearby results in a 3.568-second median and first Map markers in 3.710 seconds. Warm launch restored matching cached results in 1.927 seconds and reached first markers in 2.145 seconds: a 1.565-second, roughly 42% median improvement. Map-presentation-to-marker time itself was slightly higher warm (0.229 versus 0.143 seconds), which confirms that the material benefit occurs before Map presentation, where the protected cache replaces initial network waiting.
+
+One cold outlier retained only 44 items after four source failures, while cached warm runs retained 544–620. Together with deterministic corruption, expiration, multi-context isolation, partial-source, and timestamp-preservation tests, the evidence supports adopting the cached-first design. It does not make bounded live reconciliation faster, and it does not close the repeated DC 311 partial-source defect.
+
 ### Milestones
 
 Measure wall-clock time from the initiating action to:
@@ -249,6 +272,12 @@ The cache remains on device and the status UI discloses only relative age; it do
 
 Adopt the approach only if warm-launch time to useful markers improves materially without introducing misleading deletions, cross-location cache leakage, excessive storage, or complex source-specific behavior that cannot be tested deterministically.
 
+### July 29, 2026 adoption decision
+
+Adopt the bounded file-backed cache and conservative source-scoped reconciliation.
+
+The launch-to-marker matrix shows a material warm improvement, while deterministic tests cover context isolation, schema rejection, expiration, corruption recovery, bounded eviction, complete-source replacement, partial overlays, and failed-source retention. The design preserves the original cache timestamp when stale records survive reconciliation and never interprets an aggregate missing source as authoritative deletion. Keep the existing size, age, and context caps. Continue measuring live reconciliation separately because cached-first presentation does not solve public-source pagination latency or partial responses.
+
 ## P1 workstream — Near You simplification
 
 ### July 28, 2026 content audit and concept decision
@@ -332,6 +361,14 @@ Compare 0.25 and 0.5 miles only after radius-inclusion correctness is verified a
 | Equity | Does a smaller radius underserve lower-density parts of DC? |
 
 Candidate outcomes are: retain 0.5 mile after performance work; default current-location searches to 0.25 mile with a clear expansion action; or investigate a density-adaptive first view. Do not choose the adaptive option unless its behavior can be explained accessibly and remains predictable.
+
+### July 29, 2026 default-radius decision
+
+Retain 0.5 mile as the default and preserve the person’s explicit radius choice.
+
+At the measured dense Downtown DC context, 0.25 mile materially improved bounded latency: cold median fell from 21.186 to 6.588 seconds and warm median from 18.738 to 6.801 seconds. It also reduced the median visible result set from 584 to 125 cold and 620 to 151 warm. All 0.25-mile runs still returned more than 100 items, so it remained meaningful at this location, and deterministic close-in merging verifies that wider-radius passes retain compatible quarter-mile identifiers.
+
+That evidence does not justify making the smaller radius universal. Every run at both radii remained partial, so the smaller radius would conceal neither the reliability defect nor its warning. The sample is one high-density location and provides no equity evidence for lower-density parts of the District. A density-adaptive default would also be less predictable and harder to explain accessibly. Retaining 0.5 mile preserves broader neighborhood usefulness while the app addresses DC 311 pagination; 0.25 mile remains an explicit, clearly labeled option for people who prefer a tighter view.
 
 ## Deliverables and exit criteria
 

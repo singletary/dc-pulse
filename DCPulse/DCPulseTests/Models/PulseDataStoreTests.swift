@@ -308,7 +308,7 @@ struct PulseDataStoreTests {
         let closeItem = try #require(SampleData.items.dropFirst().first)
         let laterBroadItem = try #require(SampleData.items.dropFirst(2).first)
         let repository = StubPulseRepository(results: [
-            .success(.init(items: [broadItem], nextOffset: 1, hasMore: false)),
+            .success(.init(items: [broadItem], nextOffset: 1, hasMore: true)),
             .success(.init(items: [closeItem], nextOffset: 1, hasMore: false)),
             .success(.init(items: [broadItem, laterBroadItem], nextOffset: 2, hasMore: false))
         ])
@@ -319,15 +319,33 @@ struct PulseDataStoreTests {
 
         #expect(Set(store.items.map(\.id)) == Set([broadItem.id, closeItem.id, laterBroadItem.id]))
         #expect(repository.radiusRequests == [0.5, 0.25, 0.5])
+        #expect(repository.offsetRequests == [0, 0, 1])
         #expect(repository.limitRequests == [30, 150, 150])
         #expect(!store.isMapCoverageLoading)
+    }
+
+    @Test func mapReusesACompleteCompatibleNearYouPageWithoutAnotherSelectedRadiusRequest() async throws {
+        let item = try #require(SampleData.items.first)
+        let repository = StubPulseRepository(results: [
+            .success(.init(items: [item], nextOffset: 1, hasMore: false)),
+            .success(.init(items: [item], nextOffset: 1, hasMore: false))
+        ])
+        let store = PulseDataStore(repository: repository)
+
+        await store.load()
+        await store.selectRadius(.quarterMile)
+        await store.prepareMapResults()
+
+        #expect(repository.radiusRequests == [0.5, 0.25])
+        #expect(repository.offsetRequests == [0, 0])
+        #expect(store.items == [item])
     }
 
     @Test func selectedRadiusCoverageStillLoadsWhenCloseInVerificationFails() async throws {
         let broadItem = try #require(SampleData.items.first)
         let laterBroadItem = try #require(SampleData.items.dropFirst().first)
         let repository = StubPulseRepository(results: [
-            .success(.init(items: [broadItem], nextOffset: 1, hasMore: false)),
+            .success(.init(items: [broadItem], nextOffset: 1, hasMore: true)),
             .failure(TestError.expected),
             .success(.init(items: [laterBroadItem], nextOffset: 1, hasMore: false))
         ])
@@ -339,11 +357,11 @@ struct PulseDataStoreTests {
         #expect(Set(store.items.map(\.id)) == Set([broadItem.id, laterBroadItem.id]))
         #expect(repository.radiusRequests == [0.5, 0.25, 0.5])
         #expect(store.sourceWarnings.isEmpty)
-        #expect(store.mapCoverageWarning == "Map coverage is incomplete. Existing markers remain available.")
+        #expect(store.mapCoverageWarning == "Some map results could not update. Existing markers are still available.")
         #expect(store.mapCoverageIssues == [
             .init(
                 pass: .closeIn,
-                message: "This coverage pass could not finish. Existing markers remain available."
+                message: "These results could not update. Markers already on the map remain available."
             )
         ])
         #expect(!store.isMapCoverageLoading)
@@ -364,7 +382,7 @@ struct PulseDataStoreTests {
         await store.prepareMapResults()
 
         #expect(store.sourceWarnings.isEmpty)
-        #expect(store.mapCoverageWarning == "Map coverage is incomplete. Existing markers remain available.")
+        #expect(store.mapCoverageWarning == "Some map results could not update. Existing markers are still available.")
         #expect(store.mapCoverageIssues == [
             .init(
                 pass: .closeIn,
@@ -378,7 +396,7 @@ struct PulseDataStoreTests {
         let selectedRadius = try #require(SampleData.items.dropFirst(2).first)
         let repository = StubPulseRepository(results: [
             .success(.init(items: [initial], nextOffset: 1, hasMore: false)),
-            .success(.init(items: [initial], nextOffset: 1, hasMore: false)),
+            .success(.init(items: [initial], nextOffset: 1, hasMore: true)),
             .success(.init(
                 items: [selectedRadius],
                 nextOffset: 1,

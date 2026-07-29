@@ -41,6 +41,24 @@ final class PulseDataStore {
         let loadedCount: Int
     }
 
+    private struct MapCoverageSeed {
+        let coordinate: PulseItem.Coordinate
+        let radius: Radius
+        let period: Period
+        var items: [PulseItem]
+        var nextOffset: Int
+        var hasMore: Bool
+        var warnings: [String]
+
+        func matches(
+            coordinate: PulseItem.Coordinate,
+            radius: Radius,
+            period: Period
+        ) -> Bool {
+            self.coordinate == coordinate && self.radius == radius && self.period == period
+        }
+    }
+
     private enum MapCoverageAttempt {
         case success(MapCoverageResult)
         case failed(MapCoverageIssue)
@@ -128,6 +146,8 @@ final class PulseDataStore {
     private(set) var isLoadingMore = false
     private(set) var isMapCoverageLoading = false
     private(set) var mapCoverageLoadingDescription: String?
+    private(set) var mapCoverageCompletedUnits = 0
+    private(set) var mapCoverageTotalUnits = 0
     private(set) var mapCoverageWarning: String?
     private(set) var mapCoverageIssues: [MapCoverageIssue] = []
     private(set) var loadMoreError: String?
@@ -143,6 +163,7 @@ final class PulseDataStore {
     private(set) var isShowingCachedResults = false
     private(set) var cachedResultsAreStale = false
     private var cachedSources: Set<PulseItem.Source> = []
+    private var mapCoverageSeed: MapCoverageSeed?
     private var allRequestCategoryCounts: [String: Int]?
     private var requestCategoryCountsByStatus: [PulseItem.Status: [String: Int]] = [:]
     private(set) var searchCoordinate = SampleData.center
@@ -209,6 +230,7 @@ final class PulseDataStore {
         mapCoverageWarning = nil
         mapCoverageIssues = []
         sourceWarnings = []
+        mapCoverageSeed = nil
         requestStatusCounts = nil
         isRequestSummaryLoading = requestStatusSummaryRepository != nil
         requestTrendSnapshot = nil
@@ -262,6 +284,15 @@ final class PulseDataStore {
             nextOffset = page.nextOffset
             hasMore = page.hasMore
             sourceWarnings = page.warnings
+            mapCoverageSeed = MapCoverageSeed(
+                coordinate: coordinate,
+                radius: radius,
+                period: period,
+                items: page.items,
+                nextOffset: page.nextOffset,
+                hasMore: page.hasMore,
+                warnings: page.warnings
+            )
             state = items.isEmpty ? .empty : .loaded
             if !restoredCache { await saveCache() }
             let counts = await countsRequest
@@ -327,6 +358,7 @@ final class PulseDataStore {
             nextOffset = page.nextOffset
             hasMore = page.hasMore
             clearRecoveredSourceWarnings(using: page.items)
+            extendMapCoverageSeed(with: page)
             if !page.warnings.isEmpty {
                 loadMoreError = "Some additional results could not be refreshed. Try again."
             }
@@ -367,9 +399,11 @@ final class PulseDataStore {
         let selectedPeriod = period
         mapCoverageWarning = nil
         mapCoverageIssues = []
+        mapCoverageCompletedUnits = 0
+        mapCoverageTotalUnits = selectedRadius == .quarterMile ? 1 : 2
         mapCoverageLoadingDescription = selectedRadius == .quarterMile
-            ? "Loading 0.25-mile map coverage…"
-            : "Loading close-in and \(selectedRadius.distanceLabel) map coverage…"
+            ? "Loading 0.25-mile results · 0 of 1 area complete"
+            : "Loading close-in and \(selectedRadius.distanceLabel) results · 0 of 2 areas complete"
         let sessionContext = MapPerformanceContext(
             pass: selectedRadius == .quarterMile ? .selectedRadius : .closeInAndSelected,
             radiusMiles: selectedRadius.rawValue,
@@ -387,6 +421,8 @@ final class PulseDataStore {
             if coverageSequence == mapCoverageSequence {
                 isMapCoverageLoading = false
                 mapCoverageLoadingDescription = nil
+                mapCoverageCompletedUnits = 0
+                mapCoverageTotalUnits = 0
             }
         }
 
@@ -568,12 +604,29 @@ final class PulseDataStore {
         coverageSequence: Int,
         selectedRadius: Radius
     ) async throws -> MapCoverageResult {
-        var loadedCount = 0
-        var offset = 0
-        var hasMore = true
-        var warnings: [String] = []
-        var recoveredSources: Set<PulseItem.Source> = []
-        var refreshedItems: [PulseItem] = []
+        let seed = pass == .selectedRadius
+            ? mapCoverageSeed.flatMap {
+                $0.matches(coordinate: coordinate, radius: radius, period: period) ? $0 : nil
+            }
+            : nil
+        var loadedCount = seed?.items.count ?? 0
+        var offset = seed?.nextOffset ?? 0
+        var hasMore = seed?.hasMore ?? true
+        var warnings = seed?.warnings ?? []
+        var recoveredSources = Set(seed?.items.map(\.id.source) ?? [])
+        var refreshedItems = seed?.items ?? []
+        if let seed {
+            mapPerformanceDiagnostics.milestone(
+                .selectedRadiusSeedReused,
+                context: MapPerformanceContext(
+                    pass: .selectedRadius,
+                    radiusMiles: radius.rawValue,
+                    offset: seed.nextOffset,
+                    limit: seed.items.count
+                ),
+                itemCount: seed.items.count
+            )
+        }
         while hasMore, loadedCount < limit {
             try Task.checkCancellation()
             let page = try await repository.nearbyItems(
@@ -667,15 +720,25 @@ final class PulseDataStore {
                 context: context,
                 itemCount: result.loadedCount
             )
+            markMapCoverageUnitComplete(
+                pass: pass,
+                coverageSequence: coverageSequence,
+                selectedRadius: selectedRadius
+            )
             return .success(result)
         } catch is CancellationError {
             mapPerformanceDiagnostics.end(interval, outcome: .cancelled, itemCount: 0)
             return .cancelled
         } catch {
             mapPerformanceDiagnostics.end(interval, outcome: .failed, itemCount: 0)
+            markMapCoverageUnitComplete(
+                pass: pass,
+                coverageSequence: coverageSequence,
+                selectedRadius: selectedRadius
+            )
             return .failed(MapCoverageIssue(
                 pass: pass,
-                message: "This coverage pass could not finish. Existing markers remain available."
+                message: "These results could not update. Markers already on the map remain available."
             ))
         }
     }
@@ -718,9 +781,40 @@ final class PulseDataStore {
         }
         mapCoverageWarning = mapCoverageIssues.isEmpty
             ? nil
-            : "Map coverage is incomplete. Existing markers remain available."
+            : "Some map results could not update. Existing markers are still available."
         reconcileCachedMapResults(attempts)
         return true
+    }
+
+    private func extendMapCoverageSeed(with page: PulsePage) {
+        guard var seed = mapCoverageSeed,
+              seed.matches(
+                coordinate: searchCoordinate,
+                radius: radius,
+                period: period
+              ) else { return }
+        var byID = Dictionary(uniqueKeysWithValues: seed.items.map { ($0.id, $0) })
+        for item in page.items { byID[item.id] = item }
+        seed.items = byID.values.sorted { $0.openedAt > $1.openedAt }
+        seed.nextOffset = page.nextOffset
+        seed.hasMore = page.hasMore
+        seed.warnings = Array(Set(seed.warnings + page.warnings)).sorted()
+        mapCoverageSeed = seed
+    }
+
+    private func markMapCoverageUnitComplete(
+        pass: MapCoveragePass,
+        coverageSequence: Int,
+        selectedRadius: Radius
+    ) {
+        guard coverageSequence == mapCoverageSequence,
+              selectedRadius == radius,
+              mapCoverageCompletedUnits < mapCoverageTotalUnits else { return }
+        mapCoverageCompletedUnits += 1
+        let area = mapCoverageTotalUnits == 1 ? "area" : "areas"
+        mapCoverageLoadingDescription =
+            "\(pass.label(selectedRadius: selectedRadius)) finished · " +
+            "\(mapCoverageCompletedUnits) of \(mapCoverageTotalUnits) \(area) complete"
     }
 
     private func reconcileCachedMapResults(_ attempts: [MapCoverageAttempt]) {

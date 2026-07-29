@@ -51,4 +51,9 @@ This document preserves completed delivery milestones that would otherwise obscu
 - Item Details removes repeated copy icons while preserving selection, context-menu copying, accessibility actions, and clearly labeled bulk copying.
 - New-near-Home inbox and system notifications use a fixed 0.1-mile boundary even when the on-device auto-watch radius is 0.25 mile.
 
+## Post-build 9 Map discovery decisions
+
+- Adopted the bounded cached-first Map store and conservative per-source reconciliation after a five-pair default-radius Simulator matrix showed warm launch-to-first-markers improving from a 3.710-second median to 2.145 seconds while cached records remained isolated by rounded context and survived partial-source failures.
+- Retained 0.5 mile as the default radius. A same-build Downtown DC matrix showed that 0.25 mile reduced bounded-coverage median from 21.186 to 6.588 seconds cold and visible items from a 584-item median to 125, but every run remained partial and one dense location could not justify reducing coverage for lower-density neighborhoods. The explicit 0.25- and 1-mile choices remain available.
+
 Current distribution is maintained in [release status](release-status.md).
