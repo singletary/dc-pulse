@@ -14,6 +14,8 @@ Make the first screen answer **What changed near this place?** before it asks pe
 
 This record began as a low-fidelity information-architecture decision. The selected Snapshot-first direction was approved for production implementation on July 28, 2026.
 
+Follow-up Home Screen review retained that hierarchy while expanding the insight preview to four rows. The rows use complete status-scoped category totals after New, Active, or Resolved is selected; unfiltered rows may use verified comparison trends and fill remaining space from complete category totals. The selected metric itself toggles back to all statuses, avoiding separate selected-state and list-route copy.
+
 ## Audit method
 
 Each current element is scored from 1 (low) to 5 (high). Higher vertical and accessibility cost is worse. “Primary” means the element directly answers the first-screen question; “supporting” means it remains useful but should not compete above the fold; “destination” means it belongs behind a focused route or in another tab.

@@ -56,8 +56,8 @@ struct ItemDetailsView: View {
                         copy(field.value, label: field.label)
                     }
                 }
-                Button { copy(ItemDetailsContent.summary(for: detailFields), label: "Details") } label: {
-                    Label("Copy All Details", systemImage: "doc.on.doc")
+                Button("Copy All Details") {
+                    copy(ItemDetailsContent.summary(for: detailFields), label: "Details")
                 }
                 .accessibilityIdentifier("item-details.copy-all")
             }
@@ -101,8 +101,8 @@ struct ItemDetailsView: View {
                             copy(field.value, label: field.label)
                         }
                     }
-                    Button { copy(ItemDetailsContent.summary(for: violationFields), label: "Report details") } label: {
-                        Label("Copy Report Details", systemImage: "doc.on.doc")
+                    Button("Copy Report Details") {
+                        copy(ItemDetailsContent.summary(for: violationFields), label: "Report details")
                     }
                     .accessibilityIdentifier("item-details.copy-report")
                 }
@@ -213,18 +213,15 @@ private struct CopyableDetailRow: View {
 
     var body: some View {
         LabeledContent {
-            HStack(spacing: 8) {
-                Text(value)
-                    .multilineTextAlignment(.trailing)
-                    .textSelection(.enabled)
-                Button(action: copy) {
-                    Image(systemName: "doc.on.doc")
+            Text(value)
+                .multilineTextAlignment(.trailing)
+                .textSelection(.enabled)
+                .contextMenu {
+                    Button("Copy", action: copy)
                 }
-                .buttonStyle(.borderless)
-                .accessibilityLabel("Copy \(label)")
-            }
         } label: {
             Text(label)
         }
+        .accessibilityAction(named: "Copy \(label)", copy)
     }
 }

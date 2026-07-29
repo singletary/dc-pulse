@@ -230,7 +230,9 @@ struct AppRootView: View {
         ) {
             let key = WatchedPulseItem.stableKey(for: item.id)
             modelContext.insert(WatchedPulseItem(item: item, origin: .automatic))
-            recordNewNearbyItem(item)
+            if AutoWatchPolicy.isEligibleForNewNearbyNotification(item, home: home) {
+                recordNewNearbyItem(item)
+            }
             watchedKeys.insert(key)
         }
     }
