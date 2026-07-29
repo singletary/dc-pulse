@@ -37,6 +37,8 @@ DC Pulse makes it easier to see recent DC 311 requests and public permit activit
 
 **What to test**
 
+Build 8 focuses on a simpler Near You experience and more reliable Map updates. It keeps unfinished features out of view, refreshes full marker coverage when the active area or filters change, and improves diagnostics without expanding data collection.
+
 - Check Near You’s snapshot, status totals, noteworthy items, and Neighborhood Summary. Confirm only live features are shown.
 - Keep Map open while changing location, address, or ward. Confirm close-in and full-radius markers refresh for the new area without stale results.
 - Try 0.25, 0.5, and 1 mile plus each time range. Change filters quickly, use Reset, and test partial-coverage details and Retry.
@@ -60,7 +62,7 @@ Notifications currently use on-device refresh checks rather than a push-notifica
 
 1. Before archiving, open **Xcode > Settings > Accounts** and confirm the existing account has App Store Connect access. Re-authentication is a manual account-owner action.
 2. Archive to Xcode’s standard Organizer location; do not use a temporary `-archivePath`.
-3. In Organizer, select the validated archive and choose **Distribute App > App Store Connect > Upload**.
+3. In Organizer, select the validated archive and choose **Distribute App > App Store Connect**. Never choose **TestFlight Internal Only**; the full App Store Connect route supports testing and release.
 4. Use existing signing assets only. Never pass `-allowProvisioningUpdates`; stop if Xcode requests account, team, certificate, profile, entitlement, identifier, or provisioning changes.
 5. In App Store Connect, wait for processing, complete export-compliance and beta information, then add the build to an internal testing group.
 6. Install through TestFlight on a physical iPhone and complete the **What to Test** and physical-device passes.
