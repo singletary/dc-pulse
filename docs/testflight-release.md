@@ -37,30 +37,12 @@ DC Pulse makes it easier to see recent DC 311 requests and public permit activit
 
 **What to test**
 
-- Allow location access and confirm nearby results match the simulated or physical location.
-- Cold-launch the app and confirm the Near You summary appears promptly without first loading an unrelated default location.
-- Open Map and check that it becomes interactive promptly while additional markers load progressively.
-- Change radius, time range, data source, status, and request-type filters.
-- At one unchanged center, verify that records visible at 0.25 mile remain available at 0.5 and 1 mile. Change several filters quickly, then use **Reset** and confirm all sources/statuses/categories, 0.5 mile, and 30 days return without moving the center.
-- Pan within DC and use Search This Area; use the location button to return to the current location.
-- Open single and grouped map markers and confirm detail navigation and dismissal.
-- Browse and sort Requests, including requests around followed places, then pull to refresh and confirm the active location and sort/filter choices remain intact.
-- Save Home, follow a place, watch an item, and exercise notification permission and manual refresh flows.
-- In Places > Alerts, independently toggle **Watched status changes** and **New items near Home**. Confirm the nearby choice is unavailable until auto-watch is enabled and that each preference survives a relaunch.
-- In Places, swipe an active watch to **Archive**, restore it from the **Archived** section, and confirm its Item Details watch action changes to **Restore Watch** while archived. Archived records should remain readable but should not be included in **Check Watched Items Now**.
-- Change **Archive resolved watches** among 7 days, 30 days, 90 days, and Never; relaunch and confirm the choice persists. Auto-watched items should continue to explain their separate seven-day behavior.
-- Try denied, approximate, and out-of-DC location paths, plus offline and slow-network recovery.
-- Verify the X status-update composer and DC reporting handoffs, but do not submit a real report solely for testing.
-- Open **Report an Issue to 311** and verify **Choose Photo** opens Photos while **Take Photo** opens the camera. Use a non-sensitive test image, confirm the suggested type remains editable, dismiss the keyboard, and verify the continuation control stays reachable. Confirm the handoff offers the official app and website fallback without claiming submission.
-- Verify camera denial, a photo without location metadata, current-location fallback, and manual address entry. Do not use a personal photo in App Store screenshots or shared test evidence.
-- Watch a newly opened request and confirm its automatic New-to-Active aging does not create a notification; confirm a meaningful Active-to-Resolved change still does.
-- Open the notification inbox and confirm each row has an appropriate category/source symbol, unread state remains distinguishable, and tapping opens the referenced details.
-- From Item Details, copy individual fields and **Copy All Details**; for a permit, verify **Copy Report Details** prepares useful, displayed context without hidden coordinates.
-- From a 311 item, verify the request-ID confirmation copies the exact identifier and opens the official search destination without implying a direct record link.
-- Open **About DC Pulse** from Places and verify version/build, website, support, privacy, GitHub, license, attribution, and independent-app disclosure both online and offline where applicable.
-- With system alerts enabled, confirm lock-screen notification text does not contain a street address while the in-app inbox retains the useful record detail.
-- With auto-watch enabled, confirm a newly discovered nearby item can create a privacy-safe system alert and that tapping it opens the saved record.
-- Open **Restaurant Health Inspections** only to verify that its data-gated explanation is clear. Nearby restaurant report verification begins after a dependable source interface is approved.
+- Check Near You’s snapshot, status totals, noteworthy items, and Neighborhood Summary. Confirm only live features are shown.
+- Keep Map open while changing location, address, or ward. Confirm close-in and full-radius markers refresh for the new area without stale results.
+- Try 0.25, 0.5, and 1 mile plus each time range. Change filters quickly, use Reset, and test partial-coverage details and Retry.
+- Relaunch the same area. Cached markers should appear quickly, show when they were updated, and remain usable if one public source fails.
+- Save Home, follow a place, watch and archive an item, then relaunch. Confirm saved choices and detail navigation persist.
+- Check denied or approximate location, offline recovery, largest text, VoiceOver, and Light/Dark Mode. Report clipping, confusing announcements, stale data, or crashes.
 
 **Feedback contact**
 

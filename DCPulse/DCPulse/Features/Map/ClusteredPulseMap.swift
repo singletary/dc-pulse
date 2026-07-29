@@ -5,6 +5,7 @@ struct ClusteredPulseMap: UIViewRepresentable {
     let items: [PulseItem]
     let searchCoordinate: PulseItem.Coordinate
     let radiusMeters: CLLocationDistance
+    let renderingContext: MapRenderingContext
     let targetRegion: MKCoordinateRegion
     let centerRequestID: Int
     let diagnostics: any MapPerformanceDiagnosticsProtocol
@@ -51,13 +52,13 @@ struct ClusteredPulseMap: UIViewRepresentable {
         private var isApplyingRegion = false
         private var canRenderItems = false
         private var annotationUpdateTask: Task<Void, Never>?
-        private var reportedFirstMarkers = false
-        private var reportedStableRenderItemCount = -1
+        private var milestoneTracker = MapRenderMilestoneTracker()
 
         init(parent: ClusteredPulseMap) { self.parent = parent }
 
         func apply(parent: ClusteredPulseMap, to mapView: MKMapView, force: Bool) {
             self.parent = parent
+            milestoneTracker.update(context: parent.renderingContext)
             let searchCoordinateChanged = renderedSearchCoordinate != parent.searchCoordinate
 
             if force || appliedCenterRequestID != parent.centerRequestID {
@@ -152,8 +153,7 @@ struct ClusteredPulseMap: UIViewRepresentable {
                     for annotation in batch {
                         self.renderedItemAnnotations[annotation.item.id] = annotation
                     }
-                    if !self.reportedFirstMarkers {
-                        self.reportedFirstMarkers = true
+                    if self.milestoneTracker.shouldReportFirstMarkers() {
                         self.parent.diagnostics.milestone(
                             .firstMarkers,
                             context: self.parent.performanceContext,
@@ -168,8 +168,9 @@ struct ClusteredPulseMap: UIViewRepresentable {
         func mapViewDidFinishRenderingMap(_ mapView: MKMapView, fullyRendered: Bool) {
             guard fullyRendered,
                   !renderedItemAnnotations.isEmpty,
-                  reportedStableRenderItemCount != renderedItemAnnotations.count else { return }
-            reportedStableRenderItemCount = renderedItemAnnotations.count
+                  milestoneTracker.shouldReportStableRender(
+                    itemIDs: Set(renderedItemAnnotations.keys)
+                  ) else { return }
             parent.diagnostics.milestone(
                 .clusteringStable,
                 context: parent.performanceContext,
@@ -297,6 +298,37 @@ struct ClusteredPulseMap: UIViewRepresentable {
 
     private var performanceContext: MapPerformanceContext {
         MapPerformanceContext(radiusMiles: radiusMeters / 1_609.344, limit: items.count)
+    }
+}
+
+nonisolated struct MapRenderingContext: Hashable {
+    let searchCoordinate: PulseItem.Coordinate
+    let radiusMiles: Double
+    let queryDays: Int
+}
+
+nonisolated struct MapRenderMilestoneTracker {
+    private var context: MapRenderingContext?
+    private var reportedFirstMarkers = false
+    private var reportedStableItemIDs: Set<PulseItem.ID>?
+
+    mutating func update(context: MapRenderingContext) {
+        guard context != self.context else { return }
+        self.context = context
+        reportedFirstMarkers = false
+        reportedStableItemIDs = nil
+    }
+
+    mutating func shouldReportFirstMarkers() -> Bool {
+        guard !reportedFirstMarkers else { return false }
+        reportedFirstMarkers = true
+        return true
+    }
+
+    mutating func shouldReportStableRender(itemIDs: Set<PulseItem.ID>) -> Bool {
+        guard !itemIDs.isEmpty, itemIDs != reportedStableItemIDs else { return false }
+        reportedStableItemIDs = itemIDs
+        return true
     }
 }
 

@@ -55,6 +55,42 @@ struct MapPerformanceDiagnosticsTests {
         #expect(snapshot.contexts.allSatisfy { !$0.contains("38.") && !$0.contains("-77.") })
         #expect(snapshot.contexts.allSatisfy { !$0.localizedCaseInsensitiveContains("Downtown") })
     }
+
+    @Test func renderMilestonesResetForEachMapContextAndTrackItemIdentity() throws {
+        let firstCoordinate = try #require(PulseItem.Coordinate(latitude: 38.90, longitude: -77.03))
+        let secondCoordinate = try #require(PulseItem.Coordinate(latitude: 38.91, longitude: -77.04))
+        let firstContext = MapRenderingContext(
+            searchCoordinate: firstCoordinate,
+            radiusMiles: 0.5,
+            queryDays: 30
+        )
+        let secondContext = MapRenderingContext(
+            searchCoordinate: secondCoordinate,
+            radiusMiles: 0.5,
+            queryDays: 30
+        )
+        let firstID = PulseItem.ID(source: .serviceRequests311, sourceIdentifier: "first")
+        let secondID = PulseItem.ID(source: .serviceRequests311, sourceIdentifier: "second")
+        var tracker = MapRenderMilestoneTracker()
+
+        tracker.update(context: firstContext)
+        let firstMarkers = tracker.shouldReportFirstMarkers()
+        let duplicateFirstMarkers = tracker.shouldReportFirstMarkers()
+        let firstStableRender = tracker.shouldReportStableRender(itemIDs: [firstID])
+        let duplicateStableRender = tracker.shouldReportStableRender(itemIDs: [firstID])
+        let sameCountNewItemsRender = tracker.shouldReportStableRender(itemIDs: [secondID])
+        #expect(firstMarkers)
+        #expect(!duplicateFirstMarkers)
+        #expect(firstStableRender)
+        #expect(!duplicateStableRender)
+        #expect(sameCountNewItemsRender)
+
+        tracker.update(context: secondContext)
+        let nextContextFirstMarkers = tracker.shouldReportFirstMarkers()
+        let nextContextStableRender = tracker.shouldReportStableRender(itemIDs: [secondID])
+        #expect(nextContextFirstMarkers)
+        #expect(nextContextStableRender)
+    }
 }
 
 private struct BaselineStubRepository: PulseRepositoryProtocol {

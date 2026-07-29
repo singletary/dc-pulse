@@ -439,7 +439,7 @@ struct PulseView: View {
 
 }
 
-struct RequestCategorySummaryPresentation {
+nonisolated struct RequestCategorySummaryPresentation {
     struct Category: Identifiable, Equatable {
         let name: String
         let count: Int
