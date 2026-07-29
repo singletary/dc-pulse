@@ -62,11 +62,41 @@ Notifications currently use on-device refresh checks rather than a push-notifica
 ## Replacement upload steps
 
 1. Before archiving, open **Xcode > Settings > Accounts** and confirm the existing account has App Store Connect access. Re-authentication is a manual account-owner action.
-2. Archive to Xcode’s standard Organizer location; do not use a temporary `-archivePath`.
-3. Prefer `xcodebuild -exportArchive` with export method `app-store-connect` and destination `upload`. Organizer fallback must use **Distribute App > App Store Connect**. Never use **TestFlight Internal Only**; the full App Store Connect route supports testing and release.
-4. Use existing signing assets only. Never pass `-allowProvisioningUpdates`; stop if Xcode requests account, team, certificate, profile, entitlement, identifier, or provisioning changes.
-5. In App Store Connect, wait for processing, complete export-compliance and beta information, then assign the build to the intended TestFlight groups.
-6. Install through TestFlight on a physical iPhone and complete the **What to Test** and physical-device passes.
-7. Return to **Before external distribution** above after internal verification.
+2. Run the read-only signing-session preflight below. Stop before archiving if it does not pass.
+3. Archive to Xcode’s standard Organizer location; do not use a temporary `-archivePath`.
+4. Prefer `xcodebuild -exportArchive` with export method `app-store-connect` and destination `upload`. Organizer fallback must use **Distribute App > App Store Connect**. Never use **TestFlight Internal Only**; the full App Store Connect route supports testing and release.
+5. Use existing signing assets only. Never pass `-allowProvisioningUpdates`; stop if Xcode requests account, team, certificate, profile, entitlement, identifier, or provisioning changes.
+6. In App Store Connect, wait for processing, complete export-compliance and beta information, then assign the build to the intended TestFlight groups.
+7. Install through TestFlight on a physical iPhone and complete the **What to Test** and physical-device passes.
+8. Return to **Before external distribution** above after internal verification.
+
+## Signing-session reliability
+
+Run the fail-fast check in the logged-in Mac user session immediately before the archive:
+
+```sh
+scripts/testflight-signing-preflight.sh
+```
+
+The script requires accessible login-keychain settings and at least one valid
+code-signing identity. Its checks are read-only. It does not unlock, repair, or
+change Keychain.
+
+If either check fails, or if signing reports `errSecInternalComponent`,
+`errSecAuthFailed`, or `CSSMERR_CSP_OPERATION_AUTH_DENIED`:
+
+1. Stop immediately. Do not retry through both CLI and Organizer.
+2. Do not run `security unlock-keychain`, `set-key-partition-list`, change private-key Access Control, replace certificates, or regenerate profiles automatically.
+3. Save the focused `securityd` and `codesign` log window for diagnosis.
+4. Let the account owner restore the macOS login/security session, normally by logging out or restarting, before making one new preflight and archive attempt.
+5. If the condition recurs after a clean login, collect a sysdiagnose and file Apple Feedback rather than changing signing assets speculatively.
+
+The July 28, 2026 failure was not a missing certificate or an archive-setting
+problem. macOS reported the keychain as unlocked, then denied the signing key's
+integrity/authentication operation. The identical certificate, profile, and CLI
+archive succeeded after restart without a keychain or project change. Treat this
+signature as a transient macOS security-session failure. Nearby Xcode credential
+and iCloud-keychain errors were present in the log, but their causal relationship
+is unproven.
 
 External testing can begin after any required Beta App Review approval and assignment to the intended external group.
