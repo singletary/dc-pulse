@@ -10,18 +10,18 @@ This is the canonical source for DC Pulse distribution state and immediate relea
 - External TestFlight: **build 6**
 - Internal TestFlight: **build 7**
 - Latest App Store Connect upload: **build 8**, uploaded through the full testing-and-release route
-- Build 8 processing and tester assignment: **pending**
+- Build 9 release candidate: **verified locally; upload pending**
 - Public App Store: **not submitted for review**
 
 ## Immediate gate
 
-1. Wait for build 8 to finish App Store Connect processing.
-2. Complete build 8's internal TestFlight verification.
-3. Assign build 8 to the intended external testing group after any required Beta App Review approval.
+1. Upload build 9 through the full App Store Connect testing-and-release route.
+2. Wait for build 9 to finish App Store Connect processing.
+3. Complete build 9's TestFlight verification and assign it to the intended external testing group after any required Beta App Review approval.
 4. Run the focused external soak covering correctness, performance, migration, navigation, accessibility, location behavior, Map density, watched items, alerts, photo input, and official handoffs.
 5. Triage external findings before selecting a build for public App Review.
 
-Any replacement for build 8 must use a higher build number. Signing, capabilities, entitlements, bundle identifiers, certificates, provisioning, and Apple-account configuration remain manually controlled and must not be changed without explicit approval.
+Any replacement for build 9 must use a higher build number. Signing, capabilities, entitlements, bundle identifiers, certificates, provisioning, and Apple-account configuration remain manually controlled and must not be changed without explicit approval.
 
 ## Capability gate
 

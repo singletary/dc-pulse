@@ -31,9 +31,9 @@ DC Pulse is a native, map-forward iPhone app for exploring recent public activit
 - **Places** saves Home and other meaningful DC locations on-device for quick return visits.
 - **Item Details** normalizes dates, status, agency, address, source attributes, and official civic-action destinations.
 - **Watches** track selected public records on-device, can auto-watch new activity close to Home, and move resolved records into a visible, restorable archive after a configurable grace period.
-- **Notifications** keep an on-device history with category-aware symbols and direct navigation back to the affected public record. Optional, privacy-safe system alerts can be chosen separately for watched status changes and new items near Home.
+- **Notifications** keep an on-device history with category-aware symbols and direct navigation back to the affected public record. Optional, privacy-safe system alerts can be chosen separately for watched status changes and new items within 0.1 mile of Home.
 - **Report to 311 (beta)** turns a deliberately selected or captured photo into an editable, on-device request draft before an official DC app or website handoff.
-- **Item actions** make public details easy to copy, prepare permit-violation context, and provide an honest copy-and-search handoff for 311 request IDs.
+- **Item actions** keep public details selectable and copyable without repeated icon clutter, prepare permit-violation context, and provide an honest copy-and-search handoff for 311 request IDs.
 - **About DC Pulse** keeps the website, support, privacy policy, source code, MIT terms, public-data attribution, and installed build information available inside the app.
 - **Restaurant Health (data-gated)** models DC's real pass/fail and violation terminology. Nearby inspection reports and a useful inspection map will ship only after a dependable source contract or a separately reviewed ingestion approach is established.
 
@@ -42,7 +42,7 @@ Location is requested only to perform a nearby search. If access is unavailable,
 ## Current TestFlight focus
 
 - The external build provides the full nearby requests, permits, Map, Places, watching, notification inbox, trend, and civic-handoff experience described above.
-- The current internal build improves warning isolation, status-scoped category summaries, expandable overview content, and bounded lifecycle history.
+- The current release candidate combines reliable Map refreshes with a simplified Near You snapshot, four status-aware insights, saved-Home context, quieter detail copying, and a tighter 0.1-mile Home-alert boundary.
 - The next gate is internal verification followed by focused external testing; current build numbers and availability live in [release status](docs/release-status.md).
 - Restaurant inspection ingestion and direct 311 submission remain explicitly data- or contract-gated. See the [ranked roadmap](docs/roadmap.md) for active work and [release history](docs/release-history.md) for completed milestones.
 

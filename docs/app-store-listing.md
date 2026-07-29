@@ -115,7 +115,7 @@ This product-page disclosure is separate from `PrivacyInfo.xcprivacy`, which cor
 >
 > Map and Requests combine three public sources: DC 311 City Service Requests, 2026 Building Permits, and 2026 DDOT Construction Permits. Public services may respond at different speeds; a source-specific warning is shown if one source is temporarily unavailable.
 >
-> Watch alerts are evaluated when the app refreshes public data, including launch, foreground refresh, and eligible background refresh. They are not represented as immediate server push notifications. The notification inbox is stored on-device.
+> Watch alerts are evaluated when the app refreshes public data, including launch, manual refresh, and throttled foreground refresh. They are not represented as immediate server push notifications or guaranteed background delivery. The notification inbox is stored on-device, and new-near-Home alerts use a fixed 0.1-mile boundary.
 >
 > Report an Issue to 311 creates an editable draft and performs photo classification on-device. DC Pulse does not read photo GPS metadata, upload the photo, or claim submission. Continue in DC 311 copies the reviewed text and opens the official portal, where the user completes any official transaction.
 >

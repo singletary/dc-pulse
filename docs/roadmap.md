@@ -13,13 +13,12 @@ This roadmap contains active work only, ordered by release value, correctness ri
 
 The measurement plan, test matrix, home-screen concepts, and decision gates are maintained in [Map performance and Near You discovery](map-performance-home-discovery.md).
 
-- [ ] **P0 — Make Map loading and partial-failure status legible and actionable.** Reproduce truncation, identify the exact pass and source behind each warning, use honest staged or measurable progress, and provide accessible detail and retry actions.
 - [ ] **P0 — Establish a repeatable Map performance baseline.** Measure cold and warm time to interaction, first markers, useful close-in coverage, and completed bounded coverage for every radius. Attribute time to transport, pagination, decoding, mapping, merging, annotations, and clustering.
   - A five-pair iPhone 17 Pro Simulator baseline is recorded for the default 0.5-mile/30-day context. Interaction and first markers remain below 0.15 and 0.29 seconds, while bounded coverage has a roughly 24-second median and every run is partial; live source pagination, especially DC 311, is the leading measured cost. The 0.25/1-mile, constrained/offline, and physical-iPhone matrices remain open.
 - [ ] **P1 — Prototype cached-first Map loading with per-source reconciliation.** Evaluate a bounded multi-context cache that can show labeled cached markers immediately, refresh sources independently, use reliable update fields where supported, and preserve cached records through partial failures.
   - Production prototype implemented July 28: labeled fresh/stale cache candidates, conservative source-scoped reconciliation, partial-failure retention, and timestamp-preserving persistence are covered by deterministic tests. Performance measurements and the adoption decision remain open.
-- [ ] **P1 — Simplify Near You around one primary snapshot.** Audit usefulness and duplication, review Snapshot-first, Personalized-first, and Map-preview concepts, and record the selected hierarchy before implementation.
-  - Content audit and three-concept state comparison completed July 28. Snapshot-first is implemented with a focused Neighborhood Summary; task, accessibility, and physical-device validation remain open.
+- [ ] **P1 — Validate the simplified Near You snapshot.** Complete task, accessibility, and physical-device validation for the implemented Snapshot-first hierarchy, dynamic status insights, and saved-Home context.
+  - Content audit and three-concept state comparison completed July 28. Snapshot-first is implemented with a focused Neighborhood Summary and up to four status-aware insights.
   - Keep City Services hidden on Near You until supported direct 311 functionality or another approved reporting path is live and nearby Restaurant Health results have a dependable reviewed source.
 - [ ] **P1 — Decide the default radius from evidence.** Compare 0.25 and 0.5 miles for correctness, latency, request volume, meaningful-result rate, density, legibility, and usefulness. Do not reduce the radius to conceal incomplete or slow loading.
 
@@ -75,7 +74,6 @@ This remains the highest-priority product-development track after TestFlight sta
 
 ## 6. Item-detail depth and civic actions — medium
 
-- Simplify repeated field-copy affordances while preserving discoverable tap-to-copy, accessible announcements, and clearly labeled bulk actions.
 - Validate DC 311 request-ID search, paste behavior, cancellation, and official-site failure on a physical iPhone.
 - Investigate only supported or permissioned record-detail links; do not guess URLs, scrape authenticated pages, or persist private Salesforce identifiers.
 - Improve official permit-violation handoffs only when DOB or DDOT publishes supported address- or permit-specific parameters.

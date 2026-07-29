@@ -41,4 +41,14 @@ This document preserves completed delivery milestones that would otherwise obscu
 - Lifecycle transition snapshots are separated from the current observation index and use a documented one-year retention and migration policy.
 - Trend context and status/category responses remain generation-safe during rapid radius, location, period, and status changes.
 
+## Builds 8 and 9
+
+- Near You uses a simpler Snapshot-first hierarchy, keeps unfinished civic actions hidden, and provides a focused Neighborhood Summary.
+- Map refreshes close-in and selected-radius coverage when location or filters change, rejects stale passes, preserves useful cached markers through partial failures, and exposes clearer retry details and privacy-safe performance diagnostics.
+- The current location shows a saved-Home indicator when it matches Home.
+- New, Active, and Resolved metrics directly refresh up to four complete, status-scoped insight rows; tapping the selected metric returns to all statuses.
+- Insight rows use category-relevant emoji and compact trend arrows.
+- Item Details removes repeated copy icons while preserving selection, context-menu copying, accessibility actions, and clearly labeled bulk copying.
+- New-near-Home inbox and system notifications use a fixed 0.1-mile boundary even when the on-device auto-watch radius is 0.25 mile.
+
 Current distribution is maintained in [release status](release-status.md).
