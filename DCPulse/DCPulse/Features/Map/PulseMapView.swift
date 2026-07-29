@@ -46,7 +46,20 @@ struct PulseMapView: View {
             .overlay(alignment: .top) {
                 if isMapUpdating {
                     VStack(spacing: 4) {
-                        ProgressView().progressViewStyle(.linear)
+                        if store.isMapCoverageLoading, store.mapCoverageTotalUnits > 0 {
+                            ProgressView(
+                                value: Double(store.mapCoverageCompletedUnits),
+                                total: Double(store.mapCoverageTotalUnits)
+                            )
+                            .progressViewStyle(.linear)
+                            .accessibilityValue(
+                                "\(store.mapCoverageCompletedUnits) of \(store.mapCoverageTotalUnits) " +
+                                "\(store.mapCoverageTotalUnits == 1 ? "area" : "areas") complete"
+                            )
+                        } else {
+                            ProgressView()
+                                .controlSize(.small)
+                        }
                         Text(mapLoadingLabel)
                             .font(.caption2.weight(.medium))
                             .foregroundStyle(.secondary)

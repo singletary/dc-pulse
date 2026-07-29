@@ -49,6 +49,7 @@ struct MapPerformanceDiagnosticsTests {
         #expect(snapshot.startedStages.contains(.merge))
         #expect(snapshot.startedStages.contains(.cacheEncoding))
         #expect(snapshot.milestones.contains(.coveragePage))
+        #expect(snapshot.milestones.contains(.selectedRadiusSeedReused))
         #expect(snapshot.milestones.contains(.closeInCoverage))
         #expect(snapshot.milestones.contains(.selectedRadiusCoverage))
         #expect(snapshot.milestones.contains(.boundedCoverage))

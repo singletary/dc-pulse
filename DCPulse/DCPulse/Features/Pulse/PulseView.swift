@@ -49,6 +49,7 @@ struct PulseView: View {
                     .buttonStyle(.borderless)
                 }
                 .padding(.vertical, 6)
+                .accessibilityIdentifier("pulse.searchContext")
             }
 
             Section("Nearby snapshot") {

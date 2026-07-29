@@ -10,15 +10,16 @@ struct SignpostEvent {
     let message: String
 }
 
-guard CommandLine.arguments.count == 3 else {
+guard CommandLine.arguments.count == 4 else {
     FileHandle.standardError.write(Data(
-        "usage: summarize-map-performance.swift <cache-state> <run-number>\n".utf8
+        "usage: summarize-map-performance.swift <radius> <cache-state> <run-number>\n".utf8
     ))
     exit(64)
 }
 
-let cacheState = CommandLine.arguments[1]
-let runNumber = CommandLine.arguments[2]
+let radius = CommandLine.arguments[1]
+let cacheState = CommandLine.arguments[2]
+let runNumber = CommandLine.arguments[3]
 let input = String(data: FileHandle.standardInput.readDataToEndOfFile(), encoding: .utf8) ?? ""
 let formatter = ISO8601DateFormatter()
 formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -74,6 +75,8 @@ guard let presentation = firstEvent(named: "Map Presentation Started") else {
     FileHandle.standardError.write(Data("Map Presentation Started was not captured.\n".utf8))
     exit(65)
 }
+let launch = firstEvent(named: "App Launch Started")
+let initialResults = firstEvent(named: "Initial Nearby Results Ready")
 
 let intervalBegins = Dictionary(
     uniqueKeysWithValues: events
@@ -111,8 +114,12 @@ for (id, begin) in intervalBegins where begin.name == "Map Source Request" {
 }
 
 let columns = [
+    radius,
     cacheState,
     runNumber,
+    formatted(launch.flatMap { start in seconds(from: start.date, to: initialResults) }),
+    formatted(launch.flatMap { start in seconds(from: start.date, to: firstEvent(named: "Map Interactive")) }),
+    formatted(launch.flatMap { start in seconds(from: start.date, to: firstEvent(named: "First Map Markers")) }),
     formatted(seconds(from: presentation.date, to: firstEvent(named: "Map Interactive"))),
     formatted(seconds(from: presentation.date, to: firstEvent(named: "First Map Markers"))),
     formatted(seconds(from: presentation.date, to: firstEvent(named: "Close-in Coverage Complete"))),

@@ -56,7 +56,15 @@ struct AppRootView: View {
             await notificationService.refreshAuthorizationState()
             locationService.requestCurrentLocation()
             await loadInitialLocation()
-            openMapForPerformanceCaptureIfRequested()
+            store.mapPerformanceDiagnostics.milestone(
+                .initialResults,
+                context: MapPerformanceContext(
+                    radiusMiles: store.radius.rawValue,
+                    limit: store.items.count
+                ),
+                itemCount: store.items.count
+            )
+            await openMapForPerformanceCaptureIfRequested()
             await refreshWatchedItemsAfterLaunchDelay()
         }
         .onChange(of: locationService.updateSequence) { _, _ in
@@ -115,10 +123,17 @@ struct AppRootView: View {
         await loadResolvedLocation()
     }
 
-    private func openMapForPerformanceCaptureIfRequested() {
+    private func openMapForPerformanceCaptureIfRequested() async {
 #if DEBUG
         guard ProcessInfo.processInfo.environment["DCPULSE_MAP_PERFORMANCE_AUTOLAUNCH"] == "1" else {
             return
+        }
+        if let radiusText = ProcessInfo.processInfo.environment["DCPULSE_MAP_PERFORMANCE_RADIUS"],
+           let radiusValue = Double(radiusText),
+           let radius = PulseDataStore.Radius.allCases.first(where: {
+               $0.rawValue == radiusValue
+           }) {
+            await store.selectRadius(radius)
         }
         store.mapPerformanceDiagnostics.milestone(
             .mapPresentation,

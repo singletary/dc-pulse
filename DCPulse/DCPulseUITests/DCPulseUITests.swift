@@ -128,6 +128,36 @@ final class DCPulseUITests: XCTestCase {
     }
 
     @MainActor
+    func testNearYouHierarchyAtLargestAccessibilityText() throws {
+        let app = XCUIApplication()
+        app.launchArguments += [
+            "-UIPreferredContentSizeCategoryName",
+            "UICTContentSizeCategoryAccessibilityExtraExtraExtraLarge"
+        ]
+        app.launch()
+
+        XCTAssertTrue(
+            app.descendants(matching: .any)["pulse.searchContext"].waitForExistence(timeout: 10)
+        )
+        let newStatus = app.buttons["pulse.status.new"]
+        let activeStatus = app.buttons["pulse.status.active"]
+        let resolvedStatus = app.buttons["pulse.status.resolved"]
+        scrollToElement(newStatus, in: app)
+        XCTAssertTrue(activeStatus.exists)
+        XCTAssertTrue(resolvedStatus.exists)
+
+        let summary = app.buttons["pulse.neighborhoodSummary"]
+        scrollToElement(summary, in: app)
+        summary.tap()
+        XCTAssertTrue(app.navigationBars["Neighborhood Summary"].waitForExistence(timeout: 10))
+
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "Near You largest accessibility text"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
+    @MainActor
     func testAboutOpensFromPlacesWithTrustInformation() throws {
         let app = XCUIApplication()
         app.launch()

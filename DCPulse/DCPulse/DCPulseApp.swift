@@ -12,6 +12,14 @@ import SwiftData
 struct DCPulseApp: App {
     @UIApplicationDelegateAdaptor(NotificationAppDelegate.self) private var appDelegate
 
+    init() {
+        MapPerformanceDiagnostics.shared.milestone(
+            .appLaunch,
+            context: MapPerformanceContext(),
+            itemCount: 0
+        )
+    }
+
     var body: some Scene {
         WindowGroup {
             AppRootView()
