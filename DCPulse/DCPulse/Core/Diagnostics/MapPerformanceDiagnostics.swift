@@ -15,6 +15,7 @@ enum MapPerformanceStage: String, CaseIterable, Sendable {
 }
 
 enum MapPerformanceMilestone: String, CaseIterable, Sendable {
+    case mapPresentation
     case mapInteractive
     case firstMarkers
     case coveragePage
@@ -126,28 +127,29 @@ struct MapPerformanceDiagnostics: MapPerformanceDiagnosticsProtocol, Sendable {
 
     nonisolated func begin(_ stage: MapPerformanceStage, context: MapPerformanceContext) -> MapPerformanceInterval {
         let metadata = context.description
+        let id = signposter.makeSignpostID()
         let state: OSSignpostIntervalState
         switch stage {
         case .coverageSession:
-            state = signposter.beginInterval("Map Coverage Session", "\(metadata, privacy: .public)")
+            state = signposter.beginInterval("Map Coverage Session", id: id, "\(metadata, privacy: .public)")
         case .coveragePass:
-            state = signposter.beginInterval("Map Coverage Pass", "\(metadata, privacy: .public)")
+            state = signposter.beginInterval("Map Coverage Pass", id: id, "\(metadata, privacy: .public)")
         case .sourceRequest:
-            state = signposter.beginInterval("Map Source Request", "\(metadata, privacy: .public)")
+            state = signposter.beginInterval("Map Source Request", id: id, "\(metadata, privacy: .public)")
         case .transport:
-            state = signposter.beginInterval("ArcGIS Transport", "\(metadata, privacy: .public)")
+            state = signposter.beginInterval("ArcGIS Transport", id: id, "\(metadata, privacy: .public)")
         case .decoding:
-            state = signposter.beginInterval("ArcGIS Decoding", "\(metadata, privacy: .public)")
+            state = signposter.beginInterval("ArcGIS Decoding", id: id, "\(metadata, privacy: .public)")
         case .mapping:
-            state = signposter.beginInterval("Pulse Item Mapping", "\(metadata, privacy: .public)")
+            state = signposter.beginInterval("Pulse Item Mapping", id: id, "\(metadata, privacy: .public)")
         case .merge:
-            state = signposter.beginInterval("Map Item Merge", "\(metadata, privacy: .public)")
+            state = signposter.beginInterval("Map Item Merge", id: id, "\(metadata, privacy: .public)")
         case .cacheEncoding:
-            state = signposter.beginInterval("Map Cache Encoding", "\(metadata, privacy: .public)")
+            state = signposter.beginInterval("Map Cache Encoding", id: id, "\(metadata, privacy: .public)")
         case .annotationDiff:
-            state = signposter.beginInterval("Map Annotation Diff", "\(metadata, privacy: .public)")
+            state = signposter.beginInterval("Map Annotation Diff", id: id, "\(metadata, privacy: .public)")
         case .annotationApply:
-            state = signposter.beginInterval("Map Annotation Apply", "\(metadata, privacy: .public)")
+            state = signposter.beginInterval("Map Annotation Apply", id: id, "\(metadata, privacy: .public)")
         }
         return MapPerformanceInterval(stage: stage, state: state)
     }
@@ -190,6 +192,8 @@ struct MapPerformanceDiagnostics: MapPerformanceDiagnosticsProtocol, Sendable {
     ) {
         let metadata = context.description
         switch milestone {
+        case .mapPresentation:
+            signposter.emitEvent("Map Presentation Started", "\(metadata, privacy: .public) count=\(itemCount)")
         case .mapInteractive:
             signposter.emitEvent("Map Interactive", "\(metadata, privacy: .public) count=\(itemCount)")
         case .firstMarkers:
