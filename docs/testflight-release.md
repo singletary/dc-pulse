@@ -58,10 +58,12 @@ Notifications currently use on-device refresh checks rather than a push-notifica
 
 ## Replacement upload steps
 
-1. In Xcode Organizer, select the validated archive and choose **Distribute App > App Store Connect > Upload**.
-2. Keep the existing bundle identifier and signing configuration. Stop if Xcode requests a different team, certificate, profile, entitlement, or identifier.
-3. In App Store Connect, wait for processing, complete export-compliance and beta information, then add the build to an internal testing group.
-4. Install through TestFlight on a physical iPhone and complete the **What to Test** and physical-device passes.
-5. Return to **Before external distribution** above after internal verification.
+1. Before archiving, open **Xcode > Settings > Accounts** and confirm the existing account has App Store Connect access. Re-authentication is a manual account-owner action.
+2. Archive to Xcode’s standard Organizer location; do not use a temporary `-archivePath`.
+3. In Organizer, select the validated archive and choose **Distribute App > App Store Connect > Upload**.
+4. Use existing signing assets only. Never pass `-allowProvisioningUpdates`; stop if Xcode requests account, team, certificate, profile, entitlement, identifier, or provisioning changes.
+5. In App Store Connect, wait for processing, complete export-compliance and beta information, then add the build to an internal testing group.
+6. Install through TestFlight on a physical iPhone and complete the **What to Test** and physical-device passes.
+7. Return to **Before external distribution** above after internal verification.
 
 External testing can begin after any required Beta App Review approval and assignment to the intended external group.
