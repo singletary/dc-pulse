@@ -79,22 +79,39 @@ For every failure or warning, record the accepted load generation, coverage pass
 
 The app now emits local Apple signposts in the `MapPerformance` category for coverage sessions and passes, per-source requests, ArcGIS transport and decoding, adapter mapping, item merging, cache encoding, annotation diff/application, and clustering stabilization. Milestone events cover Map construction, first markers, each coverage page, close-in completion, selected-radius completion, and final bounded coverage.
 
-Signpost metadata is intentionally limited to a public dataset label, coverage-pass label, radius bucket, pagination offset/limit, outcome, byte count, and item count. It never includes coordinates, addresses, saved-place names, request identifiers, complete URLs, query clauses, device/account identifiers, or photo data. Signposts are inspected locally in an attached Instruments session; DC Pulse does not upload them, persist them in app storage, or operate a diagnostics backend. This preserves the current **Developer analytics: No** and **Diagnostics collected by the developer: No** disclosures.
+Signpost metadata is intentionally limited to a public dataset label, coverage-pass label, radius bucket, pagination offset/limit, outcome, byte count, and item count. It never includes coordinates, addresses, saved-place names, request identifiers, complete URLs, query clauses, device/account identifiers, or photo data. Signposts are inspected locally through Instruments or the Simulator unified log; DC Pulse does not upload them, persist them in app storage, or operate a diagnostics backend. This preserves the current **Developer analytics: No** and **Diagnostics collected by the developer: No** disclosures.
+
+Each concurrent interval now receives a unique signpost ID. This is required to pair overlapping close-in and selected-radius source requests correctly when exporting unified-log data; the previous default exclusive ID could not support defensible per-source attribution.
 
 ### Repeatable capture procedure
 
-1. Use Instruments’ **Points of Interest** instrument and select the `MapPerformance` category.
-2. Record the device model, OS, app commit/build, radius, period, network condition, and whether the app cache is cold or warm. Do not record a coordinate or address.
-3. Start capture before launching or opening Map. Stop after **Bounded Map Coverage Complete** or the explicit partial result.
-4. Run each scenario at least five times without changing retrieval limits. For a cold run, reinstall or clear only the app container; for a warm run, first complete the same radius/period context within the ten-minute cache lifetime.
-5. Record elapsed time from the initiating action to **Map Interactive**, **First Map Markers**, **Close-in Coverage Complete**, and **Bounded Map Coverage Complete**, plus their item counts.
-6. Report median, p90, and worst elapsed time. Keep Simulator and physical-iPhone results in separate tables and retain `.trace` files only in approved private test storage.
+1. Build a Debug app for the target Simulator without changing retrieval limits.
+2. Run `scripts/capture-map-performance-baseline.sh <simulator-udid> <path-to-DCPulse.app> <private-output.csv>`. The default is five paired cold/warm runs with a 75-second completion timeout.
+3. The Debug-only launch hook waits for the initial location context to finish loading, emits **Map Presentation Started**, and then opens Map. It is excluded from Release builds and does not alter TestFlight or App Store navigation.
+4. The script reinstalls only the app for each cold run, immediately reuses that completed context for the paired warm run, waits for **Bounded Map Coverage Complete**, and summarizes only approved signpost fields.
+5. For Instruments or physical-iPhone captures, record the device model, OS, app commit/build, radius, period, network condition, and whether the app cache is cold or warm. Do not record a coordinate or address.
+6. Report median, nearest-rank p90, and worst elapsed time. Keep Simulator and physical-iPhone results separate and retain raw `.trace` or CSV files only in approved private test storage.
 
 Use this row shape for every scenario:
 
 | Environment | Cache | Radius | Period | Network | Runs | Interactive median/p90/worst | First markers median/p90/worst | Close-in median/p90/worst | Bounded median/p90/worst | Final items | Partial sources |
 | --- | --- | --- | --- | --- | ---: | --- | --- | --- | --- | ---: | --- |
 | Pending | Cold/Warm | 0.25/0.5/1 mi | 30 days/densest | Wi-Fi/constrained/offline recovery | 5+ | Pending | Pending | Pending | Pending | Pending | Pending |
+
+### July 28, 2026 first repeatable Simulator baseline
+
+The first automated matrix used an iPhone 17 Pro Simulator on iOS 26.5, the default 0.5-mile/30-day context, normal Wi-Fi, and five paired cold/warm runs. With five samples, nearest-rank p90 is also the observed worst value.
+
+| Environment | Cache | Radius | Period | Network | Runs | Interactive median/p90/worst | First markers median/p90/worst | Close-in median/p90/worst | Bounded median/p90/worst | Final items | Partial sources |
+| --- | --- | --- | --- | --- | ---: | --- | --- | --- | --- | ---: | --- |
+| iPhone 17 Pro Simulator, iOS 26.5 | Cold | 0.5 mi | 30 days | Normal Wi-Fi | 5 | 0.098 / 0.142 / 0.142 s | 0.186 / 0.253 / 0.253 s | 11.865 / 12.962 / 12.962 s | 24.052 / 32.399 / 32.399 s | Median 553; range 479–575 | Every run partial; 2–11 failed source requests |
+| iPhone 17 Pro Simulator, iOS 26.5 | Warm | 0.5 mi | 30 days | Normal Wi-Fi | 5 | 0.113 / 0.119 / 0.119 s | 0.279 / 0.285 / 0.285 s | 10.151 / 12.446 / 12.446 s | 23.912 / 27.078 / 27.078 s | Median 575; range 549–613 | Every run partial; 2–5 failed source requests |
+
+This establishes a Simulator baseline, not a physical-device or broad-scenario baseline. Map construction and first useful rendering are not the dominant delay in this scenario: the Map is interactive in under 0.15 seconds and shows first markers in under 0.29 seconds across every run. Full bounded coverage remains slow and variable.
+
+Summed request time across the two concurrent radius passes further narrows the bottleneck. DC 311 source requests consumed a median 29.437 seconds cold and 30.212 seconds warm; Building Permits consumed 11.479 and 15.606 seconds with one 40.447-second cold outlier; DDOT consumed 1.539 and 1.440 seconds. These are overlapping aggregate durations and must not be added or treated as wall-clock time. They show that live pagination and source failures dominate, while annotation presentation does not.
+
+Warm cache made hundreds of markers available immediately but did not materially reduce bounded live reconciliation time. Because all ten runs completed partial, no retrieval-limit, timeout, default-radius, or cache-adoption decision should be made from this matrix alone. The next measurement slice should identify the exact failed source/offset distribution, repeat 0.25 and 1 mile, and reproduce on a physical iPhone before changing production behavior.
 
 ### Milestones
 

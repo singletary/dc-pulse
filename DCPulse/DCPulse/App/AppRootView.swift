@@ -56,6 +56,7 @@ struct AppRootView: View {
             await notificationService.refreshAuthorizationState()
             locationService.requestCurrentLocation()
             await loadInitialLocation()
+            openMapForPerformanceCaptureIfRequested()
             await refreshWatchedItemsAfterLaunchDelay()
         }
         .onChange(of: locationService.updateSequence) { _, _ in
@@ -112,6 +113,23 @@ struct AppRootView: View {
             if Task.isCancelled { return }
         }
         await loadResolvedLocation()
+    }
+
+    private func openMapForPerformanceCaptureIfRequested() {
+#if DEBUG
+        guard ProcessInfo.processInfo.environment["DCPULSE_MAP_PERFORMANCE_AUTOLAUNCH"] == "1" else {
+            return
+        }
+        store.mapPerformanceDiagnostics.milestone(
+            .mapPresentation,
+            context: MapPerformanceContext(
+                radiusMiles: store.radius.rawValue,
+                limit: store.items.count
+            ),
+            itemCount: store.items.count
+        )
+        navigation.selectedTab = .map
+#endif
     }
 
     private func loadResolvedLocation() async {
