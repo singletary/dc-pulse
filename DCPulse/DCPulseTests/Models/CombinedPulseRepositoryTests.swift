@@ -71,6 +71,57 @@ struct CombinedPulseRepositoryTests {
         #expect(page.items == [item])
         #expect(page.warnings == ["Slow permits records are temporarily unavailable."])
     }
+
+    @Test func reportsAnAppDeadlineSeparatelyFromAServiceFailure() async throws {
+        let item = try #require(SampleData.items.first)
+        let diagnostics = RecordingSourceDiagnostics()
+        let repository = CombinedPulseRepository(
+            sources: [
+                .init(name: "DC 311", repository: DelayedRepository()),
+                .init(
+                    name: "Building Permits",
+                    repository: FixedRepository(
+                        result: .success(.init(items: [item], nextOffset: 1, hasMore: false))
+                    )
+                )
+            ],
+            sourceTimeout: .milliseconds(100),
+            diagnostics: diagnostics
+        )
+
+        _ = try await repository.nearbyItems(
+            coordinate: SampleData.center, radiusMiles: 0.5, days: 30, offset: 0, limit: 30
+        )
+
+        #expect(diagnostics.outcomes == [.succeeded, .timedOut])
+    }
+
+    @Test func sourceSpecificDeadlineCanAccommodateAMeasuredSlowSource() async throws {
+        let item = try #require(SampleData.items.first)
+        let repository = CombinedPulseRepository(
+            sources: [
+                .init(
+                    name: "DC 311",
+                    repository: DelayedRepository(delay: .milliseconds(200), item: item),
+                    timeout: .milliseconds(300)
+                ),
+                .init(
+                    name: "Building Permits",
+                    repository: FixedRepository(
+                        result: .success(.init(items: [], nextOffset: 0, hasMore: false))
+                    )
+                )
+            ],
+            sourceTimeout: .milliseconds(100)
+        )
+
+        let page = try await repository.nearbyItems(
+            coordinate: SampleData.center, radiusMiles: 0.5, days: 30, offset: 0, limit: 30
+        )
+
+        #expect(page.items == [item])
+        #expect(page.warnings.isEmpty)
+    }
 }
 
 private struct FixedRepository: PulseRepositoryProtocol {
@@ -95,8 +146,46 @@ private actor RecordingRepository: PulseRepositoryProtocol {
 }
 
 private struct DelayedRepository: PulseRepositoryProtocol {
-    func nearbyItems(coordinate: PulseItem.Coordinate, radiusMiles: Double, days: Int, offset: Int, limit: Int) async throws -> PulsePage {
-        try await Task.sleep(for: .seconds(1))
-        return .init(items: [], nextOffset: offset, hasMore: false)
+    let delay: Duration
+    let item: PulseItem?
+
+    init(delay: Duration = .seconds(1), item: PulseItem? = nil) {
+        self.delay = delay
+        self.item = item
     }
+
+    func nearbyItems(coordinate: PulseItem.Coordinate, radiusMiles: Double, days: Int, offset: Int, limit: Int) async throws -> PulsePage {
+        try await Task.sleep(for: delay)
+        return .init(items: item.map { [$0] } ?? [], nextOffset: offset, hasMore: false)
+    }
+}
+
+private final class RecordingSourceDiagnostics: MapPerformanceDiagnosticsProtocol, @unchecked Sendable {
+    private let lock = NSLock()
+    private var recordedOutcomes: [MapPerformanceOutcome] = []
+
+    var outcomes: [MapPerformanceOutcome] {
+        lock.withLock { recordedOutcomes.sorted { $0.rawValue < $1.rawValue } }
+    }
+
+    func begin(
+        _ stage: MapPerformanceStage,
+        context: MapPerformanceContext
+    ) -> MapPerformanceInterval {
+        MapPerformanceInterval(stage: stage, state: nil)
+    }
+
+    func end(
+        _ interval: MapPerformanceInterval,
+        outcome: MapPerformanceOutcome,
+        itemCount: Int
+    ) {
+        lock.withLock { recordedOutcomes.append(outcome) }
+    }
+
+    func milestone(
+        _ milestone: MapPerformanceMilestone,
+        context: MapPerformanceContext,
+        itemCount: Int
+    ) {}
 }

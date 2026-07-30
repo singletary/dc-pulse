@@ -101,15 +101,24 @@ let outcome = coverageEnd.flatMap { capture(#"outcome=([A-Za-z]+)"#, in: $0.mess
 var sourceTotals: [String: Double] = [:]
 var sourceFailures: [String: Int] = [:]
 var failedSourceRequests = 0
+var timedOutSourceRequests = 0
+var failedSourceOffsets: [String] = []
 for (id, begin) in intervalBegins where begin.name == "Map Source Request" {
     guard let end = intervalEnds[id],
           let source = capture(#"source=([A-Za-z0-9]+)"#, in: begin.message) else {
         continue
     }
     sourceTotals[source, default: 0] += end.date.timeIntervalSince(begin.date)
-    if end.message.contains("outcome=failed") {
+    let failed = !end.message.contains("outcome=succeeded") &&
+        !end.message.contains("outcome=cancelled")
+    if failed {
         failedSourceRequests += 1
         sourceFailures[source, default: 0] += 1
+        if end.message.contains("outcome=timedOut") {
+            timedOutSourceRequests += 1
+        }
+        let offset = capture(#"offset=(\d+)"#, in: begin.message) ?? "unknown"
+        failedSourceOffsets.append("\(source):\(offset)")
     }
 }
 
@@ -131,9 +140,11 @@ let columns = [
     formatted(sourceTotals["buildingPermits"]),
     formatted(sourceTotals["ddotPermits"]),
     String(failedSourceRequests),
+    String(timedOutSourceRequests),
     String(sourceFailures["dc311", default: 0]),
     String(sourceFailures["buildingPermits", default: 0]),
-    String(sourceFailures["ddotPermits", default: 0])
+    String(sourceFailures["ddotPermits", default: 0]),
+    "\"\(failedSourceOffsets.sorted().joined(separator: "|"))\""
 ]
 
 print(columns.joined(separator: ","))

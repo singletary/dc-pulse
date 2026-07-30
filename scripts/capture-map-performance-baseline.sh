@@ -36,7 +36,7 @@ case "$radius" in
         ;;
 esac
 
-echo "radius,cache,run,launch_to_initial_s,launch_to_interactive_s,launch_to_first_markers_s,interactive_s,first_markers_s,close_in_s,bounded_s,coverage_session_s,final_items,outcome,dc311_total_s,building_permits_total_s,ddot_permits_total_s,failed_source_requests,dc311_failures,building_permits_failures,ddot_permits_failures" > "$output_csv"
+echo "radius,cache,run,launch_to_initial_s,launch_to_interactive_s,launch_to_first_markers_s,interactive_s,first_markers_s,close_in_s,bounded_s,coverage_session_s,final_items,outcome,dc311_total_s,building_permits_total_s,ddot_permits_total_s,failed_source_requests,timed_out_source_requests,dc311_failures,building_permits_failures,ddot_permits_failures,failed_source_offsets" > "$output_csv"
 
 xcrun simctl boot "$device_udid" >/dev/null 2>&1 || true
 xcrun simctl bootstatus "$device_udid" -b

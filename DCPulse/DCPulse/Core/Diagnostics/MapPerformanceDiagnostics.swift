@@ -32,6 +32,7 @@ enum MapPerformanceOutcome: String, Sendable {
     case succeeded
     case partial
     case failed
+    case timedOut
     case cancelled
 }
 

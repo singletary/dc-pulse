@@ -158,6 +158,35 @@ final class DCPulseUITests: XCTestCase {
     }
 
     @MainActor
+    func testNearYouVoiceOverLabelsAndDescriptions() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let searchContext = app.staticTexts.matching(
+            NSPredicate(
+                format: "identifier == %@ AND label BEGINSWITH %@",
+                "pulse.searchContext",
+                "Near "
+            )
+        ).firstMatch
+        XCTAssertTrue(searchContext.waitForExistence(timeout: 10))
+        XCTAssertFalse(searchContext.label.isEmpty)
+
+        for identifier in ["pulse.status.new", "pulse.status.active", "pulse.status.resolved"] {
+            let status = app.buttons[identifier]
+            scrollToElement(status, in: app)
+            XCTAssertFalse(status.label.isEmpty)
+            XCTAssertTrue((status.value as? String)?.contains("selected") == true)
+        }
+
+        let summary = app.buttons["pulse.neighborhoodSummary"]
+        scrollToElement(summary, in: app)
+        XCTAssertFalse(summary.label.isEmpty)
+
+        try app.performAccessibilityAudit(for: [.sufficientElementDescription])
+    }
+
+    @MainActor
     func testAboutOpensFromPlacesWithTrustInformation() throws {
         let app = XCUIApplication()
         app.launch()
