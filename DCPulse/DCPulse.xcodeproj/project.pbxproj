@@ -6,6 +6,16 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A1F1000130B0000100DC0001 /* 311-service-request.json in Resources */ = {isa = PBXBuildFile; fileRef = A1F2000130B0000100DC0001 /* 311-service-request.json */; };
+		A1F1000230B0000100DC0001 /* arcgis-error.json in Resources */ = {isa = PBXBuildFile; fileRef = A1F2000230B0000100DC0001 /* arcgis-error.json */; };
+		A1F1000330B0000100DC0001 /* arcgis-page.json in Resources */ = {isa = PBXBuildFile; fileRef = A1F2000330B0000100DC0001 /* arcgis-page.json */; };
+		A1F1000430B0000100DC0001 /* arcgis-success.json in Resources */ = {isa = PBXBuildFile; fileRef = A1F2000430B0000100DC0001 /* arcgis-success.json */; };
+		A1F1000530B0000100DC0001 /* building-permit-2026.json in Resources */ = {isa = PBXBuildFile; fileRef = A1F2000530B0000100DC0001 /* building-permit-2026.json */; };
+		A1F1000630B0000100DC0001 /* ddot-construction-permit-2026.json in Resources */ = {isa = PBXBuildFile; fileRef = A1F2000630B0000100DC0001 /* ddot-construction-permit-2026.json */; };
+		A1F1000730B0000100DC0001 /* restaurant-inspections-v1.json in Resources */ = {isa = PBXBuildFile; fileRef = A1F2000730B0000100DC0001 /* restaurant-inspections-v1.json */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		4EF6E64B3002957C007455AD /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +37,13 @@
 		4EF6E63D30029577007455AD /* DCPulse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DCPulse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4EF6E64A3002957C007455AD /* DCPulseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DCPulseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4EF6E6543002957C007455AD /* DCPulseUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DCPulseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1F2000130B0000100DC0001 /* 311-service-request.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "311-service-request.json"; sourceTree = "<group>"; };
+		A1F2000230B0000100DC0001 /* arcgis-error.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "arcgis-error.json"; sourceTree = "<group>"; };
+		A1F2000330B0000100DC0001 /* arcgis-page.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "arcgis-page.json"; sourceTree = "<group>"; };
+		A1F2000430B0000100DC0001 /* arcgis-success.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "arcgis-success.json"; sourceTree = "<group>"; };
+		A1F2000530B0000100DC0001 /* building-permit-2026.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "building-permit-2026.json"; sourceTree = "<group>"; };
+		A1F2000630B0000100DC0001 /* ddot-construction-permit-2026.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "ddot-construction-permit-2026.json"; sourceTree = "<group>"; };
+		A1F2000730B0000100DC0001 /* restaurant-inspections-v1.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "restaurant-inspections-v1.json"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -97,6 +114,7 @@
 				4EF6E63F30029577007455AD /* DCPulse */,
 				4EF6E64D3002957C007455AD /* DCPulseTests */,
 				4EF6E6573002957C007455AD /* DCPulseUITests */,
+				A1F3000130B0000100DC0001 /* Test Fixtures */,
 				4EF6E63E30029577007455AD /* Products */,
 			);
 			sourceTree = "<group>";
@@ -109,6 +127,21 @@
 				4EF6E6543002957C007455AD /* DCPulseUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A1F3000130B0000100DC0001 /* Test Fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				A1F2000130B0000100DC0001 /* 311-service-request.json */,
+				A1F2000230B0000100DC0001 /* arcgis-error.json */,
+				A1F2000330B0000100DC0001 /* arcgis-page.json */,
+				A1F2000430B0000100DC0001 /* arcgis-success.json */,
+				A1F2000530B0000100DC0001 /* building-permit-2026.json */,
+				A1F2000630B0000100DC0001 /* ddot-construction-permit-2026.json */,
+				A1F2000730B0000100DC0001 /* restaurant-inspections-v1.json */,
+			);
+			name = "Test Fixtures";
+			path = DCPulse/Resources/Fixtures;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -238,6 +271,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1F1000130B0000100DC0001 /* 311-service-request.json in Resources */,
+				A1F1000230B0000100DC0001 /* arcgis-error.json in Resources */,
+				A1F1000330B0000100DC0001 /* arcgis-page.json in Resources */,
+				A1F1000430B0000100DC0001 /* arcgis-success.json in Resources */,
+				A1F1000530B0000100DC0001 /* building-permit-2026.json in Resources */,
+				A1F1000630B0000100DC0001 /* ddot-construction-permit-2026.json in Resources */,
+				A1F1000730B0000100DC0001 /* restaurant-inspections-v1.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
