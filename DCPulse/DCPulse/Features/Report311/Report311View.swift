@@ -26,6 +26,13 @@ struct Report311View: View {
                         .resizable().scaledToFit().frame(maxHeight: 260)
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                         .accessibilityLabel("Photo for the service request")
+                    Button(role: .destructive) {
+                        selectedPhoto = nil
+                        viewModel.removePhoto()
+                    } label: {
+                        Label("Remove Photo", systemImage: "trash")
+                    }
+                    .accessibilityIdentifier("report311.removePhoto")
                 } else {
                     ContentUnavailableView(
                         "Start with a photo",
@@ -53,7 +60,7 @@ struct Report311View: View {
             } header: {
                 Text("What needs attention?")
             } footer: {
-                Text("Photo analysis stays on this device. DC Pulse does not read the photo’s location metadata or upload it during analysis.")
+                Text("The system picker shares only the photo you choose. Analysis stays on this device; DC Pulse does not read the photo’s location metadata or upload it during analysis.")
             }
 
             Section("Request details") {
@@ -161,9 +168,10 @@ struct Report311View: View {
         .alert("Draft copied", isPresented: $showingHandoffConfirmation) {
             Button("Open DC311 App") { openURL(DC311Handoff.appStoreURL) }
             Button("Use Official Website") { openURL(DC311Handoff.websiteURL) }
+            Button("Text DC311") { openURL(DC311Handoff.newRequestTextURL) }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("The official web portal is not loading reliably on some iPhones. For the best handoff, open the District's DC311 app, then paste the reviewed details and attach the photo.")
+            Text("Open the District's DC311 app or website to paste the reviewed details and attach the photo. To use Text DC311, send NEW and follow its prompts; it does not transfer the photo.")
         }
         .alert("Camera unavailable", isPresented: $showingCameraAccessAlert) {
             if cameraAccess.canOpenSettings {

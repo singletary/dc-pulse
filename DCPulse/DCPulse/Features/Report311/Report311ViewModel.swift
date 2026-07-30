@@ -4,6 +4,7 @@ import Observation
 enum DC311Handoff {
     static let appStoreURL = URL(string: "https://apps.apple.com/us/app/dc311/id966327559")!
     static let websiteURL = URL(string: "https://311.dc.gov/citizen/s/")!
+    static let newRequestTextURL = URL(string: "sms:32311")!
 }
 
 @MainActor @Observable
@@ -61,6 +62,13 @@ final class Report311ViewModel {
     func photoSelectionFailed(selectionSequence: Int) {
         guard selectionSequence == photoSelectionSequence else { return }
         photoSelectionError = "That photo could not be loaded. Your existing draft and photo are unchanged."
+    }
+
+    func removePhoto() {
+        photoSelectionSequence += 1
+        imageData = nil
+        analysisState = .idle
+        photoSelectionError = nil
     }
 
     func useCurrentLocation(_ coordinate: PulseItem.Coordinate?, address: String?) {

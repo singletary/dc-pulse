@@ -55,6 +55,25 @@ struct Report311ViewModelTests {
         #expect(viewModel.imageData == Data([3]))
         #expect(viewModel.draft.category == .streetlightRepair)
     }
+
+    @Test func removingAPhotoPreservesTheDraftAndRejectsLateAnalysis() async {
+        let analyzer = ControlledPhotoAnalyzer()
+        let viewModel = Report311ViewModel(analyzer: analyzer)
+        viewModel.draft.details = "Keep this description"
+        let sequence = viewModel.beginPhotoSelection()
+        let task = Task { await viewModel.setPhoto(Data([4]), selectionSequence: sequence) }
+        await analyzer.waitUntilStarted(for: 4)
+
+        viewModel.removePhoto()
+        await analyzer.finish(4, category: .graffitiRemoval)
+        await task.value
+
+        #expect(viewModel.imageData == nil)
+        #expect(viewModel.analysisState == .idle)
+        #expect(viewModel.photoSelectionError == nil)
+        #expect(viewModel.draft.details == "Keep this description")
+        #expect(viewModel.draft.category == .other)
+    }
 }
 
 private struct ImmediatePhotoAnalyzer: ReportPhotoAnalyzing {
