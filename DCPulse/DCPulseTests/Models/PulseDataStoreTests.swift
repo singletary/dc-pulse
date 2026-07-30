@@ -132,6 +132,47 @@ struct PulseDataStoreTests {
         #expect(!store.isRequestCategorySummaryLoading)
     }
 
+    @Test func rapidContextChangeRejectsTheSlowerEarlierPage() async throws {
+        let firstCoordinate = try #require(PulseItem.Coordinate(latitude: 38.90, longitude: -77.03))
+        let secondCoordinate = try #require(PulseItem.Coordinate(latitude: 38.93, longitude: -77.07))
+        let firstItem = cacheItem(source: .serviceRequests311, id: "earlier", day: 1)
+        let secondItem = cacheItem(source: .serviceRequests311, id: "latest", day: 2)
+        let repository = ContextDelayRepository(
+            firstCoordinate: firstCoordinate,
+            firstItem: firstItem,
+            secondItem: secondItem
+        )
+        let store = PulseDataStore(repository: repository)
+
+        let earlierLoad = Task {
+            await store.load(coordinate: firstCoordinate, placeName: "Earlier")
+        }
+        try await Task.sleep(for: .milliseconds(20))
+        await store.load(coordinate: secondCoordinate, placeName: "Latest")
+        await earlierLoad.value
+
+        #expect(store.searchCoordinate == secondCoordinate)
+        #expect(store.placeName == "Latest")
+        #expect(store.items == [secondItem])
+        #expect(store.state == .loaded)
+    }
+
+    @Test func cancelledLoadDoesNotPublishLateResults() async throws {
+        let item = cacheItem(source: .serviceRequests311, id: "cancelled", day: 1)
+        let store = PulseDataStore(repository: DelayedPulseRepository(item: item))
+
+        let load = Task { await store.load(force: true) }
+        try await Task.sleep(for: .milliseconds(20))
+        load.cancel()
+        await load.value
+
+        #expect(store.items.isEmpty)
+        #expect(store.state == .idle)
+        #expect(!store.isRequestSummaryLoading)
+        #expect(!store.isRequestInsightsLoading)
+        #expect(!store.isRequestCategorySummaryLoading)
+    }
+
     @Test func doesNotPresentPartialPageCountsAsCompleteWhenSummariesFail() async throws {
         let loadedItem = try #require(SampleData.items.first)
         let repository = StubPulseRepository(results: [
@@ -884,6 +925,56 @@ private final class StubPulseRepository: PulseRepositoryProtocol, @unchecked Sen
         offsetRequests.append(offset)
         limitRequests.append(limit)
         return try results.removeFirst().get()
+    }
+}
+
+private actor ContextDelayRepository: PulseRepositoryProtocol {
+    let firstCoordinate: PulseItem.Coordinate
+    let firstItem: PulseItem
+    let secondItem: PulseItem
+
+    init(
+        firstCoordinate: PulseItem.Coordinate,
+        firstItem: PulseItem,
+        secondItem: PulseItem
+    ) {
+        self.firstCoordinate = firstCoordinate
+        self.firstItem = firstItem
+        self.secondItem = secondItem
+    }
+
+    func nearbyItems(
+        coordinate: PulseItem.Coordinate,
+        radiusMiles: Double,
+        days: Int,
+        offset: Int,
+        limit: Int
+    ) async throws -> PulsePage {
+        if coordinate == firstCoordinate {
+            try await Task.sleep(for: .milliseconds(150))
+            return .init(items: [firstItem], nextOffset: 1, hasMore: false)
+        }
+        try await Task.sleep(for: .milliseconds(5))
+        return .init(items: [secondItem], nextOffset: 1, hasMore: false)
+    }
+}
+
+private actor DelayedPulseRepository: PulseRepositoryProtocol {
+    let item: PulseItem
+
+    init(item: PulseItem) {
+        self.item = item
+    }
+
+    func nearbyItems(
+        coordinate: PulseItem.Coordinate,
+        radiusMiles: Double,
+        days: Int,
+        offset: Int,
+        limit: Int
+    ) async throws -> PulsePage {
+        try await Task.sleep(for: .seconds(1))
+        return .init(items: [item], nextOffset: 1, hasMore: false)
     }
 }
 

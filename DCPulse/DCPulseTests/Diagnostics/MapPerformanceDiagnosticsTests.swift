@@ -92,6 +92,52 @@ struct MapPerformanceDiagnosticsTests {
         #expect(nextContextFirstMarkers)
         #expect(nextContextStableRender)
     }
+
+    @Test func failedRefreshReportsOnlyCoarseContextAndRetainedCount() async throws {
+        let diagnostics = RecordingMapPerformanceDiagnostics()
+        let store = PulseDataStore(
+            repository: FailingBaselineRepository(),
+            mapPerformanceDiagnostics: diagnostics
+        )
+
+        await store.load(
+            coordinate: PulseItem.Coordinate(
+                latitude: 38.9072,
+                longitude: -77.0369
+            ),
+            placeName: "Private saved place"
+        )
+
+        let snapshot = diagnostics.snapshot
+        #expect(snapshot.milestones.contains(.refreshFailure))
+        #expect(snapshot.contexts.allSatisfy { !$0.contains("38.9072") })
+        #expect(snapshot.contexts.allSatisfy { !$0.contains("-77.0369") })
+        #expect(snapshot.contexts.allSatisfy { !$0.contains("Private saved place") })
+    }
+
+    @Test func failedCoverageReportsOnlyCoarseContext() async throws {
+        let item = try #require(SampleData.items.first)
+        let diagnostics = RecordingMapPerformanceDiagnostics()
+        let store = PulseDataStore(
+            repository: BaselineThenFailingRepository(item: item),
+            mapPerformanceDiagnostics: diagnostics
+        )
+
+        await store.load(
+            coordinate: PulseItem.Coordinate(
+                latitude: 38.9072,
+                longitude: -77.0369
+            ),
+            placeName: "Private saved place"
+        )
+        await store.prepareMapResults()
+
+        let snapshot = diagnostics.snapshot
+        #expect(snapshot.milestones.contains(.coverageFailure))
+        #expect(snapshot.contexts.allSatisfy { !$0.contains("38.9072") })
+        #expect(snapshot.contexts.allSatisfy { !$0.contains("-77.0369") })
+        #expect(snapshot.contexts.allSatisfy { !$0.contains("Private saved place") })
+    }
 }
 
 private struct BaselineStubRepository: PulseRepositoryProtocol {
@@ -105,6 +151,41 @@ private struct BaselineStubRepository: PulseRepositoryProtocol {
         limit: Int
     ) async throws -> PulsePage {
         PulsePage(items: [item], nextOffset: offset + 1, hasMore: false)
+    }
+}
+
+private struct FailingBaselineRepository: PulseRepositoryProtocol {
+    func nearbyItems(
+        coordinate: PulseItem.Coordinate,
+        radiusMiles: Double,
+        days: Int,
+        offset: Int,
+        limit: Int
+    ) async throws -> PulsePage {
+        throw URLError(.notConnectedToInternet)
+    }
+}
+
+private actor BaselineThenFailingRepository: PulseRepositoryProtocol {
+    let item: PulseItem
+    private var requestCount = 0
+
+    init(item: PulseItem) {
+        self.item = item
+    }
+
+    func nearbyItems(
+        coordinate: PulseItem.Coordinate,
+        radiusMiles: Double,
+        days: Int,
+        offset: Int,
+        limit: Int
+    ) throws -> PulsePage {
+        requestCount += 1
+        guard requestCount == 1 else {
+            throw URLError(.notConnectedToInternet)
+        }
+        return PulsePage(items: [item], nextOffset: 1, hasMore: false)
     }
 }
 

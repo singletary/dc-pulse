@@ -23,6 +23,8 @@ Signing, capabilities, entitlements, bundle identifiers, and Apple-account confi
 
 The copy-ready listing, review notes, privacy recommendation, and screenshot sequence are maintained in [App Store listing](app-store-listing.md); reproducible 6.9- and 6.5-inch assets live in `marketing/app-store`.
 
+Run `scripts/audit-release-assets.sh` before selecting a candidate. It verifies the production icon, both screenshot-size sets, source privacy manifest, offline About attribution/disclosure, and live marketing/privacy/support pages. Run `scripts/audit-live-arcgis-schemas.sh` separately for the three public-data contracts. These checks do not create an archive, upload a build, or mutate App Store Connect.
+
 ## Privacy behavior and draft disclosure
 
 DC Pulse does not use tracking or advertising and does not operate a backend. Home, followed places, watched items, preferences, cached results, and normalized trend observations remain in the app's on-device storage. Map cache payloads may contain the searched coordinate and returned public records; they use iOS file protection, remain bounded by age/count/size, and are removed when iOS purges caches or the app is deleted.

@@ -181,6 +181,7 @@ actor FileBackedMapCacheStore: MapCacheStoreProtocol {
         let cutoff = referenceDate.addingTimeInterval(-policy.maximumAge)
         let sorted = records
             .filter {
+                $0.context.generation == MapCacheContext.schemaGeneration &&
                 $0.savedAt >= cutoff &&
                 $0.savedAt <= referenceDate &&
                 $0.itemCount >= 0

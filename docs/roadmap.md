@@ -33,19 +33,28 @@ The measurement plan, test matrix, home-screen concepts, and decision gates are 
 
 - [x] Trace any missing nearby record through ArcGIS paging, transfer limits, per-source allocation, cache acceptance, filtering, clustering, and final annotations. Source signposts expose privacy-safe radius/offset/deadline outcomes; repository and cache tests cover allocation, transfer continuation, and reconciliation; `MapItemPipeline` gives an in-memory disposition from received record through filter, coordinate eligibility, and final annotation without logging identifiers.
 - [x] Define and test the same-center radius inclusion invariant: with equal filters and period, every identifier returned at 0.25 mile must remain available at 0.5 and 1 mile, subject only to explicit source failure. The deterministic test deliberately omits close-in records from wider source responses and proves the independent close-in pass restores the full identifier subset at both wider radii.
-- Verify the current independent close-in and selected-radius passes on physical iPhones before treating radius inclusion as closed.
-- Add deterministic coverage for delayed and out-of-order summaries, cancellation, cache-hit refresh, rapid context changes, offline recovery, partial sources, and stale-generation rejection.
-- Validate approximate location, the 25-mile near/far threshold, every side of the District boundary, relaunch recovery, and later transition to a valid in-DC location. Replace the rectangular service envelope if physical testing finds misleading edge behavior.
-- Run a physical-device stress pass with rapid source, category, status, radius, period, location, and reset changes.
-- Repeat the live 311, Building Permit, and DDOT schema audit before each TestFlight release and update fixtures when contracts change.
-- Add privacy-safe diagnostics for refresh and coverage failures without collecting precise location or saved addresses.
+- [ ] Verify the current independent close-in and selected-radius passes on physical iPhones before treating radius inclusion as closed.
+  - July 29 attempt: the paired iPhone is discoverable, but Xcode reports Developer Mode disabled. No signing or device settings were changed. Physical coverage remains open until the device is explicitly prepared for development.
+- [x] Add deterministic coverage for delayed and out-of-order summaries, cancellation, cache-hit refresh, rapid context changes, offline recovery, partial sources, and stale-generation rejection.
+  - July 29 completion: focused store tests now prove that a slower earlier location cannot replace the latest context, cancellation publishes no late page, transient/out-of-order summaries cannot replace newer state, fresh cache hits avoid duplicate work, stale cache survives offline refresh failure, partial sources reconcile independently, and old schema generations are rejected.
+- [ ] Validate approximate location, the 25-mile near/far threshold, every side of the District boundary, relaunch recovery, and later transition to a valid in-DC location. Replace the rectangular service envelope if physical testing finds misleading edge behavior.
+  - July 29 progress: deterministic policy tests cover approximate accuracy, inclusive north/south/east/west boundaries, immediately outside every side, and measured points on both sides of the 25-mile threshold. Relaunch recovery and later valid-location transition still require the physical pass.
+- [ ] Run a physical-device stress pass with rapid source, category, status, radius, period, location, and reset changes.
+  - Blocked by the same Developer Mode requirement above; Simulator context-switch and stale-result rejection coverage passes.
+- [x] Repeat the live 311, Building Permit, and DDOT schema audit before each TestFlight release and update fixtures when contracts change.
+  - July 29 audit: all three live layers remain queryable point layers and contain every field required by their current adapters. `scripts/audit-live-arcgis-schemas.sh` makes this a reproducible pre-release gate; it must be rerun for every future candidate. No fixture update was required.
+- [x] Add privacy-safe diagnostics for refresh and coverage failures without collecting precise location or saved addresses.
+  - Refresh, pagination, and coverage failures now emit only source/pass labels, approved radius buckets, pagination limits/offsets, and retained item counts. Tests reject the private coordinate and place-name examples from recorded contexts.
 
 ## 2. App Store release readiness — critical
 
-- Complete accessibility, Dynamic Type, VoiceOver, Reduce Motion, Light/Dark Mode, and smallest-screen checks.
-- Verify production icon, screenshots, privacy report, public URLs, About content, attribution, and the independent-app disclosure in the selected release build.
-- Complete the focused external beta pass described in [release status](release-status.md) before public App Review.
-- Use [App Store readiness](app-store-readiness.md) as the operational gate and [App Store listing](app-store-listing.md) as copy-ready metadata.
+- [ ] Complete accessibility, Dynamic Type, VoiceOver, Reduce Motion, Light/Dark Mode, and smallest-screen checks.
+  - July 29 progress: iPhone 17e UI checks pass at the largest accessibility text size, the focused accessibility-description audit passes, and all four Light/Dark portrait/landscape launch configurations pass. Copy confirmations now suppress their transition when Reduce Motion is enabled. Manual VoiceOver order/rotor and physical-device checks remain open.
+- [ ] Verify production icon, screenshots, privacy report, public URLs, About content, attribution, and the independent-app disclosure in the selected release build.
+  - July 29 progress: the 1024-pixel icon and both four-image screenshot sets have exact dimensions and no alpha; the source privacy manifest validates; public marketing, privacy, and support routes respond; and About plus the website retain attribution and independent-app disclosures. `scripts/audit-release-assets.sh` reproduces these checks. Archive privacy-report and selected-upload verification remain intentionally open because no new archive or TestFlight upload was created.
+- [ ] Complete the focused external beta pass described in [release status](release-status.md) before public App Review.
+  - Deferred until a later TestFlight candidate; no tester-group or App Store Connect changes were made.
+- [x] Use [App Store readiness](app-store-readiness.md) as the operational gate and [App Store listing](app-store-listing.md) as copy-ready metadata.
 
 ## 3. Direct 311 submission discovery — high, contract-gated
 

@@ -26,6 +26,8 @@ enum MapPerformanceMilestone: String, CaseIterable, Sendable {
     case selectedRadiusCoverage
     case boundedCoverage
     case clusteringStable
+    case refreshFailure
+    case coverageFailure
 }
 
 enum MapPerformanceOutcome: String, Sendable {
@@ -218,6 +220,10 @@ struct MapPerformanceDiagnostics: MapPerformanceDiagnosticsProtocol, Sendable {
             signposter.emitEvent("Bounded Map Coverage Complete", "\(metadata, privacy: .public) count=\(itemCount)")
         case .clusteringStable:
             signposter.emitEvent("Map Clustering Stable", "\(metadata, privacy: .public) count=\(itemCount)")
+        case .refreshFailure:
+            signposter.emitEvent("Refresh Failure", "\(metadata, privacy: .public) retained=\(itemCount)")
+        case .coverageFailure:
+            signposter.emitEvent("Map Coverage Failure", "\(metadata, privacy: .public) retained=\(itemCount)")
         }
     }
 }

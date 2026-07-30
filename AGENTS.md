@@ -32,6 +32,7 @@ xcodebuild -project DCPulse/DCPulse.xcodeproj -scheme DCPulse -destination 'plat
 
 ## GitHub workflow
 - Use the authenticated GitHub connector as the default for GitHub reads and mutations, including pull request creation. Use `gh` only when the connector cannot perform the required operation.
+- In Codex, run every networked `gh` command outside the network-restricted sandbox. A sandboxed `gh auth status` can misclassify blocked GitHub API access as an invalid token. Never log out, reauthorize, or replace the stored credential based on a sandboxed result; verify with an escalated `gh auth status` and `gh api user` first.
 - Use local Git for branch creation, staging, commits, rebases, and pushes.
 - After completing and verifying an authorized project task, commit the intended changes, push the feature branch, and open a draft pull request without waiting for a separate publishing request.
 - When a pull request is verified, mergeable, appropriately scoped, and has no unresolved checks or review blockers, mark it ready and merge it without waiting for a separate merge request. Keep it open when review, CI, dependencies, or risk still require attention.

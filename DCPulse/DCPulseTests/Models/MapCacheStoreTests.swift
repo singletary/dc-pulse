@@ -114,6 +114,25 @@ struct MapCacheStoreTests {
         }
     }
 
+    @Test func rejectsRecordsFromAStaleSchemaGeneration() async throws {
+        let store = makeStore()
+        let staleContext = MapCacheContext(
+            coordinate: SampleData.center,
+            radiusMiles: 0.5,
+            periodDays: 30,
+            generation: MapCacheContext.schemaGeneration - 1
+        )
+        try await store.save(MapCacheRecord(
+            context: staleContext,
+            savedAt: Date(timeIntervalSince1970: 1_000),
+            itemCount: 1,
+            payload: Data("stale".utf8)
+        ))
+
+        #expect(await store.record(for: staleContext) == nil)
+        #expect(await store.mostRecentRecord() == nil)
+    }
+
     private func makeStore(
         policy: MapCachePolicy = .init(
             maximumEntries: 6,
