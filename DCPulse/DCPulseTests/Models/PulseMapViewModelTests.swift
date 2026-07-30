@@ -24,4 +24,47 @@ struct PulseMapViewModelTests {
         viewModel.center(on: coordinate, radius: .oneMile)
         #expect(viewModel.region.span.latitudeDelta == 0.04)
     }
+
+    @Test func mapStatusKeepsNormalRefreshStateConcise() {
+        let refreshedAt = Date(timeIntervalSince1970: 1_800_000_000)
+
+        #expect(
+            MapStatusPresentation(
+                isUpdating: false,
+                warning: nil,
+                lastUpdated: refreshedAt
+            ) == .refreshed(refreshedAt)
+        )
+        #expect(
+            MapStatusPresentation(
+                isUpdating: true,
+                warning: nil,
+                lastUpdated: refreshedAt
+            ) == .refreshed(refreshedAt)
+        )
+    }
+
+    @Test func mapStatusShowsErrorsAndInitialLoadingOnlyWhenNeeded() {
+        #expect(
+            MapStatusPresentation(
+                isUpdating: false,
+                warning: "DC 311 could not update.",
+                lastUpdated: Date()
+            ) == .warning("DC 311 could not update.")
+        )
+        #expect(
+            MapStatusPresentation(
+                isUpdating: true,
+                warning: nil,
+                lastUpdated: nil
+            ) == .loading
+        )
+        #expect(
+            MapStatusPresentation(
+                isUpdating: false,
+                warning: nil,
+                lastUpdated: nil
+            ) == .hidden
+        )
+    }
 }

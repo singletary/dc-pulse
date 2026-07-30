@@ -89,6 +89,7 @@ gate.
 - Coverage warnings now retain the affected close-in or selected-radius pass and the source warning returned for that pass.
 - The compact warning explicitly preserves the usability of existing markers and opens an accessible detail sheet with pass-specific information and a real Map coverage retry action.
 - Loading copy now names the bounded coverage being loaded instead of implying numeric progress that the app cannot defend.
+- July 30 tester feedback supersedes the persistent loading copy: build 11 shows only **Last refreshed …** whenever a timestamp exists, uses a compact accessible activity indicator before the first refresh, and reserves explanatory text for actionable errors or partial-source failures.
 - Simulator and physical-device reproduction-matrix results remain to be recorded before this workstream is complete.
 
 ### Reproduction matrix

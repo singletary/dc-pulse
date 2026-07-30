@@ -44,38 +44,8 @@ struct PulseMapView: View {
             .accessibilityIdentifier("map.filter")
             .accessibilityHint("Opens expandable filters for data, status, time, radius, and category")
             .overlay(alignment: .top) {
-                if isMapUpdating {
-                    VStack(spacing: 4) {
-                        if store.isMapCoverageLoading, store.mapCoverageTotalUnits > 0 {
-                            ProgressView(
-                                value: Double(store.mapCoverageCompletedUnits),
-                                total: Double(store.mapCoverageTotalUnits)
-                            )
-                            .progressViewStyle(.linear)
-                            .accessibilityValue(
-                                "\(store.mapCoverageCompletedUnits) of \(store.mapCoverageTotalUnits) " +
-                                "\(store.mapCoverageTotalUnits == 1 ? "area" : "areas") complete"
-                            )
-                        } else {
-                            ProgressView()
-                                .controlSize(.small)
-                        }
-                        Text(mapLoadingLabel)
-                            .font(.caption2.weight(.medium))
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
-                        if store.isShowingCachedResults, let lastUpdated = store.lastUpdated {
-                            cachedResultsLabel(lastUpdated)
-                        }
-                    }
-                    .padding(.horizontal, 14).padding(.vertical, 8)
-                    .frame(maxWidth: 340)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                    .offset(y: 54)
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel(mapLoadingLabel)
-                } else if let warning = store.mapCoverageWarning {
+                switch mapStatusPresentation {
+                case .warning(let warning):
                     Button {
                         showingCoverageDetails = true
                     } label: {
@@ -92,13 +62,23 @@ struct PulseMapView: View {
                     .offset(y: 54)
                     .accessibilityIdentifier("map.coverageWarning")
                     .accessibilityHint("Shows affected areas and retry options")
-                } else if store.isShowingCachedResults, let lastUpdated = store.lastUpdated {
-                    cachedResultsLabel(lastUpdated)
+                case .refreshed(let lastUpdated):
+                    Text("Last refreshed \(lastUpdated, style: .relative)")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
                         .padding(.horizontal, 14).padding(.vertical, 10)
-                        .frame(maxWidth: 340, alignment: .leading)
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                         .offset(y: 54)
-                        .accessibilityIdentifier("map.cachedResults")
+                        .accessibilityIdentifier("map.lastRefreshed")
+                case .loading:
+                    ProgressView()
+                        .controlSize(.small)
+                        .padding(10)
+                        .background(.ultraThinMaterial, in: Circle())
+                        .offset(y: 54)
+                        .accessibilityLabel("Updating map")
+                case .hidden:
+                    EmptyView()
                 }
             }
         }
@@ -284,30 +264,12 @@ struct PulseMapView: View {
         store.isLoading || store.isMapCoverageLoading || isCategoryLoading
     }
 
-    private func cachedResultsLabel(_ lastUpdated: Date) -> some View {
-        Label {
-            Text(
-                store.cachedResultsAreStale
-                    ? "Showing older cached markers · Updated \(lastUpdated, style: .relative)"
-                    : "Showing cached markers · Updated \(lastUpdated, style: .relative)"
-            )
-            .multilineTextAlignment(.leading)
-            .fixedSize(horizontal: false, vertical: true)
-        } icon: {
-            Image(systemName: store.cachedResultsAreStale ? "clock.badge.exclamationmark" : "clock")
-        }
-        .font(.caption.weight(.medium))
-        .foregroundStyle(.secondary)
-        .accessibilityElement(children: .combine)
-    }
-
-    private var mapLoadingLabel: String {
-        if isCategoryLoading { return "Loading \(requestTypeFilter ?? "category") requests…" }
-        if store.isLoading { return "Updating map…" }
-        if store.isMapCoverageLoading {
-            return store.mapCoverageLoadingDescription ?? "Loading nearby map results…"
-        }
-        return "Updating map…"
+    private var mapStatusPresentation: MapStatusPresentation {
+        MapStatusPresentation(
+            isUpdating: isMapUpdating,
+            warning: store.mapCoverageWarning,
+            lastUpdated: store.lastUpdated
+        )
     }
 
     private var coverageDetails: some View {
@@ -557,6 +519,25 @@ struct PulseMapView: View {
         }
     }
 
+}
+
+enum MapStatusPresentation: Equatable {
+    case loading
+    case refreshed(Date)
+    case warning(String)
+    case hidden
+
+    init(isUpdating: Bool, warning: String?, lastUpdated: Date?) {
+        if !isUpdating, let warning {
+            self = .warning(warning)
+        } else if let lastUpdated {
+            self = .refreshed(lastUpdated)
+        } else if isUpdating {
+            self = .loading
+        } else {
+            self = .hidden
+        }
+    }
 }
 
 private struct MapCoverageContext: Hashable {
