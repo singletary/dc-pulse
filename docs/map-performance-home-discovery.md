@@ -59,12 +59,29 @@ gate.
    cached, or batched without changing visible correctness.
 4. Define one observable loading model owned below the views so Near You and Map
    can display the same in-flight work and accepted results.
+5. Trace the internal TestFlight warning **Some nearby results did not update…**
+   to the exact failed source, pass, page, deadline, cancellation, or generation
+   decision. Verify whether the warning represents a real public-source failure
+   or an app-created false positive before changing its presentation.
+6. Audit the view-model projection from repository coverage progress to the Map
+   status UI. Record why the progress bar is absent or inaccurate while a
+   refresh timestamp is visible, and define one generation-safe completed/total
+   contract that reaches completion only when accepted loading work completes.
+7. Reproduce leaving and returning to Map after a partial-update warning. Trace
+   whether view reconstruction clears the warning without recovery, a source
+   succeeds while Map is inactive, or a completed accepted generation fails to
+   publish its refresh timestamp. Navigation must not be treated as a refresh.
 
 ### Acceptance criteria
 
 - The Map indicator advances from actual accepted work. It may use defensible
   source/page units or named stages, but it must not imply precision the
   repository cannot measure.
+- While loading is active, a visible progress bar appears alongside the retained
+  **Last refreshed …** context and advances from the repository-owned
+  completed/total contract. The timestamp must not conceal progress. When no
+  defensible total exists, use an accessible indeterminate state instead of a
+  fabricated percentage.
 - Compatible loading begun during launch appears as current progress when the
   person opens Map; progress does not restart merely because the tab changed.
 - Map renders compatible cached or already-accepted Home results immediately,
@@ -77,6 +94,14 @@ gate.
 - When a public source is genuinely partial or unavailable, primary copy says
   what did not update and whether visible results are still usable; details may
   retain technical pass/source information for diagnosis.
+- A genuine partial-source warning does not occupy a large persistent card over
+  the Map. Show a compact accessible warning icon adjacent to **Last refreshed
+  …**; activating it reveals the affected source/pass, retained-data
+  explanation, dismissal, and Retry controls.
+- Warning and timestamp state survive tab navigation consistently. A warning
+  clears only after recovery, explicit dismissal, or a superseding accepted
+  generation; **Last refreshed …** advances only for a successfully accepted
+  refresh and does advance when that refresh completes while Map is inactive.
 - Retry requests only failed or missing work when safe, remains accessible, and
   does not duplicate an equivalent request already in flight.
 - Progress and warning diagnostics remain local and exclude precise coordinates,
@@ -90,6 +115,15 @@ gate.
 - The compact warning explicitly preserves the usability of existing markers and opens an accessible detail sheet with pass-specific information and a real Map coverage retry action.
 - Loading copy now names the bounded coverage being loaded instead of implying numeric progress that the app cannot defend.
 - July 30 tester feedback supersedes the persistent loading copy: build 11 shows only **Last refreshed …** whenever a timestamp exists, uses a compact accessible activity indicator before the first refresh, and reserves explanatory text for actionable errors or partial-source failures.
+- July 30 internal TestFlight follow-up: the timestamp-only treatment currently
+  conceals or misrepresents live progress, and the recurring partial-update
+  message occupies too much of the Map. This workstream remains open at P0 until
+  the failure is reproduced and fixed, real progress is visible and accurate,
+  and genuine residual warnings use the compact icon-and-detail treatment above.
+- July 30 navigation follow-up: leaving and returning to Map removed the warning
+  without advancing **Last refreshed …**. Treat this as a state-lifecycle
+  correctness finding until diagnostics establish whether recovery occurred or
+  the view merely discarded warning/timestamp state.
 - Simulator and physical-device reproduction-matrix results remain to be recorded before this workstream is complete.
 
 ### Reproduction matrix
@@ -112,8 +146,18 @@ For every failure or warning, record the accepted load generation, coverage pass
 
 - The control and status text do not truncate at supported Dynamic Type sizes.
 - Progress is described as measurable completion only when the app has a defensible numerator and denominator. Otherwise it uses staged language such as **Loading DC 311** or **Adding permits**.
+- A determinate progress bar is visible whenever the repository exposes a
+  defensible completed/total value, continues updating even when **Last
+  refreshed …** is present, and completes or disappears only for the matching
+  accepted load generation.
 - The map remains interactive after its first useful marker set is visible.
 - A partial warning states what is incomplete and whether existing markers remain usable.
+- The default Map surface represents a partial warning with a compact,
+  VoiceOver-labeled icon beside **Last refreshed …**, not a persistent block of
+  explanatory text.
+- Leaving and returning to Map neither silently discards an unresolved warning
+  nor changes the refresh timestamp. Recovery completed while Map is inactive
+  clears the warning and publishes the accepted completion time on return.
 - The warning opens an accessible detail surface with affected sources/passes, retry, and dismissal.
 - Retry invokes a real supported action; copy does not claim that Map supports pull-to-refresh unless that interaction is implemented.
 - VoiceOver announces loading transitions without repeatedly interrupting map exploration.
