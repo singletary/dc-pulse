@@ -204,6 +204,27 @@ A dedicated largest-accessibility-text UI check now runs on iPhone 17e with iOS 
 
 An iPhone 16e on iOS 18.5 is installed but cannot run this project’s iOS 26.5 deployment target, so it is not a valid smallest-supported destination. This automated pass advances the validation matrix but does not substitute for VoiceOver task narration or physical-iPhone testing. Those two gates remain open.
 
+## July 30, 2026 saved-Home confirmation follow-up
+
+Internal TestFlight feedback found that the purple Home icon identifies the
+address type but does not clearly confirm that the displayed address is
+persisted as the person’s saved Home. Add a compact trailing status treatment
+beside the saved address—such as a check-and-**Saved** badge or an equivalent
+native treatment—after comparing it with the existing Home icon, row actions,
+and status colors.
+
+The final design must:
+
+- communicate **Saved as Home** without relying on green or color alone;
+- remain visually secondary to the address and avoid adding another large card;
+- expose one concise VoiceOver value or label rather than announcing duplicate
+  Home and saved-state fragments;
+- remain legible without truncating the address at supported Dynamic Type sizes;
+- appear only after persistence succeeds and disappear immediately after Home
+  is removed; and
+- include deterministic presentation coverage for saved, unsaved, save-failed,
+  and removal states.
+
 ## Validation plan
 
 Before implementation is treated as complete, run five moderated or dogfood task passes in loaded, loading, partial, no-Home, and accessibility-size states:
