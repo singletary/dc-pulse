@@ -12,6 +12,18 @@ struct DC311RequestHandoffTests {
         let instruction = DC311RequestHandoff.instruction(for: "26-00012345")
         #expect(instruction.contains("26-00012345"))
         #expect(instruction.contains("Paste"))
-        #expect(instruction.contains("official status"))
+        #expect(instruction.contains("STATUS"))
+    }
+
+    @Test func copiedIdentifiersAreTrimmedBeforeHandoff() {
+        #expect(DC311RequestHandoff.normalizedIdentifier("  26-00012345\n") == "26-00012345")
+        #expect(!DC311RequestHandoff.instruction(for: "  26-00012345\n").contains("\n"))
+    }
+
+    @Test func textStatusHandoffTargetsTheOfficialShortCodeWithoutSending() {
+        let components = URLComponents(url: DC311RequestHandoff.statusTextURL, resolvingAgainstBaseURL: false)
+        #expect(components?.scheme == "sms")
+        #expect(components?.path == "32311")
+        #expect(components?.queryItems == nil)
     }
 }

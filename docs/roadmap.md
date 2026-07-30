@@ -63,8 +63,10 @@ This remains the highest-priority product-development track after TestFlight sta
 
 - [x] Finish locally testable camera-unavailable, denied/restricted camera, cancellation, picker-error, and reselection behavior without losing the draft. Permission and photo-analysis races now have deterministic coverage; limited-library and physical Camera/Photos validation remain in the next item.
 - Verify on a physical iPhone that Camera and Photos reach the same on-device analysis and editable review flow.
-- Identify how recently reported third-party apps submit DC 311 requests: documented API, partner agreement, supported deep link, web parameters, or an unofficial endpoint.
-- Document authentication, fields, categories, photo handling, rate limits, terms, confirmation behavior, and a safe non-production verification approach.
+- [x] Identify the currently documented DC 311 routes and assess the legacy Open311 endpoint, partner/deep-link evidence, and unsafe private alternatives.
+  - July 29 completion: current OUC sources confirm the official app, portal, phone, X, and Text DC311 channels. Read-only checks found the legacy Open311 endpoint unreachable and no current key, test, terms, or support contract. DC Pulse now offers user-controlled `NEW` and `STATUS` text handoffs without sending or pre-filling a message. See [Direct DC 311 submission discovery](direct-311-submission-discovery.md).
+- [x] Document the direct-submission contract questions and a safe non-production verification approach.
+  - Authentication, fields, service definitions, photo handling, contact/privacy rules, rate limits, idempotency, cancellation, confirmation behavior, terms, and an approval-gated test plan are recorded in the discovery document. Direct submission remains blocked pending a supported District contract.
 - Do not automate the public portal, depend on private Salesforce interfaces, or send live test requests without deliberate approval.
 - If a supported route exists, design an injected client with idempotency, cancellation, validation, retry boundaries, and a returned DC confirmation number while preserving official handoff fallback.
 - Keep every inferred photo/category/location value editable and never represent a draft as submitted without DC confirmation.
@@ -94,7 +96,8 @@ This remains the highest-priority product-development track after TestFlight sta
 - Validate DC 311 request-ID search, paste behavior, cancellation, and official-site failure on a physical iPhone.
 - Investigate only supported or permissioned record-detail links; do not guess URLs, scrape authenticated pages, or persist private Salesforce identifiers.
 - Improve official permit-violation handoffs only when DOB or DDOT publishes supported address- or permit-specific parameters.
-- Add focused tests for source-specific summaries, missing fields, stable formatting, and exclusion of hidden coordinates or irrelevant attributes.
+- [x] Add focused tests for source-specific summaries, missing fields, stable formatting, and exclusion of hidden coordinates or irrelevant attributes.
+  - July 29 completion: focused item-detail tests now cover DC 311 and DDOT source-specific identifiers/date labels, whitespace-only optional fields, curated attributes, stable field order, and exclusion of address, narrative, and coordinate context from Copy All Details.
 
 ## 7. Additional civic datasets — medium
 

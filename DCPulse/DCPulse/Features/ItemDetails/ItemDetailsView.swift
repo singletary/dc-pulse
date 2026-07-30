@@ -113,6 +113,7 @@ struct ItemDetailsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .alert("Request ID copied", isPresented: $showing311Handoff) {
             Button("Open DC 311") { openURL(DC311RequestHandoff.officialURL) }
+            Button("Check by Text") { openURL(DC311RequestHandoff.statusTextURL) }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text(DC311RequestHandoff.instruction(for: item.id.sourceIdentifier))
@@ -178,7 +179,7 @@ struct ItemDetailsView: View {
     }
 
     private func prepare311Handoff() {
-        UIPasteboard.general.string = item.id.sourceIdentifier
+        UIPasteboard.general.string = DC311RequestHandoff.normalizedIdentifier(item.id.sourceIdentifier)
         showing311Handoff = true
     }
 

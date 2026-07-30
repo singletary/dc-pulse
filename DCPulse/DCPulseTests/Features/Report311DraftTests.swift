@@ -11,6 +11,13 @@ struct Report311DraftTests {
         #expect(DC311Handoff.websiteURL.host == "311.dc.gov")
     }
 
+    @Test func textHandoffStartsTheDocumentedNewRequestFlowWithoutSending() {
+        let components = URLComponents(url: DC311Handoff.newRequestTextURL, resolvingAgainstBaseURL: false)
+        #expect(components?.scheme == "sms")
+        #expect(components?.path == "32311")
+        #expect(components?.queryItems == nil)
+    }
+
     @Test func suggestsCivicCategoriesFromImageClassifications() {
         #expect(ReportSuggestionEngine.category(for: ["street", "pothole", "asphalt"]) == .pothole)
         #expect(ReportSuggestionEngine.category(for: ["Norway rat", "animal"]) == .rodentControl)
