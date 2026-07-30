@@ -7,6 +7,7 @@ struct ItemDetailsView: View {
     let item: PulseItem
     @Environment(\.modelContext) private var modelContext
     @Environment(\.openURL) private var openURL
+    @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
     @Query private var watchedItems: [WatchedPulseItem]
     @State private var copyConfirmation: String?
     @State private var showing311Handoff = false
@@ -197,11 +198,15 @@ struct ItemDetailsView: View {
     private func copy(_ value: String, label: String) {
         UIPasteboard.general.string = value
         let confirmation = "\(label) copied"
-        withAnimation { copyConfirmation = confirmation }
+        withAnimation(accessibilityReduceMotion ? nil : .default) {
+            copyConfirmation = confirmation
+        }
         Task {
             try? await Task.sleep(for: .seconds(2))
             guard copyConfirmation == confirmation else { return }
-            withAnimation { copyConfirmation = nil }
+            withAnimation(accessibilityReduceMotion ? nil : .default) {
+                copyConfirmation = nil
+            }
         }
     }
 }

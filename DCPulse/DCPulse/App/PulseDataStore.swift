@@ -324,6 +324,15 @@ final class PulseDataStore {
             state = restoredCache ? (items.isEmpty ? .empty : .loaded) : .idle
         } catch {
             guard requestSequence == loadSequence else { return }
+            mapPerformanceDiagnostics.milestone(
+                .refreshFailure,
+                context: MapPerformanceContext(
+                    radiusMiles: radius.rawValue,
+                    offset: 0,
+                    limit: Self.pageSize
+                ),
+                itemCount: restoredCache ? items.count : 0
+            )
             isRequestSummaryLoading = false
             isRequestInsightsLoading = false
             isRequestCategorySummaryLoading = false
@@ -371,6 +380,15 @@ final class PulseDataStore {
             return
         } catch {
             guard requestSequence == loadSequence else { return }
+            mapPerformanceDiagnostics.milestone(
+                .refreshFailure,
+                context: MapPerformanceContext(
+                    radiusMiles: radius.rawValue,
+                    offset: requestedOffset,
+                    limit: limit
+                ),
+                itemCount: items.count
+            )
             loadMoreError = error.localizedDescription
         }
     }
@@ -735,6 +753,11 @@ final class PulseDataStore {
             return .cancelled
         } catch {
             mapPerformanceDiagnostics.end(interval, outcome: .failed, itemCount: 0)
+            mapPerformanceDiagnostics.milestone(
+                .coverageFailure,
+                context: context,
+                itemCount: items.count
+            )
             markMapCoverageUnitComplete(
                 pass: pass,
                 coverageSequence: coverageSequence,

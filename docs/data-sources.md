@@ -10,6 +10,12 @@ A read-only, one-record query against each production layer confirmed that every
 
 The audit demonstrates current schema compatibility, not an availability guarantee. Fixture-backed adapter tests remain the deterministic boundary verification, and live failures must continue to degrade independently by source.
 
+## Live schema smoke audit — July 29, 2026
+
+The read-only `scripts/audit-live-arcgis-schemas.sh` gate passed for DC 311 (`FeatureServer/21`), Building Permits (`FeatureServer/18`), and DDOT Construction Permits (`FeatureServer/48`). Each endpoint still identifies as a query-capable point layer, advertises a positive record limit, returns numeric point geometry for a one-record query, and contains every field requested by its production repository.
+
+No source contract changed, so the fixture-backed adapter payloads did not require an update. This remains a point-in-time compatibility check and must be repeated before each future TestFlight candidate.
+
 ## Incremental-refresh capability audit — July 28, 2026
 
 A read-only metadata audit of the same production layers confirmed that 311 `EDITED`, Building Permits `LASTMODIFIEDDATE`, and DDOT `EDITED` remain available as date fields. Every layer supports pagination, ordering, and standardized `where` queries, but reports no sync change feed, historic-moment query support, or archiving. These update fields support overlapping-window refresh and stable-identity replacement; they do not make absence authoritative.
