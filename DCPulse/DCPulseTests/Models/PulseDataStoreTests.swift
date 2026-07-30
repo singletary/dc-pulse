@@ -413,6 +413,23 @@ struct PulseDataStoreTests {
         #expect(store.items == [item])
     }
 
+    @Test func mapWaitsForAnInFlightNearYouPageBeforePlanningCoverage() async throws {
+        let item = try #require(SampleData.items.first)
+        let repository = DelayedInitialRepository(item: item)
+        let store = PulseDataStore(repository: repository)
+
+        let initialLoad = Task { await store.load(force: true) }
+        try await Task.sleep(for: .milliseconds(20))
+        let mapLoad = Task { await store.prepareMapResults() }
+        await initialLoad.value
+        await mapLoad.value
+
+        #expect(await repository.radiusRequests == [0.5, 0.25])
+        #expect(await repository.offsetRequests == [0, 0])
+        #expect(store.items == [item])
+        #expect(store.mapCoverageWarning == nil)
+    }
+
     @Test func selectedRadiusCoverageStillLoadsWhenCloseInVerificationFails() async throws {
         let broadItem = try #require(SampleData.items.first)
         let laterBroadItem = try #require(SampleData.items.dropFirst().first)
@@ -429,7 +446,7 @@ struct PulseDataStoreTests {
         #expect(Set(store.items.map(\.id)) == Set([broadItem.id, laterBroadItem.id]))
         #expect(repository.radiusRequests == [0.5, 0.25, 0.5])
         #expect(store.sourceWarnings.isEmpty)
-        #expect(store.mapCoverageWarning == "Some map results could not update. Existing markers are still available.")
+        #expect(store.mapCoverageWarning == "Some nearby results did not update. Existing markers are still available.")
         #expect(store.mapCoverageIssues == [
             .init(
                 pass: .closeIn,
@@ -454,7 +471,7 @@ struct PulseDataStoreTests {
         await store.prepareMapResults()
 
         #expect(store.sourceWarnings.isEmpty)
-        #expect(store.mapCoverageWarning == "Some map results could not update. Existing markers are still available.")
+        #expect(store.mapCoverageWarning == "Some nearby results did not update. Existing markers are still available.")
         #expect(store.mapCoverageIssues == [
             .init(
                 pass: .closeIn,
@@ -489,7 +506,7 @@ struct PulseDataStoreTests {
                 message: "Building Permits records are temporarily unavailable. Markers already on the map remain available."
             )
         ])
-        #expect(store.mapCoverageIssues[0].pass.label(selectedRadius: store.radius) == "Selected 0.25-mile coverage")
+        #expect(store.mapCoverageIssues[0].pass.label(selectedRadius: store.radius) == "Selected area (0.25 mile)")
 
         await store.retryMapCoverage()
 
@@ -974,6 +991,31 @@ private actor DelayedPulseRepository: PulseRepositoryProtocol {
         limit: Int
     ) async throws -> PulsePage {
         try await Task.sleep(for: .seconds(1))
+        return .init(items: [item], nextOffset: 1, hasMore: false)
+    }
+}
+
+private actor DelayedInitialRepository: PulseRepositoryProtocol {
+    let item: PulseItem
+    private(set) var radiusRequests: [Double] = []
+    private(set) var offsetRequests: [Int] = []
+
+    init(item: PulseItem) {
+        self.item = item
+    }
+
+    func nearbyItems(
+        coordinate: PulseItem.Coordinate,
+        radiusMiles: Double,
+        days: Int,
+        offset: Int,
+        limit: Int
+    ) async throws -> PulsePage {
+        radiusRequests.append(radiusMiles)
+        offsetRequests.append(offset)
+        if radiusRequests.count == 1 {
+            try await Task.sleep(for: .milliseconds(120))
+        }
         return .init(items: [item], nextOffset: 1, hasMore: false)
     }
 }

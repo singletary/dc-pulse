@@ -186,6 +186,30 @@ A second five-pair default-radius capture started its clock at app initializatio
 
 One cold outlier retained only 44 items after four source failures, while cached warm runs retained 544–620. Together with deterministic corruption, expiration, multi-context isolation, partial-source, and timestamp-preservation tests, the evidence supports adopting the cached-first design. It does not make bounded live reconciliation faster, and it does not close the repeated DC 311 partial-source defect.
 
+### July 29, 2026 same-build warning-reproduction check
+
+After the request-reuse and warning-copy changes, one cold/warm pair at every
+radius was captured from the same Debug build on the iPhone 17 Pro Simulator,
+iOS 26.5, 30-day Downtown DC context, and normal Wi-Fi. Timings below start at
+app launch. All six runs reached bounded coverage with zero failed or timed-out
+source requests; the formerly recurring partial DC 311 warning did not
+reproduce.
+
+| Radius | Cache | Initial results | Interactive | First markers | Close-in | Bounded | Final items |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.25 mi | Cold | 3.402 s | 5.110 s | 5.176 s | N/A | 19.932 s | 218 |
+| 0.25 mi | Warm | 1.915 s | 3.642 s | 3.743 s | N/A | 21.184 s | 218 |
+| 0.5 mi | Cold | 3.546 s | 3.630 s | 3.712 s | 16.161 s | 21.825 s | 680 |
+| 0.5 mi | Warm | 1.944 s | 2.052 s | 2.186 s | 17.523 s | 22.449 s | 683 |
+| 1 mi | Cold | 3.675 s | 8.964 s | 9.032 s | 17.191 s | 17.233 s | 761 |
+| 1 mi | Warm | 1.909 s | 3.616 s | 3.722 s | 17.425 s | 17.441 s | 761 |
+
+This is evidence that the warning is not currently reproducible in the normal
+Wi-Fi Simulator path, not proof that the public source can never be partial.
+Constrained/high-latency, offline recovery, repeated samples, and physical
+iPhone runs remain required. No timeout or retrieval-limit change is justified
+by this small successful slice.
+
 ### Milestones
 
 Measure wall-clock time from the initiating action to:

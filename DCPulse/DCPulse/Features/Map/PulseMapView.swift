@@ -91,7 +91,7 @@ struct PulseMapView: View {
                     .buttonStyle(.plain)
                     .offset(y: 54)
                     .accessibilityIdentifier("map.coverageWarning")
-                    .accessibilityHint("Shows affected coverage passes and retry options")
+                    .accessibilityHint("Shows affected areas and retry options")
                 } else if store.isShowingCachedResults, let lastUpdated = store.lastUpdated {
                     cachedResultsLabel(lastUpdated)
                         .padding(.horizontal, 14).padding(.vertical, 10)
@@ -305,7 +305,7 @@ struct PulseMapView: View {
         if isCategoryLoading { return "Loading \(requestTypeFilter ?? "category") requests…" }
         if store.isLoading { return "Updating map…" }
         if store.isMapCoverageLoading {
-            return store.mapCoverageLoadingDescription ?? "Loading map coverage…"
+            return store.mapCoverageLoadingDescription ?? "Loading nearby map results…"
         }
         return "Updating map…"
     }
@@ -314,7 +314,7 @@ struct PulseMapView: View {
         NavigationStack {
             List {
                 Section {
-                    Text("Markers already on the map remain usable. The sections below identify coverage that may be incomplete.")
+                    Text("Markers already on the map remain usable. The sections below identify nearby results that did not finish updating.")
                 }
 
                 ForEach(store.mapCoverageIssues) { issue in
@@ -329,13 +329,13 @@ struct PulseMapView: View {
                         showingCoverageDetails = false
                         Task { await store.retryMapCoverage() }
                     } label: {
-                        Label("Retry Map Coverage", systemImage: "arrow.clockwise")
+                        Label("Retry Missing Results", systemImage: "arrow.clockwise")
                     }
                     .disabled(store.isMapCoverageLoading)
                     .accessibilityIdentifier("map.coverageRetry")
                 }
             }
-            .navigationTitle("Map Coverage")
+            .navigationTitle("Map Update Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
