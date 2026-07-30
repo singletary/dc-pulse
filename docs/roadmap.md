@@ -74,10 +74,14 @@ This remains the highest-priority product-development track after TestFlight sta
 ## 4. Nearby restaurant inspection ingestion — high, data-gated
 
 - Ship nearby inspection results only after verifying a stable supported source or approving a separately reviewed ingestion service.
+  - July 29 follow-up: current DC Health guidance still points to the HTML inspection database and confirms pass/fail reporting plus a 24-hour-to-seven-day publication review window; no supported machine interface was found. Live exposure remains blocked.
 - Center the future map on the active search location and default to closures, follow-up-required inspections, and Priority/Priority Foundation violations, with an explicit all-reports filter.
+  - July 29 completion: the transport-independent query boundary now enforces the active center, finite positive radius, attention/all filter semantics, and newest-first ordering with deterministic tests.
 - Include establishment, inspection date, outcome, notable violations, freshness, and authoritative attribution in every result.
+  - July 29 completion: the normalized inspection model and version 1 fixture retain every required field plus coordinates, feed generation date, source URL, and report URL.
 - If scraping is the only route, require a legal, reliability, caching, rate-limit, maintenance, and operating-cost review; run it as monitored server-side ingestion rather than on-device scraping.
 - Add versioned payloads, source-change detection, fixture/schema tests, stale-data warnings, health monitoring, and a kill switch before exposure.
+  - July 29 progress: a versioned adapter now fails closed for disabled, malformed, unsupported-version, changed-schema, stale/future, unattributed, insecure, out-of-DC, and invalid-count feeds. The errors provide future stale/health state inputs; production monitoring and a remotely operable switch remain dependent on an approved transport.
 - Until useful nearby data exists, do not present generic links as location-specific reports.
 
 ## 5. Opportunistic background notifications — high, capability-gated

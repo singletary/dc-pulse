@@ -24,7 +24,7 @@ struct RestaurantInspectionTests {
         #expect(RestaurantInspectionPortal.closuresURL.host == "dchealth.dc.gov")
     }
 
-    @Test func mapHighlightsOnlyTheMostSeriousInspectionsByDefault() {
+    @Test func attentionFilterIncludesClosuresFollowUpsAndPriorityClasses() {
         let closed = inspection(outcome: .closed, priority: 0, foundation: 0, core: 0)
         let priority = inspection(outcome: .followUpRequired, priority: 1, foundation: 0, core: 0)
         let foundation = inspection(outcome: .followUpRequired, priority: 0, foundation: 3, core: 2)
@@ -32,8 +32,11 @@ struct RestaurantInspectionTests {
 
         #expect(closed.mapVisibility == .highlightedByDefault)
         #expect(priority.mapVisibility == .highlightedByDefault)
-        #expect(foundation.mapVisibility == .availableThroughFilter)
+        #expect(foundation.mapVisibility == .highlightedByDefault)
         #expect(passed.mapVisibility == .availableThroughFilter)
+        #expect(foundation.isIncluded(in: .needsAttention))
+        #expect(!passed.isIncluded(in: .needsAttention))
+        #expect(passed.isIncluded(in: .all))
     }
 
     private func inspection(
@@ -47,11 +50,15 @@ struct RestaurantInspectionTests {
             establishmentName: "Example Restaurant",
             address: "REDACTED TEST ADDRESS",
             ward: "Ward 1",
+            coordinate: PulseItem.Coordinate(latitude: 38.9, longitude: -77.03)!,
             inspectionDate: Date(timeIntervalSince1970: 1_700_000_000),
             inspectionType: "Routine",
             outcome: outcome,
             violations: .init(priority: priority, priorityFoundation: foundation, core: core),
-            reportURL: RestaurantInspectionPortal.searchURL
+            reportURL: RestaurantInspectionPortal.searchURL,
+            feedGeneratedAt: Date(timeIntervalSince1970: 1_700_100_000),
+            attribution: "DC Health",
+            sourceURL: RestaurantInspectionPortal.guidanceURL
         )
     }
 }
