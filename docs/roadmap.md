@@ -52,9 +52,9 @@ The measurement plan, test matrix, home-screen concepts, and decision gates are 
 - [ ] Complete accessibility, Dynamic Type, VoiceOver, Reduce Motion, Light/Dark Mode, and smallest-screen checks.
   - July 29 progress: iPhone 17e UI checks pass at the largest accessibility text size, the focused accessibility-description audit passes, and all four Light/Dark portrait/landscape launch configurations pass. Copy confirmations now suppress their transition when Reduce Motion is enabled. Manual VoiceOver order/rotor and physical-device checks remain open.
 - [ ] Verify production icon, screenshots, privacy report, public URLs, About content, attribution, and the independent-app disclosure in the selected release build.
-  - July 29 progress: the 1024-pixel icon and both four-image screenshot sets have exact dimensions and no alpha; the source privacy manifest validates; public marketing, privacy, and support routes respond; and About plus the website retain attribution and independent-app disclosures. `scripts/audit-release-assets.sh` reproduces these checks. Archive privacy-report and selected-upload verification remain intentionally open because no new archive or TestFlight upload was created.
+  - July 30 progress: the 1024-pixel icon and both four-image screenshot sets have exact dimensions and no alpha; the source and archived privacy manifests validate; public marketing, privacy, and support routes respond; and About plus the website retain attribution and independent-app disclosures. `scripts/audit-release-assets.sh` reproduces these checks. Build 10 was archived and uploaded successfully; processed-build and physical-device verification remain open.
 - [ ] Complete the focused external beta pass described in [release status](release-status.md) before public App Review.
-  - Deferred until a later TestFlight candidate; no tester-group or App Store Connect changes were made.
+  - Build 10 was uploaded to App Store Connect on July 30. Processing, internal physical-iPhone verification, and tester-group assignment remain open; no tester groups were changed automatically.
 - [x] Use [App Store readiness](app-store-readiness.md) as the operational gate and [App Store listing](app-store-listing.md) as copy-ready metadata.
 
 ## 3. Direct 311 submission discovery — high, contract-gated

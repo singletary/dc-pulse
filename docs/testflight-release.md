@@ -37,15 +37,15 @@ DC Pulse makes it easier to see recent DC 311 requests and public permit activit
 
 **What to test**
 
-Build 9 includes Build 8’s simpler Near You experience and Map reliability work, then refines the snapshot with saved-Home recognition, four dynamic insights, quieter detail copying, and more relevant Home alerts. These changes do not expand data collection.
+Build 10 hardens the Map and Near You work from Builds 8 and 9. It adds clearer progressive Map loading and recovery, avoids repeated compatible Near You requests when opening Map, expands deterministic reliability and accessibility coverage, and keeps Restaurant Health safely hidden unless a reviewed live source becomes available. These changes do not expand data collection.
 
 - Check Near You’s totals, noteworthy items, and four insight rows. Select New, Active, and Resolved; confirm the rows update, and tap the selected status again to show all.
+- Open Map from Near You and confirm compatible records appear without a redundant initial fetch. Change location, address, ward, radius, time range, and filters quickly; stale-area results must not replace the latest selection.
+- Confirm Map progress advances through meaningful work. Test Reset, partial-source recovery details, Retry, relaunch, and offline recovery; useful cached markers should remain visible when one public source fails.
 - Save the current location as Home. Confirm the Home icon appears, unfinished features stay hidden, and insight emoji and ↑/↓ trends match their request types.
-- Change Map location, address, ward, radius, time range, and filters quickly. Confirm close-in and full-radius markers refresh without stale-area results.
-- Test Map Reset, partial-coverage details, Retry, and relaunch. Cached markers should appear quickly and remain useful if one public source fails.
 - Open Item Details. Confirm fields have no distracting copy icons but still copy by touch-and-hold, text selection, VoiceOver actions, and Copy All.
 - Test Home auto-watch at 0.1 and 0.25 mile. “New near Home” inbox and system alerts should only appear for items within 0.1 mile after a refresh.
-- Check followed places, watches, archive/restore, denied or approximate location, offline recovery, largest text, VoiceOver, and Light/Dark Mode.
+- Check followed places, watches, archive/restore, denied or approximate location, largest text, VoiceOver, Reduce Motion, and Light/Dark Mode.
 
 **Feedback contact**
 
@@ -62,7 +62,7 @@ Notifications currently use on-device refresh checks rather than a push-notifica
 ## Replacement upload steps
 
 1. Before archiving, open **Xcode > Settings > Accounts** and confirm the existing account has App Store Connect access. Re-authentication is a manual account-owner action.
-2. Run the read-only signing-session preflight below. Stop before archiving if it does not pass.
+2. Run the non-mutating signing-session preflight below. Stop before archiving if it does not pass.
 3. Archive to Xcode’s standard Organizer location; do not use a temporary `-archivePath`.
 4. Prefer `xcodebuild -exportArchive` with export method `app-store-connect` and destination `upload`. Organizer fallback must use **Distribute App > App Store Connect**. Never use **TestFlight Internal Only**; the full App Store Connect route supports testing and release.
 5. Use existing signing assets only. Never pass `-allowProvisioningUpdates`; stop if Xcode requests account, team, certificate, profile, entitlement, identifier, or provisioning changes.
@@ -78,9 +78,10 @@ Run the fail-fast check in the logged-in Mac user session immediately before the
 scripts/testflight-signing-preflight.sh
 ```
 
-The script requires accessible login-keychain settings and at least one valid
-code-signing identity. Its checks are read-only. It does not unlock, repair, or
-change Keychain.
+The script enumerates an existing code-signing identity, signs a temporary copy
+of `/usr/bin/true`, verifies that signature, and deletes the temporary file. It
+does not query or change login-keychain settings, unlock or repair a keychain,
+or modify identities, private-key access controls, certificates, or profiles.
 
 If either check fails, or if signing reports `errSecInternalComponent`,
 `errSecAuthFailed`, or `CSSMERR_CSP_OPERATION_AUTH_DENIED`:
@@ -91,12 +92,13 @@ If either check fails, or if signing reports `errSecInternalComponent`,
 4. Let the account owner restore the macOS login/security session, normally by logging out or restarting, before making one new preflight and archive attempt.
 5. If the condition recurs after a clean login, collect a sysdiagnose and file Apple Feedback rather than changing signing assets speculatively.
 
-The July 28, 2026 failure was not a missing certificate or an archive-setting
-problem. macOS reported the keychain as unlocked, then denied the signing key's
-integrity/authentication operation. The identical certificate, profile, and CLI
-archive succeeded after restart without a keychain or project change. Treat this
-signature as a transient macOS security-session failure. Nearby Xcode credential
-and iCloud-keychain errors were present in the log, but their causal relationship
-is unproven.
+The July 28 and July 30, 2026 failures were not missing certificates or archive
+settings. In both cases macOS denied a private-key integrity/authentication
+operation, and the identical signing assets worked after the login/security
+session was restored without a keychain or project-setting change. The old
+preflight's `security show-keychain-info` check was removed because it queried a
+settings operation that was unnecessary for proving signing health. Treat this
+signature as a transient macOS security-session failure; nearby Xcode credential
+and iCloud-keychain errors do not establish a cause.
 
 External testing can begin after any required Beta App Review approval and assignment to the intended external group.

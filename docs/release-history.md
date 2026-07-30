@@ -56,4 +56,12 @@ This document preserves completed delivery milestones that would otherwise obscu
 - Adopted the bounded cached-first Map store and conservative per-source reconciliation after a five-pair default-radius Simulator matrix showed warm launch-to-first-markers improving from a 3.710-second median to 2.145 seconds while cached records remained isolated by rounded context and survived partial-source failures.
 - Retained 0.5 mile as the default radius. A same-build Downtown DC matrix showed that 0.25 mile reduced bounded-coverage median from 21.186 to 6.588 seconds cold and visible items from a 584-item median to 125, but every run remained partial and one dense location could not justify reducing coverage for lower-density neighborhoods. The explicit 0.25- and 1-mile choices remain available.
 
+## Build 10
+
+- Map exposes determinate completed/total coverage progress, gives plain and actionable partial-source recovery guidance, and continues compatible in-flight Near You pagination instead of repeating page zero.
+- Privacy-safe request diagnostics distinguish app deadlines from transport or decoding failures without recording precise locations or saved addresses.
+- Deterministic coverage now includes in-flight reuse, generation safety, cancellation, cache-hit refresh, offline recovery, partial-source reconciliation, input validation, item-detail formatting, and accessibility target checks.
+- Live DC 311, Building Permit, and DDOT adapter schemas, public release URLs, icon and screenshot assets, privacy declarations, Release compilation, static analysis, the full unit suite, and all UI tests passed before the build 10 archive.
+- Build 10 was uploaded through the full App Store Connect route on July 30, 2026; tester-group assignment and physical-iPhone verification remain manual gates.
+
 Current distribution is maintained in [release status](release-status.md).
