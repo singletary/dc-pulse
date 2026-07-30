@@ -162,9 +162,14 @@ struct PulseView: View {
                 } else {
                     Button { beginSavingHome() } label: {
                         Label("Save your home location", systemImage: "house")
+                            .lineLimit(nil)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     Text("Track requests reported at your address.")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
@@ -384,7 +389,7 @@ struct PulseView: View {
                 .frame(height: 28)
                 Text(status.displayName).font(.caption.weight(.medium))
             }
-            .foregroundStyle(color)
+            .foregroundStyle(.primary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
             .background(color.opacity(isSelected ? 0.18 : 0.09), in: RoundedRectangle(cornerRadius: 12))

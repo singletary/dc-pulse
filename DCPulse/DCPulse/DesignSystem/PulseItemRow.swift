@@ -19,6 +19,8 @@ struct PulseItemRow: View {
                 Text(item.id.source.displayName)
                 Spacer()
                 Text(item.openedAt, style: .relative)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .layoutPriority(1)
             }
             .font(.caption).foregroundStyle(.secondary)
         }

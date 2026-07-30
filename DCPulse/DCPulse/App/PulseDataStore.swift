@@ -71,8 +71,8 @@ final class PulseDataStore {
 
         func label(selectedRadius: Radius) -> String {
             switch self {
-            case .closeIn: "Close-in (0.25-mile) coverage"
-            case .selectedRadius: "Selected \(selectedRadius.rawValue.formatted())-mile coverage"
+            case .closeIn: "Close-in area (0.25 mile)"
+            case .selectedRadius: "Selected area (\(selectedRadius.rawValue.formatted()) mile)"
             }
         }
     }
@@ -413,6 +413,16 @@ final class PulseDataStore {
     /// The selected radius then receives its own independent page budget; merged
     /// close-in items must never consume that wider-radius budget.
     func prepareMapResults() async {
+        do {
+            while state == .loading {
+                try Task.checkCancellation()
+                try await Task.sleep(for: .milliseconds(50))
+            }
+        } catch {
+            return
+        }
+        guard state == .loaded else { return }
+
         mapCoverageSequence += 1
         let coverageSequence = mapCoverageSequence
         let requestSequence = loadSequence
@@ -808,7 +818,7 @@ final class PulseDataStore {
         }
         mapCoverageWarning = mapCoverageIssues.isEmpty
             ? nil
-            : "Some map results could not update. Existing markers are still available."
+            : "Some nearby results did not update. Existing markers are still available."
         reconcileCachedMapResults(attempts)
         return true
     }

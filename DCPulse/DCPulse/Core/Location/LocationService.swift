@@ -3,6 +3,33 @@ import Foundation
 import MapKit
 import Observation
 
+@MainActor
+protocol LocationManaging: AnyObject {
+    var delegate: (any CLLocationManagerDelegate)? { get set }
+    var desiredAccuracy: CLLocationAccuracy { get set }
+    var authorizationStatus: CLAuthorizationStatus { get }
+
+    func requestWhenInUseAuthorization()
+    func requestLocation()
+}
+
+extension CLLocationManager: LocationManaging {}
+
+@MainActor
+protocol LocationLabelResolving {
+    func label(for location: CLLocation) async -> String?
+}
+
+struct MapKitLocationLabelResolver: LocationLabelResolving {
+    func label(for location: CLLocation) async -> String? {
+        guard let request = MKReverseGeocodingRequest(location: location),
+              let mapItem = try? await request.mapItems.first else { return nil }
+        if let address = mapItem.address?.shortAddress { return "Near \(address)" }
+        if let name = mapItem.name { return "Near \(name)" }
+        return nil
+    }
+}
+
 @MainActor @Observable
 final class LocationService: NSObject, CLLocationManagerDelegate {
     enum State: Equatable {
@@ -16,9 +43,10 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
         case failed(String)
     }
 
-    private let manager: CLLocationManager
+    private let manager: any LocationManaging
     private let routingPolicy: DCLocationRoutingPolicy
-    private var geocodingRequest: MKReverseGeocodingRequest?
+    private let locationLabelResolver: any LocationLabelResolving
+    private var geocodingTask: Task<Void, Never>?
     private(set) var state: State = .idle
     private(set) var coordinate: PulseItem.Coordinate?
     private(set) var updateSequence = 0
@@ -28,12 +56,22 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
         state == .requestingPermission || state == .locating
     }
 
+    override convenience init() {
+        self.init(
+            manager: CLLocationManager(),
+            routingPolicy: .init(),
+            locationLabelResolver: MapKitLocationLabelResolver()
+        )
+    }
+
     init(
-        manager: CLLocationManager = CLLocationManager(),
-        routingPolicy: DCLocationRoutingPolicy = .init()
+        manager: any LocationManaging,
+        routingPolicy: DCLocationRoutingPolicy = .init(),
+        locationLabelResolver: any LocationLabelResolving
     ) {
         self.manager = manager
         self.routingPolicy = routingPolicy
+        self.locationLabelResolver = locationLabelResolver
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
@@ -57,6 +95,10 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
     }
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        handleAuthorizationChange()
+    }
+
+    func handleAuthorizationChange() {
         switch manager.authorizationStatus {
         case .authorizedAlways, .authorizedWhenInUse:
             state = .locating
@@ -69,8 +111,15 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last,
-              let coordinate = PulseItem.Coordinate(
+        guard let location = locations.last else {
+            failLocation("Your location could not be determined.")
+            return
+        }
+        handle(location: location)
+    }
+
+    func handle(location: CLLocation) {
+        guard let coordinate = PulseItem.Coordinate(
                 latitude: location.coordinate.latitude,
                 longitude: location.coordinate.longitude
               ) else {
@@ -79,7 +128,7 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
         }
         let resolution = routingPolicy.resolve(coordinate)
         guard case .current = resolution else {
-            geocodingRequest?.cancel()
+            geocodingTask?.cancel()
             self.coordinate = nil
             locationLabel = nil
             state = .outsideDC(resolution)
@@ -98,20 +147,20 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
     }
 
     private func failLocation(_ message: String) {
-        geocodingRequest?.cancel()
+        geocodingTask?.cancel()
         coordinate = nil
         locationLabel = nil
         state = .failed(message)
     }
 
     private func reverseGeocode(_ location: CLLocation) {
-        geocodingRequest?.cancel()
-        guard let request = MKReverseGeocodingRequest(location: location) else { return }
-        geocodingRequest = request
-        Task {
-            guard let mapItem = try? await request.mapItems.first else { return }
-            if let address = mapItem.address?.shortAddress { locationLabel = "Near \(address)" }
-            else if let name = mapItem.name { locationLabel = "Near \(name)" }
+        geocodingTask?.cancel()
+        let expectedCoordinate = coordinate
+        geocodingTask = Task { [weak self] in
+            guard let self else { return }
+            let label = await locationLabelResolver.label(for: location)
+            guard !Task.isCancelled, coordinate == expectedCoordinate else { return }
+            locationLabel = label
         }
     }
 }

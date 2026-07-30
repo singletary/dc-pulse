@@ -177,11 +177,15 @@ final class DCPulseUITests: XCTestCase {
             scrollToElement(status, in: app)
             XCTAssertFalse(status.label.isEmpty)
             XCTAssertTrue((status.value as? String)?.contains("selected") == true)
+            XCTAssertGreaterThanOrEqual(status.frame.height, 44)
+            XCTAssertGreaterThanOrEqual(status.frame.width, 44)
         }
 
         let summary = app.buttons["pulse.neighborhoodSummary"]
         scrollToElement(summary, in: app)
         XCTAssertFalse(summary.label.isEmpty)
+        XCTAssertGreaterThanOrEqual(summary.frame.height, 44)
+        XCTAssertGreaterThanOrEqual(summary.frame.width, 44)
 
         try app.performAccessibilityAudit(for: [.sufficientElementDescription])
     }

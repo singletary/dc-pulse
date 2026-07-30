@@ -11,8 +11,10 @@ struct Report311View: View {
     @Environment(LocationService.self) private var locationService
     @Environment(\.openURL) private var openURL
     @State private var viewModel = Report311ViewModel()
+    @State private var cameraAccess = CameraAccessController()
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var showingCamera = false
+    @State private var showingCameraAccessAlert = false
     @State private var showingHandoffConfirmation = false
     @FocusState private var focusedField: FocusedField?
 
@@ -35,6 +37,18 @@ struct Report311View: View {
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 12) { photoLibraryButton; cameraButton }
                     VStack(spacing: 10) { photoLibraryButton; cameraButton }
+                }
+                if let guidance = cameraAccess.guidance {
+                    Label(guidance, systemImage: "camera.fill")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if let photoSelectionError = viewModel.photoSelectionError {
+                    Label(photoSelectionError, systemImage: "exclamationmark.triangle")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             } header: {
                 Text("What needs attention?")
@@ -117,10 +131,18 @@ struct Report311View: View {
         }
         .onChange(of: selectedPhoto) { _, item in
             guard let item else { return }
+            let selectionSequence = viewModel.beginPhotoSelection()
+            selectedPhoto = nil
             Task {
-                if let data = try? await item.loadTransferable(type: Data.self) {
-                    await viewModel.setPhoto(data)
+                do {
+                    guard let data = try await item.loadTransferable(type: Data.self) else {
+                        viewModel.photoSelectionFailed(selectionSequence: selectionSequence)
+                        return
+                    }
+                    await viewModel.setPhoto(data, selectionSequence: selectionSequence)
                     useCurrentLocationIfAvailable()
+                } catch {
+                    viewModel.photoSelectionFailed(selectionSequence: selectionSequence)
                 }
             }
         }
@@ -143,6 +165,16 @@ struct Report311View: View {
         } message: {
             Text("The official web portal is not loading reliably on some iPhones. For the best handoff, open the District's DC311 app, then paste the reviewed details and attach the photo.")
         }
+        .alert("Camera unavailable", isPresented: $showingCameraAccessAlert) {
+            if cameraAccess.canOpenSettings {
+                Button("Open Settings") {
+                    openURL(URL(string: UIApplication.openSettingsURLString)!)
+                }
+            }
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(cameraAccess.guidance ?? "")
+        }
     }
 
     private var photoLibraryButton: some View {
@@ -156,14 +188,26 @@ struct Report311View: View {
     }
 
     private var cameraButton: some View {
-        Button { showingCamera = true } label: {
+        Button {
+            Task {
+                if await cameraAccess.requestCamera() {
+                    showingCamera = true
+                } else if cameraAccess.status != .unavailable {
+                    showingCameraAccessAlert = true
+                }
+            }
+        } label: {
             Label("Take Photo", systemImage: "camera")
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.bordered)
-        .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
+        .disabled(cameraAccess.status == .unavailable)
         .accessibilityIdentifier("report311.takePhoto")
-        .accessibilityHint("Opens the camera")
+        .accessibilityHint(
+            cameraAccess.status == .unavailable
+                ? "Camera unavailable. Choose an existing photo."
+                : "Opens the camera"
+        )
     }
 
     private func useCurrentLocationIfAvailable() {
