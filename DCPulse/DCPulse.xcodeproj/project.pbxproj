@@ -39,6 +39,7 @@
 				Resources/Fixtures/arcgis-success.json,
 				Resources/Fixtures/building-permit-2026.json,
 				Resources/Fixtures/ddot-construction-permit-2026.json,
+				Resources/Fixtures/restaurant-inspections-v1.json,
 			);
 			target = 4EF6E63C30029577007455AD /* DCPulse */;
 		};

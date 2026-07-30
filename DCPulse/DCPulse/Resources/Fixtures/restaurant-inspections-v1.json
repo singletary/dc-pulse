@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "schema": "dc-pulse.restaurant-inspections.v1",
+  "generatedAt": "2026-07-29T16:00:00Z",
+  "attribution": "DC Health",
+  "sourceURL": "https://dchealth.dc.gov/service/division-food",
+  "records": [
+    {
+      "permitIdentifier": "fixture-permit-1",
+      "inspectionIdentifier": "fixture-inspection-1",
+      "establishmentName": "Redacted Fixture Restaurant",
+      "address": "REDACTED TEST ADDRESS",
+      "ward": "Ward 1",
+      "latitude": 38.9072,
+      "longitude": -77.0369,
+      "inspectionDate": "2026-07-28T14:00:00Z",
+      "inspectionType": "Routine",
+      "outcome": "followUpRequired",
+      "priorityViolations": 0,
+      "priorityFoundationViolations": 2,
+      "coreViolations": 1,
+      "reportURL": "https://dc.healthinspections.us/?a=Inspections"
+    },
+    {
+      "permitIdentifier": "fixture-permit-2",
+      "inspectionIdentifier": "fixture-inspection-2",
+      "establishmentName": "Second Redacted Fixture",
+      "address": "REDACTED TEST ADDRESS",
+      "ward": "Ward 2",
+      "latitude": 38.9012,
+      "longitude": -77.0201,
+      "inspectionDate": "2026-07-27T13:00:00Z",
+      "inspectionType": "Follow-up",
+      "outcome": "passed",
+      "priorityViolations": 0,
+      "priorityFoundationViolations": 0,
+      "coreViolations": 0,
+      "reportURL": "https://dc.healthinspections.us/?a=Inspections"
+    }
+  ]
+}
