@@ -134,7 +134,7 @@ Each concurrent interval now receives a unique signpost ID. This is required to 
 3. The Debug-only launch hook waits for the initial location context to finish loading, emits **Map Presentation Started**, and then opens Map. It is excluded from Release builds and does not alter TestFlight or App Store navigation.
 4. The script reinstalls only the app for each cold run, immediately reuses that completed context for the paired warm run, waits for **Bounded Map Coverage Complete**, and summarizes only approved signpost fields.
 5. For Instruments or physical-iPhone captures, record the device model, OS, app commit/build, radius, period, network condition, and whether the app cache is cold or warm. Do not record a coordinate or address.
-6. Report median, nearest-rank p90, and worst elapsed time. Keep Simulator and physical-iPhone results separate and retain raw `.trace` or CSV files only in approved private test storage.
+6. Report median, nearest-rank p90, and worst elapsed time. Keep Simulator and physical-iPhone results separate and retain raw `.trace` or CSV files only in approved private test storage. The CSV separates app-deadline timeouts from other failures and reports only source names and page offsets; it never records a coordinate, address, or record identifier.
 
 Use this row shape for every scenario:
 
@@ -173,6 +173,12 @@ The capture path now accepts an explicit 0.25-, 0.5-, or 1-mile radius and recor
 The 1-mile bounded milestone follows the close-in milestone because both independent passes reach their configured budgets at nearly the same time; its 685-item result is the deduplicated union, not proof that authoritative pagination completed. The 0.5-mile result takes longer because its selected-radius pass continues returning pages while the 1-mile pass reaches the bounded item budget sooner. This is why the UI and document call the milestone **bounded** rather than **complete** coverage.
 
 DC 311 remained the dominant accumulated request cost and the only failing source in this matrix. The result closes the missing normal-Wi-Fi Simulator radius slice but not constrained, offline-recovery, multi-neighborhood, or physical-iPhone validation.
+
+### Missing-record trace procedure
+
+Start with the capture CSV’s failed source and page offset. The combined repository’s requested limit shows the per-source allocation; the next offset and `hasMore` state show whether ArcGIS transfer-limit paging continued. Cache reconciliation then classifies that source refresh as complete, partial, or failed without treating absence after a failed page as deletion.
+
+For a record available to the presentation layer, run the same source-namespaced identifier through `MapItemPipeline.disposition(of:)`. The result identifies source, status, or category filtering; a missing coordinate; final annotation eligibility; or that the identifier was never received. The aggregate `Trace` exposes only stage counts and is safe for diagnostics. `ClusteredPulseMap` now receives exactly the pipeline’s annotation-eligible set, so clustering cannot silently introduce an additional record filter.
 
 ### July 29, 2026 launch-to-marker cache evidence
 

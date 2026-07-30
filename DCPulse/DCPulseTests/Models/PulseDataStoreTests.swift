@@ -324,6 +324,37 @@ struct PulseDataStoreTests {
         #expect(!store.isMapCoverageLoading)
     }
 
+    @Test func sameCenterWiderRadiiRetainEveryQuarterMileIdentifier() async throws {
+        let quarterA = cacheItem(source: .serviceRequests311, id: "quarter-a", day: 4)
+        let quarterB = cacheItem(source: .buildingPermits2026, id: "quarter-b", day: 3)
+        let half = cacheItem(source: .ddotConstructionPermits2026, id: "half", day: 2)
+        let one = cacheItem(source: .serviceRequests311, id: "one", day: 1)
+        let repository = RadiusInvariantRepository(
+            quarterMile: [quarterA, quarterB],
+            halfMile: [quarterA, half],
+            oneMile: [half, one]
+        )
+        let store = PulseDataStore(repository: repository)
+
+        await store.load()
+        await store.selectRadius(.quarterMile)
+        await store.prepareMapResults()
+        let quarterMileIDs = Set(store.items.map(\.id))
+
+        await store.selectRadius(.halfMile)
+        await store.prepareMapResults()
+        let halfMileIDs = Set(store.items.map(\.id))
+
+        await store.selectRadius(.oneMile)
+        await store.prepareMapResults()
+        let oneMileIDs = Set(store.items.map(\.id))
+
+        #expect(quarterMileIDs == [quarterA.id, quarterB.id])
+        #expect(quarterMileIDs.isSubset(of: halfMileIDs))
+        #expect(quarterMileIDs.isSubset(of: oneMileIDs))
+        #expect(oneMileIDs == [quarterA.id, quarterB.id, half.id, one.id])
+    }
+
     @Test func mapReusesACompleteCompatibleNearYouPageWithoutAnotherSelectedRadiusRequest() async throws {
         let item = try #require(SampleData.items.first)
         let repository = StubPulseRepository(results: [
@@ -798,6 +829,37 @@ private actor RadiusScopedWarningRepository: PulseRepositoryProtocol {
             )
         }
         return .init(items: [selectedRadius], nextOffset: 1, hasMore: false)
+    }
+}
+
+private actor RadiusInvariantRepository: PulseRepositoryProtocol {
+    let quarterMile: [PulseItem]
+    let halfMile: [PulseItem]
+    let oneMile: [PulseItem]
+
+    init(
+        quarterMile: [PulseItem],
+        halfMile: [PulseItem],
+        oneMile: [PulseItem]
+    ) {
+        self.quarterMile = quarterMile
+        self.halfMile = halfMile
+        self.oneMile = oneMile
+    }
+
+    func nearbyItems(
+        coordinate: PulseItem.Coordinate,
+        radiusMiles: Double,
+        days: Int,
+        offset: Int,
+        limit: Int
+    ) -> PulsePage {
+        let items = switch radiusMiles {
+        case 0.25: quarterMile
+        case 0.5: halfMile
+        default: oneMile
+        }
+        return .init(items: items, nextOffset: offset + items.count, hasMore: false)
     }
 }
 

@@ -19,7 +19,7 @@ struct PulseMapView: View {
 
     var body: some View {
         ClusteredPulseMap(
-            items: filteredItems,
+            items: mapPipeline.annotationItems,
             searchCoordinate: store.searchCoordinate,
             radiusMeters: store.radius.rawValue * 1_609.344,
             renderingContext: mapRenderingContext,
@@ -193,12 +193,13 @@ struct PulseMapView: View {
         }
     }
 
-    private var filteredItems: [PulseItem] {
-        (categoryItems ?? store.items).filter { item in
-            (statusFilter == nil || item.status == statusFilter) &&
-            (selectedSources.isEmpty || selectedSources.contains(item.id.source)) &&
-            (requestTypeFilter == nil || item.category == requestTypeFilter)
-        }
+    private var mapPipeline: MapItemPipeline {
+        MapItemPipeline(
+            items: categoryItems ?? store.items,
+            selectedSources: selectedSources,
+            status: statusFilter,
+            category: requestTypeFilter
+        )
     }
 
     private func updateCandidateSearchCoordinate(_ mapCenter: CLLocationCoordinate2D) {

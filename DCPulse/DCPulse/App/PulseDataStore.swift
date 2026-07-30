@@ -173,7 +173,11 @@ final class PulseDataStore {
 
     init() {
         repository = CombinedPulseRepository(sources: [
-            NamedPulseRepository(name: "DC 311", repository: ServiceRequest311Repository()),
+            NamedPulseRepository(
+                name: "DC 311",
+                repository: ServiceRequest311Repository(),
+                timeout: .seconds(8)
+            ),
             NamedPulseRepository(name: "Building Permits", repository: BuildingPermitRepository()),
             NamedPulseRepository(name: "DDOT Construction Permits", repository: DDOTConstructionPermitRepository())
         ])

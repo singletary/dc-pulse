@@ -3,6 +3,17 @@ import Foundation
 struct NamedPulseRepository: Sendable {
     let name: String
     let repository: any PulseRepositoryProtocol
+    let timeout: Duration?
+
+    init(
+        name: String,
+        repository: any PulseRepositoryProtocol,
+        timeout: Duration? = nil
+    ) {
+        self.name = name
+        self.repository = repository
+        self.timeout = timeout
+    }
 }
 
 struct CombinedPulseRepository: PulseRepositoryProtocol, Sendable {
@@ -50,13 +61,16 @@ struct CombinedPulseRepository: PulseRepositoryProtocol, Sendable {
                             days: days,
                             offset: offset,
                             limit: sourceLimit,
-                            timeout: sourceTimeout
+                            timeout: source.timeout ?? sourceTimeout
                         )
                         diagnostics.end(interval, outcome: .succeeded, itemCount: page.items.count)
                         return SourceResult(page: page, warning: nil)
                     } catch is CancellationError {
                         diagnostics.end(interval, outcome: .cancelled, itemCount: 0)
                         return SourceResult(page: nil, warning: nil, wasCancelled: true)
+                    } catch SourceFetchError.timedOut {
+                        diagnostics.end(interval, outcome: .timedOut, itemCount: 0)
+                        return SourceResult(page: nil, warning: "\(source.name) records are temporarily unavailable.")
                     } catch {
                         diagnostics.end(interval, outcome: .failed, itemCount: 0)
                         return SourceResult(page: nil, warning: "\(source.name) records are temporarily unavailable.")
