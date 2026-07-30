@@ -119,6 +119,7 @@ final class DCPulseUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
+        XCTAssertTrue(app.navigationBars["Near You"].waitForExistence(timeout: 10))
         let summary = app.buttons["pulse.neighborhoodSummary"]
         scrollToElement(summary, in: app)
         summary.tap()
